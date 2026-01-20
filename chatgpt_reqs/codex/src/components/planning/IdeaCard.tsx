@@ -1,0 +1,382 @@
+"use client";
+
+import { useEffect, useRef, useState, useTransition } from "react";
+import { Calendar, MapPin, MessageSquare, Trash2 } from "lucide-react";
+import Modal from "@/components/Modal";
+import { useRouter } from "next/navigation";
+
+type Idea = {
+  id: string;
+  title: string;
+  description: string | null;
+  tags: string[];
+  createdAt: Date;
+  createdBy: { name: string | null; email: string };
+  placeId?: string | null;
+  placeName?: string | null;
+  placeAddress?: string | null;
+  placeLat?: number | null;
+  placeLng?: number | null;
+  placeUrl?: string | null;
+  placeWebsite?: string | null;
+  placeOpeningHours?: string[] | null;
+  placePhotoUrls?: string[] | null;
+};
+
+type IdeaComment = {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: { id: string; name: string | null; email: string };
+};
+
+type IdeaCardProps = {
+  idea: Idea;
+  commentCount: number;
+  comments: IdeaComment[];
+  currentUserId: string;
+  onSchedule: (formData: FormData) => Promise<void>;
+  onAddComment: (formData: FormData) => Promise<void>;
+  onDelete: (formData: FormData) => Promise<void>;
+};
+
+const TAG_GRADIENT = "from-amber-400 to-orange-500";
+
+function getInitials(name: string | null | undefined, email: string) {
+  const source = (name || email).trim();
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return "U";
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+}
+
+function formatTimeAgo(value: string) {
+  const date = new Date(value);
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m ago`;
+  }
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
+
+export default function IdeaCard({
+  idea,
+  commentCount,
+  comments,
+  currentUserId,
+  onSchedule,
+  onAddComment,
+  onDelete,
+}: IdeaCardProps) {
+  const router = useRouter();
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [localComments, setLocalComments] = useState<IdeaComment[]>(comments);
+  const [localCount, setLocalCount] = useState(commentCount);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (isCommentsOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isCommentsOpen]);
+
+  useEffect(() => {
+    setLocalComments(comments);
+    setLocalCount(commentCount);
+  }, [comments, commentCount]);
+
+  return (
+    <div
+      id={`idea-${idea.id}`}
+      className="animate-fade-in-up rounded-2xl border border-amber-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            {idea.title}
+          </h3>
+          {idea.description ? (
+            <p className="mt-2 text-sm text-[var(--text-muted)] line-clamp-2">
+              {idea.description}
+            </p>
+          ) : null}
+          {idea.placeName || idea.placeAddress ? (
+            <div className="mt-2 inline-flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
+              <MapPin className="h-3.5 w-3.5 text-rose-500" />
+              <span className="text-[var(--text-muted)]">
+                {idea.placeName || idea.placeAddress}
+              </span>
+              {idea.placeUrl || idea.placeWebsite ? (
+                <a
+                  className="font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
+                  href={idea.placeWebsite || idea.placeUrl || "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open
+                </a>
+              ) : null}
+            </div>
+          ) : null}
+          {idea.tags.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {idea.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className={`inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${TAG_GRADIENT} px-3 py-1 text-xs font-medium text-white shadow-[var(--shadow-sm)]`}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <p className="mt-3 text-xs text-[var(--text-tertiary)]">
+            Created by {idea.createdBy.name || idea.createdBy.email}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:shadow-[var(--shadow-sm)]"
+            title="Schedule as event"
+            onClick={() => setIsScheduleOpen(true)}
+            type="button"
+          >
+            <Calendar className="h-4 w-4" />
+          </button>
+          <button
+            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)]"
+            title={`Comments (${localCount})`}
+            onClick={() => setIsCommentsOpen((prev) => !prev)}
+            type="button"
+          >
+            <MessageSquare className="h-4 w-4" />
+            {localCount > 0 ? (
+              <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                {localCount}
+              </span>
+            ) : null}
+          </button>
+          <form
+            action={onDelete}
+            onSubmit={(event) => {
+              if (!confirm("Delete this idea?")) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <input type="hidden" name="ideaId" value={idea.id} />
+            <button
+              className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:shadow-[var(--shadow-sm)]"
+              title="Delete idea"
+              type="submit"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {isCommentsOpen ? (
+        <div className="mt-4 animate-slide-down rounded-lg bg-gray-50 p-4">
+          <div className="flex flex-col">
+            {localComments.length === 0 ? (
+              <p className="text-sm text-[var(--text-muted)]">
+                No comments yet.
+              </p>
+            ) : null}
+            {localComments.map((comment) => {
+              const isCurrentUser = comment.author.id === currentUserId;
+              const avatarGradient = isCurrentUser
+                ? "from-sky-500 to-indigo-600"
+                : "from-rose-500 to-pink-600";
+              return (
+                <div
+                  key={comment.id}
+                  className="flex items-start gap-3 border-b border-gray-200 py-2 last:border-b-0"
+                >
+                  <div
+                    className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white ${avatarGradient}`}
+                  >
+                    {getInitials(comment.author.name, comment.author.email)}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-[var(--text-tertiary)]">
+                      <span className="font-semibold text-[var(--text-primary)]">
+                        {comment.author.name || comment.author.email}
+                      </span>
+                      <span className="mx-2">•</span>
+                      {formatTimeAgo(comment.createdAt)}
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--text-primary)]">
+                      {comment.body}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <form
+            ref={formRef}
+            className="mt-3 flex flex-wrap gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+              const content = formData.get("content")?.toString().trim() ?? "";
+              if (!content) {
+                return;
+              }
+              const optimistic: IdeaComment = {
+                id: `temp-${Date.now()}`,
+                body: content,
+                createdAt: new Date().toISOString(),
+                author: { id: currentUserId, name: "You", email: "you" },
+              };
+              setLocalComments((prev) => [...prev, optimistic]);
+              setLocalCount((prev) => prev + 1);
+              event.currentTarget.reset();
+              startTransition(async () => {
+                await onAddComment(formData);
+              });
+            }}
+          >
+            <input type="hidden" name="ideaId" value={idea.id} />
+            <input
+              ref={inputRef}
+              className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-200"
+              name="content"
+              placeholder="Add comment..."
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  formRef.current?.requestSubmit();
+                }
+              }}
+            />
+            <button
+              className="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white"
+              type="submit"
+              disabled={isPending}
+            >
+              {isPending ? "Posting..." : "Post"}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
+      <Modal
+        isOpen={isScheduleOpen}
+        onClose={() => setIsScheduleOpen(false)}
+        title="Schedule this idea"
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              {idea.title}
+            </p>
+            {idea.description ? (
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
+                {idea.description}
+              </p>
+            ) : null}
+          </div>
+          <form
+            className="grid gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const formData = new FormData(event.currentTarget);
+              startTransition(async () => {
+                await onSchedule(formData);
+                router.refresh();
+                setIsScheduleOpen(false);
+              });
+            }}
+          >
+            <input type="hidden" name="ideaId" value={idea.id} />
+            <input type="hidden" name="placeId" value={idea.placeId ?? ""} />
+            <input type="hidden" name="placeName" value={idea.placeName ?? ""} />
+            <input
+              type="hidden"
+              name="placeAddress"
+              value={idea.placeAddress ?? ""}
+            />
+            <input
+              type="hidden"
+              name="placeWebsite"
+              value={idea.placeWebsite ?? ""}
+            />
+            <input
+              type="hidden"
+              name="placeOpeningHours"
+              value={
+                idea.placeOpeningHours
+                  ? JSON.stringify(idea.placeOpeningHours)
+                  : ""
+              }
+            />
+            <input
+              type="hidden"
+              name="placePhotoUrls"
+              value={
+                idea.placePhotoUrls
+                  ? JSON.stringify(idea.placePhotoUrls)
+                  : ""
+              }
+            />
+            <input
+              type="hidden"
+              name="placeLat"
+              value={idea.placeLat?.toString() ?? ""}
+            />
+            <input
+              type="hidden"
+              name="placeLng"
+              value={idea.placeLng?.toString() ?? ""}
+            />
+            <input type="hidden" name="placeUrl" value={idea.placeUrl ?? ""} />
+            <input
+              className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              name="date"
+              type="date"
+              required
+            />
+            <input
+              className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              name="time"
+              type="time"
+            />
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                className="rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+                onClick={() => setIsScheduleOpen(false)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+                type="submit"
+                disabled={isPending}
+              >
+                {isPending ? "Creating..." : "Create event"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </Modal>
+    </div>
+  );
+}

@@ -1,0 +1,38 @@
+export type CalendarDay = {
+  date: Date;
+  isCurrentMonth: boolean;
+};
+
+export function getMonthGrid(date: Date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstOfMonth = new Date(year, month, 1);
+  const startOffset = firstOfMonth.getDay();
+  const startDate = new Date(year, month, 1 - startOffset);
+
+  const days: CalendarDay[] = [];
+  for (let i = 0; i < 42; i += 1) {
+    const day = new Date(startDate);
+    day.setDate(startDate.getDate() + i);
+    days.push({
+      date: day,
+      isCurrentMonth: day.getMonth() === month,
+    });
+  }
+
+  return days;
+}
+
+export function formatMonthTitle(date: Date) {
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export function dateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}

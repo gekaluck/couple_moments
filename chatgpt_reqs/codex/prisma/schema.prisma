@@ -1,0 +1,256 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                       String             @id @default(cuid())
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  email                    String             @unique
+  passwordHash             String
+  name                     String?
+
+  emailRemindersEnabled    Boolean            @default(true)
+
+  memberships              Membership[]
+  eventsCreated            Event[]            @relation("EventsCreatedBy")
+  ideasCreated             Idea[]             @relation("IdeasCreatedBy")
+  photos                   Photo[]
+  reactions                Reaction[]
+  availabilityBlocks       AvailabilityBlock[]
+  notes                    Note[]
+  changeLogs               ChangeLogEntry[]
+  notifications            Notification[]
+}
+
+model CoupleSpace {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  name        String?
+  inviteCode  String        @unique
+
+  memberships Membership[]
+  events      Event[]
+  ideas       Idea[]
+  availabilityBlocks AvailabilityBlock[]
+  notes       Note[]
+}
+
+model Membership {
+  id            String       @id @default(cuid())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  userId        String
+  coupleSpaceId String
+  role          String       @default("member")
+
+  user          User         @relation(fields: [userId], references: [id])
+  coupleSpace   CoupleSpace  @relation(fields: [coupleSpaceId], references: [id])
+
+  @@unique([userId, coupleSpaceId])
+}
+
+model Event {
+  id              String        @id @default(cuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  coupleSpaceId   String
+  createdByUserId String
+  title           String
+  description     String?
+  type            EventType
+  dateTimeStart   DateTime
+  dateTimeEnd     DateTime?
+  timeIsSet       Boolean       @default(true)
+  tags            String        @default("[]")
+  originIdeaId    String?       @unique
+  placeId         String?
+  placeName       String?
+  placeAddress    String?
+  placeLat        Float?
+  placeLng        Float?
+  placeUrl        String?
+  placeWebsite    String?
+  placeOpeningHours Json?
+  placePhotoUrls  Json?
+
+  coupleSpace     CoupleSpace   @relation(fields: [coupleSpaceId], references: [id])
+  createdBy       User          @relation("EventsCreatedBy", fields: [createdByUserId], references: [id])
+
+  photos          Photo[]
+  originIdea      Idea?         @relation("IdeaConvertedEvent", fields: [originIdeaId], references: [id])
+  notifications   Notification[]
+}
+
+enum EventType {
+  PLANNED
+  MEMORY
+}
+
+model AvailabilityBlock {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  coupleSpaceId   String
+  createdByUserId String
+  title           String
+  note            String?
+  startAt         DateTime
+  endAt           DateTime
+
+  coupleSpace     CoupleSpace @relation(fields: [coupleSpaceId], references: [id])
+  createdBy       User        @relation(fields: [createdByUserId], references: [id])
+}
+
+model Photo {
+  id               String    @id @default(cuid())
+  createdAt        DateTime  @default(now())
+
+  eventId          String
+  uploadedByUserId String
+  storageUrl       String
+
+  event            Event     @relation(fields: [eventId], references: [id])
+  uploadedBy       User      @relation(fields: [uploadedByUserId], references: [id])
+}
+
+model Idea {
+  id              String       @id @default(cuid())
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  coupleSpaceId   String
+  createdByUserId String
+  title           String
+  description     String?
+  tags            String        @default("[]")
+  status          IdeaStatus   @default(NEW)
+  convertedToEventId String?    @unique
+  placeId         String?
+  placeName       String?
+  placeAddress    String?
+  placeLat        Float?
+  placeLng        Float?
+  placeUrl        String?
+  placeWebsite    String?
+  placeOpeningHours Json?
+  placePhotoUrls  Json?
+
+  coupleSpace     CoupleSpace  @relation(fields: [coupleSpaceId], references: [id])
+  createdBy       User         @relation("IdeasCreatedBy", fields: [createdByUserId], references: [id])
+  convertedToEvent Event?       @relation("IdeaConvertedEvent")
+}
+
+enum IdeaStatus {
+  NEW
+  PLANNED
+  DONE
+}
+
+model Note {
+  id             String        @id @default(cuid())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  coupleSpaceId  String
+  authorUserId   String
+  body           String
+  kind           NoteKind
+  parentType     NoteParentType?
+  parentId       String?
+  replyToNoteId  String?
+
+  coupleSpace    CoupleSpace   @relation(fields: [coupleSpaceId], references: [id])
+  author         User          @relation(fields: [authorUserId], references: [id])
+  replyTo        Note?         @relation("NoteReplies", fields: [replyToNoteId], references: [id])
+  replies        Note[]        @relation("NoteReplies")
+}
+
+model Reaction {
+  id         String        @id @default(cuid())
+  createdAt  DateTime      @default(now())
+
+  userId     String
+  targetType ReactionTargetType
+  targetId   String
+  emoji      String
+
+  user       User          @relation(fields: [userId], references: [id])
+}
+
+model ChangeLogEntry {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+
+  entityType  EntityType
+  entityId    String
+  userId      String
+  changeType  ChangeType
+  summary     String
+
+  user        User        @relation(fields: [userId], references: [id])
+}
+
+enum EntityType {
+  EVENT
+  IDEA
+  NOTE
+}
+
+enum ChangeType {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model Notification {
+  id          String             @id @default(cuid())
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  userId      String
+  eventId     String
+  type        NotificationType
+  scheduledAt DateTime
+  sentAt      DateTime?
+
+  user        User               @relation(fields: [userId], references: [id])
+  event       Event              @relation(fields: [eventId], references: [id])
+}
+
+enum NotificationType {
+  REMINDER_UPCOMING_EVENT
+}
+
+enum NoteKind {
+  MANUAL
+  EVENT_COMMENT
+  IDEA_COMMENT
+}
+
+enum NoteParentType {
+  EVENT
+  IDEA
+}
+
+enum ReactionTargetType {
+  EVENT
+  NOTE
+}
