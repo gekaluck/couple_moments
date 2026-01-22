@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
+import { getInitials } from "@/lib/formatters";
 import { prisma } from "@/lib/prisma";
 
 import InviteCard from "./invite-card";
@@ -9,18 +10,6 @@ import InviteCard from "./invite-card";
 type PageProps = {
   params: Promise<{ spaceId: string }>;
 };
-
-function getInitials(name: string | null | undefined, email: string) {
-  const source = (name || email).trim();
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return "U";
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-}
 
 export default async function SettingsPage({ params }: PageProps) {
   const userId = await requireUserId();

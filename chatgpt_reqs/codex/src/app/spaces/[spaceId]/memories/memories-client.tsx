@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import TagBadge from "@/components/ui/TagBadge";
+import EmptyState from "@/components/ui/EmptyState";
 
 const CalendarIcon = () => (
   <svg
@@ -194,9 +195,15 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
       </section>
       {filtered.length === 0 ? (
         <div className="surface p-6">
-          <p className="text-sm text-[var(--text-muted)]">
-            No memories match these filters yet.
-          </p>
+          <EmptyState
+            variant="memories"
+            title="No memories yet"
+            description={
+              year !== "all" || tag !== "all"
+                ? "No memories match these filters. Try adjusting your selection."
+                : "Your shared memories will appear here after you complete dates together."
+            }
+          />
         </div>
       ) : null}
       <div className="mx-auto flex max-w-4xl flex-col gap-6">

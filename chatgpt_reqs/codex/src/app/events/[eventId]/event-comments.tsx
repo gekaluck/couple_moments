@@ -4,6 +4,8 @@ import { useOptimistic, useTransition, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { formatTimestamp, getInitials } from "@/lib/formatters";
+
 type Comment = {
   id: string;
   body: string;
@@ -23,27 +25,6 @@ type EventCommentsProps = {
   };
   onSubmit: (formData: FormData) => Promise<void>;
 };
-
-function formatTimestamp(date: string) {
-  return new Date(date).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function getInitials(name: string | null, email: string) {
-  const value = (name ?? "").trim();
-  if (value) {
-    return value
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("");
-  }
-  return email.slice(0, 2).toUpperCase();
-}
 
 const AVATAR_GRADIENTS = [
   "from-rose-500 to-pink-600",

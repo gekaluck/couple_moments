@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
+import { formatTimestamp, getInitials } from "@/lib/formatters";
 
 import ConfirmForm from "@/components/ConfirmForm";
 import IconButton from "@/components/ui/IconButton";
+import EmptyState from "@/components/ui/EmptyState";
 import {
   countNotesForSpace,
   createNoteForSpace,
@@ -50,18 +52,6 @@ const AVATAR_GRADIENTS = [
   "from-sky-500 to-indigo-600",
 ];
 
-function getInitials(name: string | null | undefined, email: string) {
-  const source = (name || email).trim();
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return "U";
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-}
-
 function getAvatarGradient(userId: string) {
   let hash = 0;
   for (let index = 0; index < userId.length; index += 1) {
@@ -84,15 +74,6 @@ type PageProps = {
   params: Promise<{ spaceId: string }>;
   searchParams?: Promise<{ q?: string; type?: string; page?: string }>;
 };
-
-function formatTimestamp(date: Date) {
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 export default async function NotesPage({ params, searchParams }: PageProps) {
   const userId = await requireUserId();
@@ -238,7 +219,15 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
       <section className="flex flex-col gap-4">
         {pageNotes.length === 0 ? (
           <div className="surface p-6">
-            <p className="text-sm text-[var(--text-muted)]">No notes found.</p>
+            <EmptyState
+              variant="notes"
+              title="No notes yet"
+              description={
+                query
+                  ? "No notes match your search. Try a different query."
+                  : "Capture quick thoughts, links, and reminders here."
+              }
+            />
           </div>
         ) : null}
         {pageNotes.map((note) => {

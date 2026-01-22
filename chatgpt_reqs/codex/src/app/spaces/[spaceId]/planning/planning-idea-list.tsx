@@ -7,6 +7,7 @@ import Modal from "@/components/Modal";
 
 import IconButton from "@/components/ui/IconButton";
 import TagBadge from "@/components/ui/TagBadge";
+import { formatTimeAgo, getInitials } from "@/lib/formatters";
 
 const CalendarIcon = () => (
   <svg
@@ -101,37 +102,10 @@ function formatDate(date: Date) {
   });
 }
 
-function formatTimeAgo(value: string) {
-  const date = new Date(value);
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  if (diffMinutes < 60) {
-    return `${diffMinutes}m ago`;
-  }
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) {
-    return `${diffHours}h ago`;
-  }
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
-}
-
 const AVATAR_GRADIENTS = [
   "from-rose-500 to-pink-600",
   "from-sky-500 to-indigo-600",
 ];
-
-function getInitials(name: string | null | undefined, email: string) {
-  const source = (name || email).trim();
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return "U";
-  }
-  if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-}
 
 function getAvatarGradient(userId: string) {
   let hash = 0;

@@ -29,6 +29,7 @@ import PlanningSection from "@/components/planning/PlanningSection";
 import IdeasColumn from "@/components/planning/IdeasColumn";
 import UpcomingPlansColumn from "@/components/planning/UpcomingPlansColumn";
 import AvailabilityBlockModal from "./availability-block-modal";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -727,6 +728,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             : null
         }
       />
+      <OnboardingTour spaceId={space.id} />
     </>
   );
 }

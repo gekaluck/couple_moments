@@ -2,6 +2,8 @@
 
 import { useOptimistic } from "react";
 
+import { formatTimestamp } from "@/lib/formatters";
+
 type Comment = {
   id: string;
   body: string;
@@ -21,15 +23,6 @@ type IdeaCommentsProps = {
   };
   onSubmit: (formData: FormData) => Promise<void>;
 };
-
-function formatTimestamp(date: string) {
-  return new Date(date).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 export default function IdeaComments({
   ideaId,

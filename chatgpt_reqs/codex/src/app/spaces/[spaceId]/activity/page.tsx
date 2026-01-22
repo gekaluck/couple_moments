@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import { listActivityForSpace } from "@/lib/activity";
+import { formatTimestamp } from "@/lib/formatters";
+import EmptyState from "@/components/ui/EmptyState";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -74,15 +76,6 @@ const NoteIcon = () => (
   </svg>
 );
 
-function formatTimestamp(date: Date) {
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 function formatDayHeading(date: Date) {
   const today = new Date();
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -140,7 +133,11 @@ export default async function ActivityPage({ params }: PageProps) {
       <section className="flex flex-col gap-6">
         {activity.length === 0 ? (
           <div className="surface p-6">
-            <p className="text-sm text-[var(--text-muted)]">No activity yet.</p>
+            <EmptyState
+              variant="activity"
+              title="No activity yet"
+              description="Actions like creating events, adding ideas, and posting comments will show up here."
+            />
           </div>
         ) : null}
         {groupedEntries.map(([key, entries]) => (
