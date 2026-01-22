@@ -63,6 +63,24 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
             </p>
           ) : null}
         </header>
+        <div className="flex justify-center gap-4 text-sm">
+          <span className="text-[var(--text-muted)]">Not the right account?</span>
+          <form action="/api/auth/logout" method="POST" className="inline">
+            <button
+              type="submit"
+              className="font-semibold text-[var(--accent-strong)] hover:underline"
+            >
+              Log out
+            </button>
+          </form>
+          <span className="text-[var(--text-muted)]">or</span>
+          <a
+            href="/login"
+            className="font-semibold text-[var(--accent-strong)] hover:underline"
+          >
+            Sign in as different user
+          </a>
+        </div>
         <section className="grid gap-6 md:grid-cols-2">
           <form
             action={handleCreate}
