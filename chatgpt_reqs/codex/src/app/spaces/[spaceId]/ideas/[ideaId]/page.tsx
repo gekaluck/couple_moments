@@ -46,6 +46,13 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     redirect("/login");
   }
 
+  // Store IDs for use in server actions (avoids TypeScript narrowing issues)
+  const spaceIdForActions = space.id;
+  const ideaIdForActions = idea.id;
+  const ideaTitleForActions = idea.title;
+  const ideaDescriptionForActions = idea.description;
+  const ideaTagsForActions = idea.tags;
+
   async function handleSchedule(formData: FormData) {
     "use server";
     const currentUserId = await requireUserId();
@@ -53,24 +60,24 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     const time = formData.get("time")?.toString() || "19:00";
 
     if (!date) {
-      redirect(`/spaces/${space.id}/ideas/${idea.id}`);
+      redirect(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
     }
 
     const dateTimeStart = new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
-      redirect(`/spaces/${space.id}/ideas/${idea.id}`);
+      redirect(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
     }
 
-    await createEventForSpace(space.id, currentUserId, {
-      title: idea.title,
-      description: idea.description,
+    await createEventForSpace(spaceIdForActions, currentUserId, {
+      title: ideaTitleForActions,
+      description: ideaDescriptionForActions,
       dateTimeStart,
       dateTimeEnd: null,
-      tags: normalizeTags(parseTags(idea.tags)),
-      linkedIdeaId: idea.id,
+      tags: normalizeTags(parseTags(ideaTagsForActions)),
+      linkedIdeaId: ideaIdForActions,
     });
 
-    redirect(`/spaces/${space.id}/ideas/${idea.id}`);
+    redirect(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
   }
 
   async function handleIdeaComment(formData: FormData) {
@@ -78,10 +85,10 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     const currentUserId = await requireUserId();
     const content = formData.get("content")?.toString().trim() ?? "";
     if (!content) {
-      redirect(`/spaces/${space.id}/ideas/${idea.id}`);
+      redirect(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
     }
-    await createIdeaComment(idea.id, currentUserId, content);
-    revalidatePath(`/spaces/${space.id}/ideas/${idea.id}`);
+    await createIdeaComment(ideaIdForActions, currentUserId, content);
+    revalidatePath(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
   }
 
   const tags = parseTags(idea.tags);

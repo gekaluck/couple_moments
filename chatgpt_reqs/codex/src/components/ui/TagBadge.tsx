@@ -1,40 +1,87 @@
-type TagVariant = "date" | "together" | "cozy" | "weekend" | "test";
+type TagCategory =
+  | "romantic"
+  | "food"
+  | "outdoor"
+  | "entertainment"
+  | "travel"
+  | "cozy"
+  | "default";
 
 type TagBadgeProps = {
   label: string;
-  variant?: TagVariant;
+  category?: TagCategory;
 };
 
-const VARIANT_CLASS: Record<TagVariant, string> = {
-  date: "from-rose-500 to-pink-600",
-  together: "from-rose-500 to-pink-600",
+const CATEGORY_CLASS: Record<TagCategory, string> = {
+  romantic: "from-rose-500 to-pink-600",
+  food: "from-amber-500 to-orange-500",
+  outdoor: "from-emerald-500 to-teal-600",
+  entertainment: "from-violet-500 to-purple-600",
+  travel: "from-sky-500 to-blue-600",
   cozy: "from-orange-400 to-amber-500",
-  weekend: "from-purple-400 to-indigo-500",
-  test: "from-gray-400 to-gray-500",
+  default: "from-slate-500 to-slate-600",
 };
 
-function normalizeVariant(label: string): TagVariant {
-  switch (label.trim().toLowerCase()) {
-    case "date":
-      return "date";
-    case "together":
-      return "together";
-    case "cozy":
-      return "cozy";
-    case "weekend":
-      return "weekend";
-    case "test":
-      return "test";
-    default:
-      return "test";
-  }
+const TAG_TO_CATEGORY: Record<string, TagCategory> = {
+  // Romantic
+  date: "romantic",
+  together: "romantic",
+  romantic: "romantic",
+  anniversary: "romantic",
+  love: "romantic",
+  special: "romantic",
+
+  // Food
+  dinner: "food",
+  lunch: "food",
+  breakfast: "food",
+  food: "food",
+  restaurant: "food",
+  cooking: "food",
+  brunch: "food",
+
+  // Outdoor
+  outdoor: "outdoor",
+  hiking: "outdoor",
+  nature: "outdoor",
+  beach: "outdoor",
+  park: "outdoor",
+  picnic: "outdoor",
+
+  // Entertainment
+  movie: "entertainment",
+  concert: "entertainment",
+  show: "entertainment",
+  theater: "entertainment",
+  music: "entertainment",
+  game: "entertainment",
+  weekend: "entertainment",
+
+  // Travel
+  travel: "travel",
+  trip: "travel",
+  vacation: "travel",
+  adventure: "travel",
+  explore: "travel",
+
+  // Cozy
+  cozy: "cozy",
+  home: "cozy",
+  chill: "cozy",
+  relax: "cozy",
+  lazy: "cozy",
+};
+
+function getCategory(label: string): TagCategory {
+  const normalized = label.trim().toLowerCase();
+  return TAG_TO_CATEGORY[normalized] ?? "default";
 }
 
-export default function TagBadge({ label, variant }: TagBadgeProps) {
-  const resolved = variant ?? normalizeVariant(label);
+export default function TagBadge({ label, category }: TagBadgeProps) {
+  const resolved = category ?? getCategory(label);
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r px-3 py-1 text-xs font-medium text-white shadow-[var(--shadow-sm)] ${VARIANT_CLASS[resolved]}`}
+      className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r px-3 py-1 text-xs font-medium text-white shadow-[var(--shadow-sm)] ${CATEGORY_CLASS[resolved]}`}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
       {label}

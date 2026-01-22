@@ -61,7 +61,7 @@ export default function IdeasColumn({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
             <Lightbulb className="h-5 w-5" />
           </span>
           <div>
@@ -74,7 +74,7 @@ export default function IdeasColumn({
           </div>
         </div>
         <button
-          className="button-hover rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+          className="button-hover rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-amber-600 hover:shadow-[var(--shadow-lg)]"
           onClick={() => setIsCreateOpen(true)}
           type="button"
         >

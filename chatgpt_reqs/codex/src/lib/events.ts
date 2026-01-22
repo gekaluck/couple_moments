@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createChangeLogEntry } from "@/lib/change-log";
 import { createNoteForSpace } from "@/lib/notes";
@@ -117,8 +118,8 @@ export async function createEventForSpace(
       placeLng: input.placeLng ?? null,
       placeUrl: input.placeUrl ?? null,
       placeWebsite: input.placeWebsite ?? null,
-      placeOpeningHours: input.placeOpeningHours ?? null,
-      placePhotoUrls: input.placePhotoUrls ?? null,
+      placeOpeningHours: input.placeOpeningHours ?? Prisma.JsonNull,
+      placePhotoUrls: input.placePhotoUrls ?? Prisma.JsonNull,
     },
   });
 
@@ -398,4 +399,50 @@ export async function toggleEventReaction(
   });
 
   return { removed: false };
+}
+
+export async function updateEventRating(
+  eventId: string,
+  userId: string,
+  rating: number,
+) {
+  if (rating < 1 || rating > 5) {
+    throw new Error("Rating must be between 1 and 5");
+  }
+
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: {
+      coupleSpace: {
+        include: { memberships: true },
+      },
+    },
+  });
+
+  if (!event) {
+    throw new Error("Event not found");
+  }
+
+  const isMember = event.coupleSpace.memberships.some(
+    (m) => m.userId === userId,
+  );
+  if (!isMember) {
+    throw new Error("Not authorized");
+  }
+
+  await prisma.event.update({
+    where: { id: eventId },
+    data: {
+      rating,
+      ratedAt: new Date(),
+    },
+  });
+
+  await createChangeLogEntry({
+    entityType: "EVENT",
+    entityId: eventId,
+    userId,
+    changeType: "UPDATE",
+    summary: `Rated memory ${rating}/5 hearts.`,
+  });
 }

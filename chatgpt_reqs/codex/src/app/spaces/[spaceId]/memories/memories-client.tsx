@@ -36,6 +36,41 @@ const TagIcon = () => (
   </svg>
 );
 
+const RepeatIcon = () => (
+  <svg
+    aria-hidden="true"
+    className="h-4 w-4"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
+    <path
+      d="M17 1l4 4-4 4"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M3 11V9a4 4 0 0 1 4-4h14"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M7 23l-4-4 4-4"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M21 13v2a4 4 0 0 1-4 4H3"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 type Memory = {
   id: string;
   title: string;
@@ -62,8 +97,22 @@ function formatDate(value: string) {
 const TAG_GRADIENTS: Record<string, string> = {
   date: "from-rose-500 to-pink-600",
   together: "from-rose-500 to-pink-600",
+  romantic: "from-rose-500 to-pink-600",
+  anniversary: "from-rose-500 to-pink-600",
   cozy: "from-orange-400 to-amber-500",
+  home: "from-orange-400 to-amber-500",
   weekend: "from-purple-400 to-indigo-500",
+  outdoor: "from-emerald-500 to-teal-600",
+  hiking: "from-emerald-500 to-teal-600",
+  nature: "from-emerald-500 to-teal-600",
+  dinner: "from-amber-500 to-orange-500",
+  food: "from-amber-500 to-orange-500",
+  restaurant: "from-amber-500 to-orange-500",
+  movie: "from-violet-500 to-purple-600",
+  concert: "from-violet-500 to-purple-600",
+  travel: "from-sky-500 to-blue-600",
+  trip: "from-sky-500 to-blue-600",
+  vacation: "from-sky-500 to-blue-600",
 };
 
 export default function MemoriesClient({ memories, spaceId }: MemoriesClientProps) {
@@ -95,7 +144,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
 
   return (
     <>
-      <section className="surface p-6 bg-[var(--color-accent-soft)]/80">
+      <section className="surface p-6 bg-slate-50">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
@@ -107,7 +156,9 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           </div>
           <div className="flex flex-wrap gap-2">
             <div className="relative flex h-10 items-center">
-              <CalendarIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--accent-strong)]" />
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent-strong)]">
+                <CalendarIcon />
+              </span>
               <select
                 className="h-10 rounded-full border border-[var(--panel-border)] bg-white/80 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
                 onChange={(event) => setYear(event.target.value)}
@@ -122,7 +173,9 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               </select>
             </div>
             <div className="relative flex h-10 items-center">
-              <TagIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--accent-strong)]" />
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent-strong)]">
+                <TagIcon />
+              </span>
               <select
                 className="h-10 rounded-full border border-[var(--panel-border)] bg-white/80 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
                 onChange={(event) => setTag(event.target.value)}
@@ -151,13 +204,16 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           const gradient =
             event.tags
               .map((value) => TAG_GRADIENTS[value.toLowerCase()])
-              .find(Boolean) ?? "from-rose-500 to-pink-600";
+              .find(Boolean) ?? "from-slate-500 to-slate-600";
           return (
-            <Link
+            <div
               key={event.id}
-              href={`/events/${event.id}?from=memories&spaceId=${encodeURIComponent(spaceId)}`}
-              className="group surface flex min-h-[156px] flex-col gap-4 p-6 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg md:flex-row md:items-center"
+              className="group surface relative flex min-h-[156px] flex-col gap-4 p-6 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg md:flex-row md:items-center"
             >
+              <Link
+                href={`/events/${event.id}?from=memories&spaceId=${encodeURIComponent(spaceId)}`}
+                className="absolute inset-0 z-0"
+              />
               <div
                 className="relative flex h-[120px] w-[120px] min-h-[120px] min-w-[120px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br text-4xl font-semibold text-white shadow-sm"
               >
@@ -181,9 +237,20 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                   <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
                     {event.title}
                   </h2>
-                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] shadow-sm">
-                    {formatDate(event.dateTimeStart)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/spaces/${spaceId}/calendar?repeat=${event.id}`}
+                      className="relative z-10 inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm opacity-0 transition-opacity group-hover:opacity-100 hover:bg-rose-600 md:opacity-100"
+                      title="Do this again"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <RepeatIcon />
+                      <span className="hidden sm:inline">Repeat</span>
+                    </Link>
+                    <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] shadow-sm">
+                      {formatDate(event.dateTimeStart)}
+                    </span>
+                  </div>
                 </div>
                 {event.description ? (
                   <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
@@ -198,7 +265,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                   </div>
                 ) : null}
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>

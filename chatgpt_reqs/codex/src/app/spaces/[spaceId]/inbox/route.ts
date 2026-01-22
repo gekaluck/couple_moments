@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-type Params = {
-  params: { spaceId: string };
+type PageProps = {
+  params: Promise<{ spaceId: string }>;
 };
 
-export async function GET(request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: PageProps) {
+  const { spaceId } = await params;
   const url = new URL(request.url);
-  url.pathname = `/spaces/${params.spaceId}/calendar`;
+  url.pathname = `/spaces/${spaceId}/calendar`;
   url.search = "";
   return NextResponse.redirect(url);
 }

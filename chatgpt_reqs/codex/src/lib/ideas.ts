@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createChangeLogEntry } from "@/lib/change-log";
 import { createNoteForSpace } from "@/lib/notes";
@@ -72,8 +73,8 @@ export async function createIdeaForSpace(
       placeLng: input.placeLng ?? null,
       placeUrl: input.placeUrl ?? null,
       placeWebsite: input.placeWebsite ?? null,
-      placeOpeningHours: input.placeOpeningHours ?? null,
-      placePhotoUrls: input.placePhotoUrls ?? null,
+      placeOpeningHours: input.placeOpeningHours ?? Prisma.JsonNull,
+      placePhotoUrls: input.placePhotoUrls ?? Prisma.JsonNull,
       status: "NEW",
     },
   });
@@ -143,10 +144,10 @@ export async function updateIdea(
     data.placeWebsite = updates.placeWebsite ?? null;
   }
   if (updates.placeOpeningHours !== undefined) {
-    data.placeOpeningHours = updates.placeOpeningHours ?? null;
+    data.placeOpeningHours = updates.placeOpeningHours ?? Prisma.JsonNull;
   }
   if (updates.placePhotoUrls !== undefined) {
-    data.placePhotoUrls = updates.placePhotoUrls ?? null;
+    data.placePhotoUrls = updates.placePhotoUrls ?? Prisma.JsonNull;
   }
 
   const idea = await prisma.idea.update({

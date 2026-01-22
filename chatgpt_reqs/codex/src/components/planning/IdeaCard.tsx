@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Calendar, MapPin, MessageSquare, Trash2 } from "lucide-react";
+import { Calendar, Loader2, MapPin, MessageSquare, Trash2 } from "lucide-react";
 import Modal from "@/components/Modal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Idea = {
   id: string;
@@ -81,6 +83,7 @@ export default function IdeaCard({
   const router = useRouter();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [localComments, setLocalComments] = useState<IdeaComment[]>(comments);
   const [localCount, setLocalCount] = useState(commentCount);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -101,7 +104,7 @@ export default function IdeaCard({
   return (
     <div
       id={`idea-${idea.id}`}
-      className="animate-fade-in-up rounded-2xl border border-amber-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
+      className="animate-fade-in-up rounded-2xl border border-amber-200 bg-amber-50 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
@@ -115,13 +118,13 @@ export default function IdeaCard({
           ) : null}
           {idea.placeName || idea.placeAddress ? (
             <div className="mt-2 inline-flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
-              <MapPin className="h-3.5 w-3.5 text-rose-500" />
+              <MapPin className="h-3.5 w-3.5 text-amber-600" />
               <span className="text-[var(--text-muted)]">
                 {idea.placeName || idea.placeAddress}
               </span>
               {idea.placeUrl || idea.placeWebsite ? (
                 <a
-                  className="font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
+                  className="font-semibold text-amber-600 transition hover:text-amber-700 hover:underline"
                   href={idea.placeWebsite || idea.placeUrl || "#"}
                   target="_blank"
                   rel="noreferrer"
@@ -150,7 +153,7 @@ export default function IdeaCard({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
-            className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:shadow-[var(--shadow-sm)]"
+            className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-amber-700 transition hover:shadow-[var(--shadow-sm)] hover:bg-amber-50"
             title="Schedule as event"
             onClick={() => setIsScheduleOpen(true)}
             type="button"
@@ -170,23 +173,14 @@ export default function IdeaCard({
               </span>
             ) : null}
           </button>
-          <form
-            action={onDelete}
-            onSubmit={(event) => {
-              if (!confirm("Delete this idea?")) {
-                event.preventDefault();
-              }
-            }}
+          <button
+            className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:shadow-[var(--shadow-sm)]"
+            title="Delete idea"
+            type="button"
+            onClick={() => setIsDeleteOpen(true)}
           >
-            <input type="hidden" name="ideaId" value={idea.id} />
-            <button
-              className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:shadow-[var(--shadow-sm)]"
-              title="Delete idea"
-              type="submit"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </form>
+            <Trash2 className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
@@ -249,7 +243,12 @@ export default function IdeaCard({
               setLocalCount((prev) => prev + 1);
               event.currentTarget.reset();
               startTransition(async () => {
-                await onAddComment(formData);
+                try {
+                  await onAddComment(formData);
+                  toast.success("Comment added");
+                } catch {
+                  toast.error("Failed to add comment");
+                }
               });
             }}
           >
@@ -299,9 +298,14 @@ export default function IdeaCard({
               event.preventDefault();
               const formData = new FormData(event.currentTarget);
               startTransition(async () => {
-                await onSchedule(formData);
-                router.refresh();
-                setIsScheduleOpen(false);
+                try {
+                  await onSchedule(formData);
+                  toast.success("Event created from idea!");
+                  router.refresh();
+                  setIsScheduleOpen(false);
+                } catch {
+                  toast.error("Failed to schedule idea");
+                }
               });
             }}
           >
@@ -367,16 +371,33 @@ export default function IdeaCard({
                 Cancel
               </button>
               <button
-                className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
                 type="submit"
                 disabled={isPending}
               >
+                {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                 {isPending ? "Creating..." : "Create event"}
               </button>
             </div>
           </form>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={async () => {
+          const formData = new FormData();
+          formData.append("ideaId", idea.id);
+          await onDelete(formData);
+          toast.success("Idea deleted");
+          router.refresh();
+        }}
+        title="Delete idea"
+        message={`Are you sure you want to delete "${idea.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

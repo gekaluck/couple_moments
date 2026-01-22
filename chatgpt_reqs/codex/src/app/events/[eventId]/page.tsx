@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
-import { createEventComment, createEventPhoto, deleteEvent, getEventForUser, listEventComments, listEventReactions, toggleEventReaction, updateEvent } from "@/lib/events";
+import { createEventComment, createEventPhoto, deleteEvent, getEventForUser, listEventComments, updateEvent, updateEventRating } from "@/lib/events";
 import { requireUserId } from "@/lib/current-user";
 import { buildCreatorPalette, getCreatorInitials } from "@/lib/creator-colors";
 import { prisma } from "@/lib/prisma";
@@ -9,12 +10,11 @@ import { normalizeTags, parseTags } from "@/lib/tags";
 
 import EventComments from "./event-comments";
 import EventEditModal from "./event-edit-modal";
+import EventRating from "./event-rating";
 import IconButton from "@/components/ui/IconButton";
 import TagBadge from "@/components/ui/TagBadge";
 import ConfirmForm from "@/components/ConfirmForm";
 import PhotoUploader from "@/components/photos/PhotoUploader";
-
-const LIKE_EMOJI = "+1";
 
 const PencilIcon = () => (
   <svg
@@ -50,6 +50,41 @@ const TrashIcon = () => (
       strokeLinejoin="round"
     />
     <path d="M10 11v6M14 11v6" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+const RepeatIcon = () => (
+  <svg
+    aria-hidden="true"
+    className="h-4 w-4"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
+    <path
+      d="M17 1l4 4-4 4"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M3 11V9a4 4 0 0 1 4-4h14"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M7 23l-4-4 4-4"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M21 13v2a4 4 0 0 1-4 4H3"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
@@ -116,20 +151,13 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   if (!currentUser) {
     redirect("/login");
   }
+  // Store event ID for use in server actions (avoids TypeScript narrowing issues)
+  const eventIdForActions = event.id;
+  const spaceIdForActions = event.coupleSpaceId;
   const isFromMemories = search.from === "memories" && search.spaceId;
   const backHref = isFromMemories
     ? `/spaces/${search.spaceId}/memories`
     : `/spaces/${event.coupleSpaceId}/calendar`;
-
-  const reactions = await listEventReactions(event.id);
-  const reacted = new Set(
-    reactions
-      .filter((reaction) => reaction.userId === userId)
-      .map((reaction) => reaction.emoji),
-  );
-  const likeCount = reactions.filter(
-    (reaction) => reaction.emoji === LIKE_EMOJI,
-  ).length;
 
   async function handleUpdate(formData: FormData) {
     "use server";
@@ -160,15 +188,15 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     const placeUrl = formData.get("placeUrl")?.toString() || null;
 
     if (!title || !date) {
-      redirect(`/events/${event.id}`);
+      redirect(`/events/${eventIdForActions}`);
     }
 
     const dateTimeStart = new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
-      redirect(`/events/${event.id}`);
+      redirect(`/events/${eventIdForActions}`);
     }
 
-    await updateEvent(event.id, currentUserId, {
+    await updateEvent(eventIdForActions, currentUserId, {
       title,
       description: description || null,
       dateTimeStart,
@@ -185,14 +213,14 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       placeUrl,
     });
 
-    redirect(`/events/${event.id}`);
+    redirect(`/events/${eventIdForActions}`);
   }
 
   async function handleDelete() {
     "use server";
     const currentUserId = await requireUserId();
-    await deleteEvent(event.id, currentUserId);
-    redirect(`/spaces/${event.coupleSpaceId}/calendar`);
+    await deleteEvent(eventIdForActions, currentUserId);
+    redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleComment(formData: FormData) {
@@ -202,7 +230,8 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     if (!content) {
       return;
     }
-    await createEventComment(event.id, currentUserId, content);
+    await createEventComment(eventIdForActions, currentUserId, content);
+    revalidatePath(`/events/${eventIdForActions}`);
   }
 
   async function handleAddPhoto(formData: FormData) {
@@ -212,18 +241,19 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     if (!url) {
       return;
     }
-    await createEventPhoto(event.id, currentUserId, url);
+    await createEventPhoto(eventIdForActions, currentUserId, url);
+    revalidatePath(`/events/${eventIdForActions}`);
   }
 
-  async function handleReaction(formData: FormData) {
+  async function handleRate(formData: FormData) {
     "use server";
     const currentUserId = await requireUserId();
-    const emoji = formData.get("emoji")?.toString();
-    if (!emoji) {
-      redirect(`/events/${event.id}#event-reactions`);
+    const rating = Number(formData.get("rating"));
+    if (!rating || rating < 1 || rating > 5) {
+      return;
     }
-    await toggleEventReaction(event.id, currentUserId, emoji);
-    redirect(`/events/${event.id}#event-reactions`);
+    await updateEventRating(eventIdForActions, currentUserId, rating);
+    revalidatePath(`/events/${eventIdForActions}`);
   }
 
   const tags = parseTags(event.tags);
@@ -295,11 +325,11 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         </div>
       </header>
       <main className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
-        <section className="surface p-6 bg-gradient-to-br from-white via-white to-rose-50/70">
+        <section className={`surface p-6 ${isPast ? "bg-gradient-to-br from-white via-white to-slate-50/70" : "bg-gradient-to-br from-white via-white to-rose-50/70"}`}>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                  <span className={`rounded-full bg-gradient-to-r px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white ${isPast ? "from-rose-500 to-pink-600" : "from-sky-500 to-indigo-500"}`}>
+                  <span className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white ${isPast ? "bg-slate-500" : "bg-rose-500"}`}>
                     {isPast ? "Memory" : "Upcoming"}
                   </span>
                   <span>
@@ -332,6 +362,15 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                {isPast ? (
+                  <Link href={`/spaces/${event.coupleSpaceId}/calendar?repeat=${event.id}`}>
+                    <IconButton
+                      icon={<RepeatIcon />}
+                      label="Do this again"
+                      variant="primary"
+                    />
+                  </Link>
+                ) : null}
                 <Link href={`/events/${event.id}?edit=1`}>
                   <IconButton
                     icon={<PencilIcon />}
@@ -353,6 +392,13 @@ export default async function EventPage({ params, searchParams }: PageProps) {
               <p className="mt-5 text-sm text-[var(--text-muted)]">
                 {event.description}
               </p>
+            ) : null}
+            {isPast ? (
+              <EventRating
+                eventId={event.id}
+                currentRating={event.rating}
+                onRate={handleRate}
+              />
             ) : null}
             {hasPlace ? (
               <div className="mt-5 rounded-2xl border border-[var(--panel-border)] bg-white/80 p-4">
@@ -398,19 +444,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                     className="mt-4 h-[200px] w-full rounded-xl object-cover"
                     src={staticMapUrl}
                   />
-                ) : null}
-                {placePhotoUrls && placePhotoUrls.length > 0 ? (
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {placePhotoUrls.map((photoUrl) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={photoUrl}
-                        alt={event.placeName || "Place photo"}
-                        className="h-[160px] w-full rounded-xl object-cover"
-                        src={photoUrl}
-                      />
-                    ))}
-                  </div>
                 ) : null}
                 {placeOpeningHours && placeOpeningHours.length > 0 ? (
                   <div className="mt-4 rounded-xl border border-[var(--panel-border)] bg-white/70 p-3">
@@ -464,24 +497,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   ))}
                 </div>
               ) : null}
-            </div>
-            <div
-              id="event-reactions"
-              className="mt-5 flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]"
-            >
-              <form action={handleReaction}>
-                <input type="hidden" name="emoji" value={LIKE_EMOJI} />
-                <button
-                  className={`rounded-full border px-3 py-1 text-xs shadow-[var(--shadow-sm)] transition hover:scale-[1.03] ${
-                    reacted.has(LIKE_EMOJI)
-                      ? "border-[var(--accent-strong)] text-[var(--accent-strong)]"
-                      : "border-[var(--panel-border)] text-[var(--text-muted)]"
-                  }`}
-                  type="submit"
-                >
-                  Like{likeCount > 0 ? ` (${likeCount})` : ""}
-                </button>
-              </form>
             </div>
           </section>
         <EventComments

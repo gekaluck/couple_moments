@@ -13,6 +13,7 @@ type Plan = {
   description: string | null;
   dateTimeStart: Date;
   timeIsSet?: boolean;
+  createdBy?: { name: string | null; email: string };
 };
 
 type UpcomingPlansColumnProps = {
@@ -47,7 +48,7 @@ export default function UpcomingPlansColumn({
           </div>
         </div>
         <button
-          className="button-hover rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+          className="button-hover rounded-full bg-rose-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-rose-600 hover:shadow-[var(--shadow-lg)]"
           onClick={() => setIsCreateOpen(true)}
           type="button"
         >
@@ -73,6 +74,7 @@ export default function UpcomingPlansColumn({
               dateTimeStart={plan.dateTimeStart}
               timeIsSet={plan.timeIsSet}
               commentCount={commentCounts[plan.id] ?? 0}
+              createdBy={plan.createdBy}
             />
           ))}
         </div>

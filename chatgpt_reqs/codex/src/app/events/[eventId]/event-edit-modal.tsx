@@ -1,10 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import Modal from "@/components/Modal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
+import TagInput from "@/components/ui/TagInput";
 
 type EventEditModalProps = {
   isOpen: boolean;
@@ -50,6 +54,8 @@ export default function EventEditModal({
   placePhotoUrls,
 }: EventEditModalProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [place, setPlace] = useState<PlaceSelection | null>(
     placeId && placeName && placeLat && placeLng
       ? {
@@ -72,7 +78,23 @@ export default function EventEditModal({
       onClose={() => router.push(onCloseHref)}
       title="Edit event"
     >
-      <form className="grid gap-4 md:grid-cols-2" action={onSubmit}>
+      <form
+        className="grid gap-4 md:grid-cols-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const formData = new FormData(event.currentTarget);
+          startTransition(async () => {
+            try {
+              await onSubmit(formData);
+              toast.success("Event updated!");
+              router.push(onCloseHref);
+              router.refresh();
+            } catch {
+              toast.error("Failed to update event");
+            }
+          });
+        }}
+      >
         <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)] md:col-span-2">
           Title
           <input
@@ -101,15 +123,10 @@ export default function EventEditModal({
             defaultValue={timeValue}
           />
         </label>
-        <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
+        <div className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
           Tags
-          <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
-            name="tags"
-            defaultValue={tagsValue}
-            placeholder="dinner, cozy, weekend"
-          />
-        </label>
+          <TagInput name="tags" defaultValue={tagsValue} />
+        </div>
         <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)] md:col-span-2">
           Notes
           <textarea
@@ -163,10 +180,12 @@ export default function EventEditModal({
             Cancel
           </button>
           <button
-            className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
             type="submit"
+            disabled={isPending}
           >
-            Save changes
+            {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+            {isPending ? "Saving..." : "Save changes"}
           </button>
         </div>
       </form>
@@ -175,23 +194,29 @@ export default function EventEditModal({
         <p className="mt-2 text-sm text-[#a1493d]">
           Deleting removes this event and its comments, photos, and reactions.
         </p>
-        <form
-          className="mt-4"
-          action={onDelete}
-          onSubmit={(event) => {
-            if (!confirm("Delete this event?")) {
-              event.preventDefault();
-            }
-          }}
+        <button
+          className="mt-4 rounded-full border border-[#a1493d] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#a1493d] transition hover:bg-[#f2d6d1]"
+          type="button"
+          onClick={() => setIsDeleteOpen(true)}
         >
-          <button
-            className="rounded-full border border-[#a1493d] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#a1493d] transition hover:bg-[#f2d6d1]"
-            type="submit"
-          >
-            Delete event
-          </button>
-        </form>
+          Delete event
+        </button>
       </div>
+
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={async () => {
+          await onDelete();
+          toast.success("Event deleted");
+          router.push(onCloseHref.split("?")[0].replace(/\/events\/[^/]+$/, "/calendar"));
+          router.refresh();
+        }}
+        title="Delete event"
+        message="Are you sure you want to delete this event? All comments, photos, and reactions will be permanently removed."
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </Modal>
   );
 }

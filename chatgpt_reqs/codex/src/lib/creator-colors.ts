@@ -1,13 +1,17 @@
+// Availability block colors - distinct from event colors (rose/pink)
+// Using orange/teal to indicate "busy time" rather than romantic events
 const CREATOR_PALETTE = [
   {
-    accent: "var(--accent-primary)",
-    accentSoft: "#fde9ec",
-    accentText: "var(--accent-primary-dark)",
+    // Partner A - Orange (busy time)
+    accent: "#ea580c",
+    accentSoft: "#fff7ed",
+    accentText: "#c2410c",
   },
   {
-    accent: "var(--accent-secondary)",
-    accentSoft: "#e8f0f6",
-    accentText: "#335d78",
+    // Partner B - Teal (busy time)
+    accent: "#0d9488",
+    accentSoft: "#f0fdfa",
+    accentText: "#0f766e",
   },
 ];
 

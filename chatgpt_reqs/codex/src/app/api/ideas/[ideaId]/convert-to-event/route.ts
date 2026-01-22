@@ -6,8 +6,8 @@ import { parseJsonOrForm } from "@/lib/request";
 import { getSessionUserId } from "@/lib/session";
 import { normalizeTags, parseTags } from "@/lib/tags";
 
-type Params = {
-  params: { ideaId: string };
+type PageProps = {
+  params: Promise<{ ideaId: string }>;
 };
 
 function parseDate(value: string | null | undefined) {
@@ -21,13 +21,14 @@ function parseDate(value: string | null | undefined) {
   return parsed;
 }
 
-export async function POST(request: Request, { params }: Params) {
+export async function POST(request: Request, { params }: PageProps) {
   const userId = await getSessionUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const idea = await getIdeaForUser(params.ideaId, userId);
+  const { ideaId } = await params;
+  const idea = await getIdeaForUser(ideaId, userId);
   if (!idea) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }

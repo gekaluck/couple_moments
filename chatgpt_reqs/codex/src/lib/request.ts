@@ -1,6 +1,6 @@
-type Primitive = string | null;
+type Primitive = string | string[] | number | boolean | null | undefined;
 
-export async function parseJsonOrForm<T extends Record<string, Primitive>>(
+export async function parseJsonOrForm<T extends Record<string, Primitive | unknown>>(
   request: Request,
 ) {
   const contentType = request.headers.get("content-type") ?? "";

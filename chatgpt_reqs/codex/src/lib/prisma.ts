@@ -1,25 +1,28 @@
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client";
 
-import { PrismaClient } from "@/generated/prisma/client";
-
-const datasourceUrl = process.env.DATABASE_URL;
-if (!datasourceUrl) {
-  throw new Error("DATABASE_URL is not set");
-}
+const connectionString = process.env.DATABASE_URL;
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
+  pool?: Pool;
 };
 
-const adapter = new PrismaBetterSqlite3({ url: datasourceUrl });
+function createPrismaClient() {
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not set");
+  }
 
-let prismaClient = globalForPrisma.prisma;
-if (!prismaClient || !("note" in (prismaClient as PrismaClient))) {
-  prismaClient = new PrismaClient({ adapter });
+  const pool = globalForPrisma.pool ?? new Pool({ connectionString });
+  globalForPrisma.pool = pool;
+
+  const adapter = new PrismaPg(pool);
+  return new PrismaClient({ adapter });
 }
 
-export const prisma = prismaClient;
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prismaClient;
+  globalForPrisma.prisma = prisma;
 }

@@ -4,9 +4,9 @@ import { verifyPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { parseJsonOrForm } from "@/lib/request";
 import {
-  createSessionToken,
+  createSession,
   SESSION_COOKIE_NAME,
-  SESSION_TTL_SECONDS,
+  SESSION_TTL_MS,
 } from "@/lib/session";
 
 export async function POST(request: Request) {
@@ -44,7 +44,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const token = createSessionToken(user.id);
+  // Create signed session token
+  const token = createSession(user.id);
   const redirectUrl = new URL("/", request.url);
   const response = NextResponse.redirect(redirectUrl, { status: 303 });
 
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    maxAge: SESSION_TTL_SECONDS,
+    maxAge: SESSION_TTL_MS / 1000,
     path: "/",
   });
 

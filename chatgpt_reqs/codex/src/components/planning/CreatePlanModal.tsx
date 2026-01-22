@@ -2,9 +2,11 @@
 
 import { Fragment, useState, useTransition } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
+import TagInput from "@/components/ui/TagInput";
 
 type CreatePlanModalProps = {
   isOpen: boolean;
@@ -62,9 +64,14 @@ export default function CreatePlanModal({
                     event.preventDefault();
                     const formData = new FormData(event.currentTarget);
                     startTransition(async () => {
-                      await onSubmit(formData);
-                      router.refresh();
-                      onClose();
+                      try {
+                        await onSubmit(formData);
+                        toast.success("Plan created!");
+                        router.refresh();
+                        onClose();
+                      } catch {
+                        toast.error("Failed to create plan");
+                      }
                     });
                   }}
                 >
@@ -103,11 +110,7 @@ export default function CreatePlanModal({
                   apiKey={mapsApiKey}
                   onSelect={(selection) => setPlace(selection)}
                 />
-                  <input
-                    className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-rose-300"
-                    name="tags"
-                    placeholder="tags (comma separated)"
-                  />
+                  <TagInput name="tags" />
                   <select
                     className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-rose-300"
                     name="status"
@@ -165,10 +168,11 @@ export default function CreatePlanModal({
                       Cancel
                     </button>
                     <button
-                      className="button-hover rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+                      className="button-hover inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
                       type="submit"
                       disabled={isPending}
                     >
+                      {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
                       {isPending ? "Creating..." : "Create plan"}
                     </button>
                   </div>

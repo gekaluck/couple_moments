@@ -47,7 +47,7 @@ export default function PlaceSearch({
     let autocomplete: any = null;
 
     if (!mapsConfigured) {
-      setOptions({ apiKey: key });
+      setOptions({ key } as Parameters<typeof setOptions>[0]);
       mapsConfigured = true;
     }
 

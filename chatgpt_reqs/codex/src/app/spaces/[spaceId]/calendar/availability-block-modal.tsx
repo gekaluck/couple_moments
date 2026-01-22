@@ -1,6 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import Modal from "@/components/Modal";
 
@@ -24,6 +27,7 @@ export default function AvailabilityBlockModal({
   block,
 }: AvailabilityBlockModalProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   if (!block) {
     return null;
@@ -35,7 +39,23 @@ export default function AvailabilityBlockModal({
       onClose={() => router.push(onCloseHref)}
       title="Edit unavailable time"
     >
-      <form className="grid gap-3" action={onSubmit}>
+      <form
+        className="grid gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const formData = new FormData(event.currentTarget);
+          startTransition(async () => {
+            try {
+              await onSubmit(formData);
+              toast.success("Availability updated!");
+              router.push(onCloseHref);
+              router.refresh();
+            } catch {
+              toast.error("Failed to update availability");
+            }
+          });
+        }}
+      >
         <input type="hidden" name="blockId" value={block.id} />
         <input
           className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
@@ -74,10 +94,12 @@ export default function AvailabilityBlockModal({
             Cancel
           </button>
           <button
-            className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
             type="submit"
+            disabled={isPending}
           >
-            Save changes
+            {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+            {isPending ? "Saving..." : "Save changes"}
           </button>
         </div>
       </form>

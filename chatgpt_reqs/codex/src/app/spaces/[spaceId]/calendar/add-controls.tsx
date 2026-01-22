@@ -4,16 +4,33 @@ import { useEffect, useState } from "react";
 
 import Modal from "@/components/Modal";
 
+type PrefillData = {
+  title: string;
+  description: string;
+  tags: string;
+  placeId: string | null;
+  placeName: string | null;
+  placeAddress: string | null;
+  placeLat: number | null;
+  placeLng: number | null;
+  placeUrl: string | null;
+  placeWebsite: string | null;
+  placeOpeningHours: string[] | null;
+  placePhotoUrls: string[] | null;
+};
+
 type CalendarAddControlsProps = {
   onCreateEvent: (formData: FormData) => Promise<void>;
   onCreateBlock: (formData: FormData) => Promise<void>;
   initialEventDate?: string | null;
+  prefillData?: PrefillData | null;
 };
 
 export default function CalendarAddControls({
   onCreateEvent,
   onCreateBlock,
   initialEventDate,
+  prefillData,
 }: CalendarAddControlsProps) {
   const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(null);
   const [eventDate, setEventDate] = useState<string | undefined>(undefined);
@@ -22,8 +39,16 @@ export default function CalendarAddControls({
     if (initialEventDate) {
       setEventDate(initialEventDate);
       setOpenPanel("event");
+    } else if (prefillData) {
+      // Open modal for "repeat event" flow
+      setOpenPanel("event");
+    } else {
+      // Close modal when URL param is removed (after form submission redirect)
+      setOpenPanel(null);
     }
-  }, [initialEventDate]);
+  }, [initialEventDate, prefillData]);
+
+  const modalTitle = prefillData ? "Do this again" : "New event";
 
   return (
     <div className="flex flex-col items-end gap-3">
@@ -56,13 +81,19 @@ export default function CalendarAddControls({
       <Modal
         isOpen={openPanel === "event"}
         onClose={() => setOpenPanel(null)}
-        title="New event"
+        title={modalTitle}
       >
-        <form className="grid gap-3" action={onCreateEvent}>
+        <form className="grid gap-3" action={onCreateEvent} onSubmit={() => setOpenPanel(null)}>
+          {prefillData && (
+            <p className="text-sm text-[var(--text-muted)] mb-2">
+              Re-creating event from a previous date. Pick a new date below.
+            </p>
+          )}
           <input
             className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
             name="title"
             placeholder="Dinner at Aurora"
+            defaultValue={prefillData?.title ?? ""}
             required
           />
           <div className="grid gap-3 md:grid-cols-2">
@@ -83,12 +114,38 @@ export default function CalendarAddControls({
             className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
             name="tags"
             placeholder="tags (comma separated)"
+            defaultValue={prefillData?.tags ?? ""}
           />
           <textarea
             className="min-h-[100px] rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
             name="description"
             placeholder="Notes or details"
+            defaultValue={prefillData?.description ?? ""}
           />
+          {/* Hidden fields for place data when repeating */}
+          {prefillData?.placeId && (
+            <>
+              <input type="hidden" name="placeId" value={prefillData.placeId} />
+              <input type="hidden" name="placeName" value={prefillData.placeName ?? ""} />
+              <input type="hidden" name="placeAddress" value={prefillData.placeAddress ?? ""} />
+              {prefillData.placeLat && <input type="hidden" name="placeLat" value={prefillData.placeLat} />}
+              {prefillData.placeLng && <input type="hidden" name="placeLng" value={prefillData.placeLng} />}
+              {prefillData.placeUrl && <input type="hidden" name="placeUrl" value={prefillData.placeUrl} />}
+              {prefillData.placeWebsite && <input type="hidden" name="placeWebsite" value={prefillData.placeWebsite} />}
+              {prefillData.placeOpeningHours && (
+                <input type="hidden" name="placeOpeningHours" value={JSON.stringify(prefillData.placeOpeningHours)} />
+              )}
+              {prefillData.placePhotoUrls && (
+                <input type="hidden" name="placePhotoUrls" value={JSON.stringify(prefillData.placePhotoUrls)} />
+              )}
+            </>
+          )}
+          {prefillData?.placeName && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              <span className="font-semibold">Place:</span> {prefillData.placeName}
+              {prefillData.placeAddress && <span className="text-emerald-600"> — {prefillData.placeAddress}</span>}
+            </div>
+          )}
           <div className="flex flex-wrap justify-end gap-2">
             <button
               className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
@@ -101,7 +158,7 @@ export default function CalendarAddControls({
               className="button-hover rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
               type="submit"
             >
-              Save event
+              {prefillData ? "Create event" : "Save event"}
             </button>
           </div>
         </form>
@@ -111,7 +168,7 @@ export default function CalendarAddControls({
         onClose={() => setOpenPanel(null)}
         title="Block out unavailable time"
       >
-        <form className="grid gap-3" action={onCreateBlock}>
+        <form className="grid gap-3" action={onCreateBlock} onSubmit={() => setOpenPanel(null)}>
           <input
             className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
             name="title"

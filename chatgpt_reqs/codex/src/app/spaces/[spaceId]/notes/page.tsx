@@ -10,9 +10,7 @@ import {
   countNotesForSpace,
   createNoteForSpace,
   deleteNote,
-  listNoteReactions,
   listNotesForSpace,
-  toggleNoteReaction,
 } from "@/lib/notes";
 
 const SearchIcon = () => (
@@ -47,7 +45,6 @@ const TrashIcon = () => (
   </svg>
 );
 
-const LIKE_EMOJI = "+1";
 const AVATAR_GRADIENTS = [
   "from-rose-500 to-pink-600",
   "from-sky-500 to-indigo-600",
@@ -78,9 +75,9 @@ function getNoteAccent(kind: string) {
     return "border-l-rose-400";
   }
   if (kind === "IDEA_COMMENT") {
-    return "border-l-sky-400";
+    return "border-l-amber-400";
   }
-  return "border-l-[var(--panel-border)]";
+  return "border-l-violet-400";
 }
 
 type PageProps = {
@@ -110,6 +107,8 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
   if (!space) {
     redirect("/spaces/onboarding");
   }
+  // Store space ID for use in server actions (avoids TypeScript narrowing issues)
+  const spaceIdForActions = space.id;
 
   const kindFilter =
     filter === "free"
@@ -133,15 +132,6 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
   const hasMore = notes.length > pageSize;
   const pageNotes = hasMore ? notes.slice(0, pageSize) : notes;
   const hasNextPage = page < totalPages;
-  const reactions = await listNoteReactions(notes.map((note) => note.id));
-  const reactionsByNoteId = reactions.reduce<Record<string, typeof reactions>>(
-    (acc, reaction) => {
-      acc[reaction.targetId] = acc[reaction.targetId] ?? [];
-      acc[reaction.targetId].push(reaction);
-      return acc;
-    },
-    {},
-  );
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -150,18 +140,18 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
 
     if (!content) {
       redirect(
-        `/spaces/${space.id}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
+        `/spaces/${spaceIdForActions}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
       );
     }
 
     await createNoteForSpace({
-      spaceId: space.id,
+      spaceId: spaceIdForActions,
       userId: currentUserId,
       body: content,
       kind: "MANUAL",
     });
     redirect(
-      `/spaces/${space.id}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
+      `/spaces/${spaceIdForActions}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
     );
   }
 
@@ -171,28 +161,12 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
     const noteId = formData.get("noteId")?.toString();
     if (!noteId) {
       redirect(
-        `/spaces/${space.id}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
+        `/spaces/${spaceIdForActions}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
       );
     }
     await deleteNote(noteId, currentUserId);
     redirect(
-      `/spaces/${space.id}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
-    );
-  }
-
-  async function handleReaction(formData: FormData) {
-    "use server";
-    const currentUserId = await requireUserId();
-    const noteId = formData.get("noteId")?.toString();
-    const emoji = formData.get("emoji")?.toString();
-    if (!noteId || !emoji) {
-      redirect(
-        `/spaces/${space.id}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
-      );
-    }
-    await toggleNoteReaction(noteId, currentUserId, emoji);
-    redirect(
-      `/spaces/${space.id}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
+      `/spaces/${spaceIdForActions}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
     );
   }
 
@@ -224,7 +198,9 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
               </select>
             </div>
             <div className="relative flex h-10 flex-1 items-center">
-              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
+                <SearchIcon />
+              </span>
               <input
                 className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white pl-9 pr-4 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none transition focus:border-[var(--accent)]"
                 name="q"
@@ -233,7 +209,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
               />
             </div>
             <button
-              className="h-10 shrink-0 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
+              className="h-10 shrink-0 rounded-full bg-violet-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-600 hover:shadow-md"
               type="submit"
             >
               Search
@@ -241,7 +217,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
           </form>
         </div>
         <form className="mt-6 flex flex-col gap-3" action={handleCreate}>
-          <div className="rounded-2xl bg-[var(--panel-border)] p-px transition focus-within:bg-gradient-to-r focus-within:from-rose-500 focus-within:to-pink-600">
+          <div className="rounded-2xl bg-[var(--panel-border)] p-px transition focus-within:bg-violet-500">
             <textarea
               className="min-h-[160px] w-full rounded-[15px] bg-white/90 px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
               name="content"
@@ -251,7 +227,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
           </div>
           <div className="flex justify-end">
             <button
-              className="rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
+              className="rounded-full bg-violet-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-600 hover:shadow-md"
               type="submit"
             >
               Add note
@@ -266,22 +242,12 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
           </div>
         ) : null}
         {pageNotes.map((note) => {
-          const noteReactions = reactionsByNoteId[note.id] ?? [];
-          const likeCount = noteReactions.filter(
-            (reaction) => reaction.emoji === LIKE_EMOJI,
-          ).length;
           const metadataLabel =
             note.kind === "EVENT_COMMENT"
               ? "Event comment"
               : note.kind === "IDEA_COMMENT"
                 ? "Idea comment"
                 : "Note";
-
-          const reacted = new Set(
-            noteReactions
-              .filter((reaction) => reaction.userId === userId)
-              .map((reaction) => reaction.emoji),
-          );
 
           return (
             <article
@@ -335,22 +301,6 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                     type="submit"
                   />
                 </ConfirmForm>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
-                <form action={handleReaction}>
-                  <input type="hidden" name="noteId" value={note.id} />
-                  <input type="hidden" name="emoji" value={LIKE_EMOJI} />
-                  <button
-                    className={`rounded-full border px-3 py-1 text-xs transition ${
-                      reacted.has(LIKE_EMOJI)
-                        ? "border-[var(--accent-strong)] text-[var(--accent-strong)]"
-                        : "border-[var(--panel-border)] text-[var(--text-muted)]"
-                    }`}
-                    type="submit"
-                  >
-                    Like{likeCount > 0 ? ` (${likeCount})` : ""}
-                  </button>
-                </form>
               </div>
             </article>
           );

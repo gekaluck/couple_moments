@@ -5,12 +5,11 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {
@@ -33,6 +32,21 @@ model User {
   notes                    Note[]
   changeLogs               ChangeLogEntry[]
   notifications            Notification[]
+  sessions                 Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  userId    String
+  token     String   @unique
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
 }
 
 model CoupleSpace {
@@ -89,6 +103,8 @@ model Event {
   placeWebsite    String?
   placeOpeningHours Json?
   placePhotoUrls  Json?
+  rating          Int?
+  ratedAt         DateTime?
 
   coupleSpace     CoupleSpace   @relation(fields: [coupleSpaceId], references: [id])
   createdBy       User          @relation("EventsCreatedBy", fields: [createdByUserId], references: [id])

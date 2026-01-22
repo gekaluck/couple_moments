@@ -1,11 +1,56 @@
 @import "tailwindcss";
 
 :root {
+  /* Base accent colors */
   --accent-primary: #e63946;
   --accent-primary-light: #ff6b7a;
   --accent-primary-dark: #c1121f;
   --accent-secondary: #457b9d;
   --accent-tertiary: #f4a261;
+
+  /* Semantic colors for item types */
+  --event-upcoming: #0d9488;
+  --event-upcoming-light: #ccfbf1;
+  --event-upcoming-border: #5eead4;
+  --event-upcoming-text: #115e59;
+
+  --event-memory: #64748b;
+  --event-memory-light: #f1f5f9;
+  --event-memory-border: #cbd5e1;
+  --event-memory-text: #475569;
+
+  --idea-new: #d97706;
+  --idea-new-light: #fef3c7;
+  --idea-new-border: #fcd34d;
+  --idea-new-text: #92400e;
+
+  --idea-planned: #0284c7;
+  --idea-planned-light: #e0f2fe;
+  --idea-planned-border: #7dd3fc;
+  --idea-planned-text: #075985;
+
+  --note-color: #7c3aed;
+  --note-color-light: #ede9fe;
+  --note-color-border: #c4b5fd;
+  --note-color-text: #5b21b6;
+
+  --special-event: #db2777;
+  --special-event-light: #fce7f3;
+  --special-event-border: #f9a8d4;
+  --special-event-text: #9d174d;
+
+  /* Partner colors for availability */
+  --partner-a: #e11d48;
+  --partner-a-light: #ffe4e6;
+  --partner-a-border: #fda4af;
+  --partner-a-text: #be123c;
+
+  --partner-b: #2563eb;
+  --partner-b-light: #dbeafe;
+  --partner-b-border: #93c5fd;
+  --partner-b-text: #1d4ed8;
+
+  /* Legacy colors (keeping for compatibility) */
   --color-primary: #e11d48;
   --color-primary-hover: #be123c;
   --color-secondary: #ec4899;

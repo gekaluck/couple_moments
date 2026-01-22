@@ -6,8 +6,8 @@ import { parseJsonOrForm } from "@/lib/request";
 import { getSessionUserId } from "@/lib/session";
 import { normalizeTags } from "@/lib/tags";
 
-type Params = {
-  params: { spaceId: string };
+type PageProps = {
+  params: Promise<{ spaceId: string }>;
 };
 
 function parseDate(value: string | null | undefined) {
@@ -21,13 +21,14 @@ function parseDate(value: string | null | undefined) {
   return parsed;
 }
 
-export async function GET(request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: PageProps) {
   const userId = await getSessionUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const space = await getCoupleSpaceForUser(params.spaceId, userId);
+  const { spaceId } = await params;
+  const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
@@ -42,7 +43,7 @@ export async function GET(request: Request, { params }: Params) {
       : null;
 
   const events = await listEventsForSpace({
-    spaceId: params.spaceId,
+    spaceId,
     from,
     to,
     timeframe,
@@ -51,13 +52,14 @@ export async function GET(request: Request, { params }: Params) {
   return NextResponse.json({ events });
 }
 
-export async function POST(request: Request, { params }: Params) {
+export async function POST(request: Request, { params }: PageProps) {
   const userId = await getSessionUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const space = await getCoupleSpaceForUser(params.spaceId, userId);
+  const { spaceId } = await params;
+  const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
@@ -90,7 +92,7 @@ export async function POST(request: Request, { params }: Params) {
     );
   }
 
-  const event = await createEventForSpace(params.spaceId, userId, {
+  const event = await createEventForSpace(spaceId, userId, {
     title,
     description: body.description?.trim() || null,
     dateTimeStart,

@@ -6,17 +6,18 @@ import { parseJsonOrForm } from "@/lib/request";
 import { getSessionUserId } from "@/lib/session";
 import { normalizeTags } from "@/lib/tags";
 
-type Params = {
-  params: { spaceId: string };
+type PageProps = {
+  params: Promise<{ spaceId: string }>;
 };
 
-export async function GET(request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: PageProps) {
   const userId = await getSessionUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const space = await getCoupleSpaceForUser(params.spaceId, userId);
+  const { spaceId } = await params;
+  const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
@@ -24,7 +25,7 @@ export async function GET(request: Request, { params }: Params) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const ideas = await listIdeasForSpace({
-    spaceId: params.spaceId,
+    spaceId,
     status:
       status === "NEW" || status === "PLANNED" || status === "DONE"
         ? status
@@ -34,13 +35,14 @@ export async function GET(request: Request, { params }: Params) {
   return NextResponse.json({ ideas });
 }
 
-export async function POST(request: Request, { params }: Params) {
+export async function POST(request: Request, { params }: PageProps) {
   const userId = await getSessionUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const space = await getCoupleSpaceForUser(params.spaceId, userId);
+  const { spaceId } = await params;
+  const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
@@ -56,7 +58,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Title is required." }, { status: 400 });
   }
 
-  const idea = await createIdeaForSpace(params.spaceId, userId, {
+  const idea = await createIdeaForSpace(spaceId, userId, {
     title,
     description: body.description?.trim() || null,
     tags: normalizeTags(body.tags),

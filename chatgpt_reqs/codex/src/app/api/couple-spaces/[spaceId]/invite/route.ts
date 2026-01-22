@@ -3,17 +3,18 @@ import { NextResponse } from "next/server";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { getSessionUserId } from "@/lib/session";
 
-type Params = {
-  params: { spaceId: string };
+type PageProps = {
+  params: Promise<{ spaceId: string }>;
 };
 
-export async function GET(request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: PageProps) {
   const userId = await getSessionUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const space = await getCoupleSpaceForUser(params.spaceId, userId);
+  const { spaceId } = await params;
+  const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }

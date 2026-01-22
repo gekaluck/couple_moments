@@ -11,6 +11,7 @@ import {
 } from "@/lib/availability";
 import {
   createEventForSpace,
+  getEventForUser,
   listEventCommentsForEvents,
   listEventsForSpace,
 } from "@/lib/events";
@@ -31,7 +32,7 @@ import AvailabilityBlockModal from "./availability-block-modal";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
-  searchParams?: Promise<{ month?: string; new?: string; editBlock?: string }>;
+  searchParams?: Promise<{ month?: string; new?: string; editBlock?: string; repeat?: string }>;
 };
 
 export default async function CalendarPage({ params, searchParams }: PageProps) {
@@ -45,10 +46,38 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const initialEventDate =
     search.new && /^\d{4}-\d{2}-\d{2}$/.test(search.new) ? search.new : null;
   const editBlockId = search.editBlock ?? null;
+  const repeatEventId = search.repeat ?? null;
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     redirect("/spaces/onboarding");
   }
+  // Store space ID for use in server actions (avoids TypeScript narrowing issues)
+  const spaceIdForActions = space.id;
+
+  // Fetch event to repeat if repeat param is present
+  const repeatEvent = repeatEventId
+    ? await getEventForUser(repeatEventId, userId)
+    : null;
+  const prefillData = repeatEvent
+    ? {
+        title: repeatEvent.title,
+        description: repeatEvent.description ?? "",
+        tags: parseTags(repeatEvent.tags).join(", "),
+        placeId: repeatEvent.placeId,
+        placeName: repeatEvent.placeName,
+        placeAddress: repeatEvent.placeAddress,
+        placeLat: repeatEvent.placeLat,
+        placeLng: repeatEvent.placeLng,
+        placeUrl: repeatEvent.placeUrl,
+        placeWebsite: repeatEvent.placeWebsite,
+        placeOpeningHours: Array.isArray(repeatEvent.placeOpeningHours)
+          ? (repeatEvent.placeOpeningHours as string[])
+          : null,
+        placePhotoUrls: Array.isArray(repeatEvent.placePhotoUrls)
+          ? (repeatEvent.placePhotoUrls as string[])
+          : null,
+      }
+    : null;
 
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
@@ -71,11 +100,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     to: monthEnd,
   });
   const ideas = await listIdeasForSpace({ spaceId: space.id, status: "NEW" });
-  const upcomingEnd = new Date(now);
-  upcomingEnd.setDate(now.getDate() + 14);
+  // Use actual current date for upcoming plans, not the selected calendar month
+  const actualToday = new Date();
+  const upcomingEnd = new Date(actualToday);
+  upcomingEnd.setDate(actualToday.getDate() + 14);
   const upcomingEvents = await listEventsForSpace({
     spaceId: space.id,
-    from: now,
+    from: actualToday,
     to: upcomingEnd,
     timeframe: "upcoming",
   });
@@ -135,15 +166,15 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeUrl = formData.get("placeUrl")?.toString() || null;
 
     if (!title || !date) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
     const dateTimeStart = new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
-    await createEventForSpace(space.id, currentUserId, {
+    await createEventForSpace(spaceIdForActions, currentUserId, {
       title,
       description: description || null,
       dateTimeStart,
@@ -161,6 +192,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       placeUrl,
     });
 
+    redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleCreateBlock(formData: FormData) {
@@ -172,23 +204,23 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const note = formData.get("note")?.toString().trim() ?? "";
 
     if (!title || !start || !end) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
     const startAt = new Date(`${start}T00:00:00`);
     const endAt = new Date(`${end}T23:59:59`);
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
-    await createAvailabilityBlock(space.id, currentUserId, {
+    await createAvailabilityBlock(spaceIdForActions, currentUserId, {
       title,
       note: note || null,
       startAt,
       endAt,
     });
 
-    redirect(`/spaces/${space.id}/calendar`);
+    redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleUpdateBlock(formData: FormData) {
@@ -201,13 +233,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const note = formData.get("note")?.toString().trim() ?? "";
 
     if (!blockId || !title || !start || !end) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
     const startAt = new Date(`${start}T00:00:00`);
     const endAt = new Date(`${end}T23:59:59`);
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
     await updateAvailabilityBlock(blockId, currentUserId, {
@@ -217,7 +249,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       endAt,
     });
 
-    redirect(`/spaces/${space.id}/calendar`);
+    redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleCreateIdea(formData: FormData) {
@@ -259,10 +291,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeUrl = formData.get("placeUrl")?.toString() || null;
 
     if (!title) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
-    await createIdeaForSpace(space.id, currentUserId, {
+    await createIdeaForSpace(spaceIdForActions, currentUserId, {
       title,
       description: description || null,
       tags,
@@ -289,20 +321,20 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const time = timeIsSet ? rawTime : "12:00";
 
     if (!ideaId || !date) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
     const idea = ideas.find((item) => item.id === ideaId);
     if (!idea) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
     const dateTimeStart = new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
-    await createEventForSpace(space.id, currentUserId, {
+    await createEventForSpace(spaceIdForActions, currentUserId, {
       title: idea.title,
       description: idea.description,
       dateTimeStart,
@@ -345,10 +377,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const currentUserId = await requireUserId();
     const ideaId = formData.get("ideaId")?.toString();
     if (!ideaId) {
-      redirect(`/spaces/${space.id}/calendar`);
+      redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
     await deleteIdea(ideaId, currentUserId);
-    redirect(`/spaces/${space.id}/calendar`);
+    redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   const monthDays = getMonthGrid(now);
@@ -472,6 +504,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               onCreateEvent={handleCreate}
               onCreateBlock={handleCreateBlock}
               initialEventDate={initialEventDate}
+              prefillData={prefillData}
             />
             <Link
               className="pill-button button-hover"
@@ -492,6 +525,26 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               Next
             </Link>
             <span>{formatMonthTitle(now)}</span>
+            <a
+              className="pill-button button-hover inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent-strong)]"
+              href={`/api/spaces/${space.id}/calendar.ics`}
+              download
+              title="Export to calendar app"
+            >
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 10l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Export
+            </a>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
@@ -560,7 +613,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     return (
                       <Link
                         key={block.id}
-                        className="rounded-lg border px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)]"
+                        className="rounded-lg border-2 border-dashed px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] opacity-80"
                         href={`/spaces/${space.id}/calendar?month=${monthParam(now)}&editBlock=${block.id}`}
                         style={{
                           borderColor: blockAccent,
@@ -597,19 +650,26 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                       </Link>
                     );
                   })}
-                  {visibleEvents.map((event) => (
-                    <Link
-                      key={event.id}
-                      className="rounded-lg border border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 px-2 py-1 text-xs text-gray-800 transition hover:scale-[1.01] hover:border-rose-300 hover:shadow-md"
-                      href={`/events/${event.id}`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="truncate text-[13px] font-semibold text-gray-800">
-                          {event.title}
+                  {visibleEvents.map((event) => {
+                    const eventIsPast = event.dateTimeStart < today;
+                    return (
+                      <Link
+                        key={event.id}
+                        className={`rounded-lg border px-2 py-1 text-xs transition hover:scale-[1.01] hover:shadow-md ${
+                          eventIsPast
+                            ? "border-slate-300 bg-slate-50 text-slate-600 hover:border-slate-400"
+                            : "border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300"
+                        }`}
+                        href={`/events/${event.id}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="truncate text-[13px] font-semibold">
+                            {event.title}
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                   {overflowCount > 0 ? (
                     <div className="rounded-lg border border-dashed border-[var(--panel-border)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
                       ... +{overflowCount} more
@@ -635,7 +695,16 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             onDeleteIdea={handleDeleteIdea}
           />
           <UpcomingPlansColumn
-            plans={upcomingEvents}
+            plans={upcomingEvents.map((event) => ({
+              id: event.id,
+              title: event.title,
+              description: event.description,
+              dateTimeStart: event.dateTimeStart,
+              timeIsSet: event.timeIsSet,
+              createdBy: event.createdBy
+                ? { name: event.createdBy.name, email: event.createdBy.email }
+                : undefined,
+            }))}
             commentCounts={eventCommentCounts}
             mapsApiKey={mapsApiKey}
             onCreatePlan={handleCreate}
