@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   });
 
   // Create signed session token
-  const token = createSession(user.id);
+  const token = await createSession(user.id);
   const redirectUrl = new URL("/", request.url);
   const response = NextResponse.redirect(redirectUrl, { status: 303 });
 

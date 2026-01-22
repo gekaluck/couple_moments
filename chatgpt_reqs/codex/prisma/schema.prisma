@@ -112,6 +112,9 @@ model Event {
   photos          Photo[]
   originIdea      Idea?         @relation("IdeaConvertedEvent", fields: [originIdeaId], references: [id])
   notifications   Notification[]
+
+  @@index([coupleSpaceId, dateTimeStart])
+  @@index([dateTimeStart])
 }
 
 enum EventType {
@@ -172,6 +175,8 @@ model Idea {
   coupleSpace     CoupleSpace  @relation(fields: [coupleSpaceId], references: [id])
   createdBy       User         @relation("IdeasCreatedBy", fields: [createdByUserId], references: [id])
   convertedToEvent Event?       @relation("IdeaConvertedEvent")
+
+  @@index([coupleSpaceId, status])
 }
 
 enum IdeaStatus {
@@ -197,6 +202,8 @@ model Note {
   author         User          @relation(fields: [authorUserId], references: [id])
   replyTo        Note?         @relation("NoteReplies", fields: [replyToNoteId], references: [id])
   replies        Note[]        @relation("NoteReplies")
+
+  @@index([coupleSpaceId, kind])
 }
 
 model Reaction {

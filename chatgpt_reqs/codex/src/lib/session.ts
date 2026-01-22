@@ -1,64 +1,51 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
 export const SESSION_COOKIE_NAME = "cm_session";
 export const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 
-function getSessionSecret() {
-  const secret = process.env.SESSION_SECRET ?? "dev-secret-change-in-production";
-  return secret;
-}
+/**
+ * Create a session token backed by the database.
+ */
+export async function createSession(userId: string): Promise<string> {
+  const token = crypto.randomBytes(32).toString("base64url");
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
-function signPayload(payload: string, secret: string) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("base64url");
-}
+  await prisma.session.create({
+    data: {
+      userId,
+      token,
+      expiresAt,
+    },
+  });
 
-function safeEqual(a: string, b: string) {
-  const aBuf = Buffer.from(a);
-  const bBuf = Buffer.from(b);
-  if (aBuf.length !== bBuf.length) {
-    return false;
-  }
-  return crypto.timingSafeEqual(aBuf, bBuf);
+  return token;
 }
 
 /**
- * Create a signed session token (no database required)
+ * Verify a session token and return the user ID if valid
  */
-export function createSession(userId: string): string {
-  const issuedAt = Date.now();
-  const payload = `${userId}.${issuedAt}`;
-  const signature = signPayload(payload, getSessionSecret());
-  return `${payload}.${signature}`;
-}
+export async function verifySession(token: string): Promise<string | null> {
+  const session = await prisma.session.findUnique({
+    where: { token },
+    select: { userId: true, expiresAt: true },
+  });
 
-/**
- * Verify a signed session token and return the user ID if valid
- */
-export function verifySession(token: string): string | null {
-  const parts = token.split(".");
-  if (parts.length !== 3) {
+  if (!session) {
     return null;
   }
 
-  const [userId, issuedAtRaw, signature] = parts;
-  const issuedAt = Number(issuedAtRaw);
-  if (!userId || Number.isNaN(issuedAt)) {
+  if (session.expiresAt <= new Date()) {
+    try {
+      await prisma.session.delete({ where: { token } });
+    } catch {
+      // Ignore cleanup errors; treat session as invalid.
+    }
     return null;
   }
 
-  const payload = `${userId}.${issuedAtRaw}`;
-  const expectedSignature = signPayload(payload, getSessionSecret());
-  if (!safeEqual(signature, expectedSignature)) {
-    return null;
-  }
-
-  const ageMs = Date.now() - issuedAt;
-  if (ageMs > SESSION_TTL_MS) {
-    return null;
-  }
-
-  return userId;
+  return session.userId;
 }
 
 /**
@@ -93,4 +80,13 @@ export async function setSessionCookie(token: string): Promise<void> {
 export async function clearSessionCookie(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
+}
+
+/**
+ * Remove a session from the database.
+ */
+export async function deleteSession(token: string): Promise<void> {
+  await prisma.session.deleteMany({
+    where: { token },
+  });
 }
