@@ -231,12 +231,13 @@ export default function PlanningIdeaList({
 }: PlanningIdeaListProps) {
   const [activeIdeaId, setActiveIdeaId] = useState<string | null>(null);
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
+  const [visibleCount, setVisibleCount] = useState(5);
   const activeIdea = useMemo(
     () => ideas.find((idea) => idea.id === activeIdeaId) ?? null,
     [activeIdeaId, ideas],
   );
-  const ideaPreview = ideas.slice(0, 5);
-  const ideaOverflow = ideas.slice(5);
+  const visibleIdeas = ideas.slice(0, visibleCount);
+  const hasMore = ideas.length > visibleCount;
 
   const toggleComments = (ideaId: string) => {
     setOpenComments((prev) => ({ ...prev, [ideaId]: !prev[ideaId] }));
@@ -267,7 +268,7 @@ export default function PlanningIdeaList({
             </div>
           </div>
         ) : null}
-        {ideaPreview.map((idea) => {
+        {visibleIdeas.map((idea) => {
           const tags = parseTags(idea.tags);
           return (
             <div
@@ -277,7 +278,7 @@ export default function PlanningIdeaList({
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-words">
                     {idea.title}
                   </h3>
                   {idea.description ? (
@@ -348,95 +349,14 @@ export default function PlanningIdeaList({
             </div>
           );
         })}
-        {ideaOverflow.length > 0 ? (
-          <details className="rounded-2xl border border-[var(--panel-border)] bg-white/70 p-4">
-            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
-              Show more
-            </summary>
-            <div className="mt-4 flex flex-col gap-3">
-              {ideaOverflow.map((idea) => {
-                const tags = parseTags(idea.tags);
-                return (
-                  <div
-                    key={idea.id}
-                    id={`idea-${idea.id}`}
-                    className="card-hover group rounded-2xl border border-[var(--panel-border)] bg-white/70 p-5"
-                  >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                          {idea.title}
-                        </h3>
-                        {idea.description ? (
-                          <p className="mt-2 text-sm text-[var(--text-muted)]">
-                            {idea.description}
-                          </p>
-                        ) : null}
-                        {tags.length > 0 ? (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {tags.map((tag: string) => (
-                              <TagBadge key={tag} label={tag} />
-                            ))}
-                          </div>
-                        ) : null}
-                        <p className="mt-3 text-xs text-[var(--text-tertiary)]">
-                          Created by {idea.createdBy.name || idea.createdBy.email} on{" "}
-                          {formatDate(new Date(idea.createdAt))}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 opacity-0 transition group-hover:opacity-100">
-                        <IconButton
-                          icon={<CalendarIcon />}
-                          label="Schedule as event"
-                          variant="ghost"
-                          size="md"
-                          iconSize="h-5 w-5"
-                          className="px-2"
-                          onClick={() => setActiveIdeaId(idea.id)}
-                        />
-                        <IconButton
-                          icon={<MessageSquareIcon />}
-                          label={`Comments (${commentCounts[idea.id] ?? 0})`}
-                          variant="secondary"
-                          size="md"
-                          iconSize="h-5 w-5"
-                          className="px-2"
-                          count={commentCounts[idea.id] ?? 0}
-                          onClick={() => toggleComments(idea.id)}
-                        />
-                        <form
-                          action={onDelete}
-                          onSubmit={(event) => {
-                            if (!confirm("Delete this idea?")) {
-                              event.preventDefault();
-                            }
-                          }}
-                        >
-                          <input type="hidden" name="ideaId" value={idea.id} />
-                          <IconButton
-                            icon={<TrashIcon />}
-                            label="Delete idea"
-                            variant="danger"
-                            size="md"
-                            iconSize="h-5 w-5"
-                            className="px-2"
-                            type="submit"
-                          />
-                        </form>
-                      </div>
-                    </div>
-                    <IdeaComments
-                      ideaId={idea.id}
-                      comments={commentsByIdea[idea.id] ?? []}
-                      isOpen={Boolean(openComments[idea.id])}
-                      currentUserId={currentUserId}
-                      onAddComment={onAddComment}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </details>
+        {hasMore ? (
+          <button
+            type="button"
+            onClick={() => setVisibleCount((prev) => prev + 5)}
+            className="rounded-2xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] transition hover:bg-white hover:text-[var(--text-primary)] hover:shadow-sm"
+          >
+            Show more ({ideas.length - visibleCount} remaining)
+          </button>
         ) : null}
       </div>
       <Modal

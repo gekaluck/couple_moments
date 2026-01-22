@@ -23,14 +23,29 @@ export default async function MemoriesPage({ params }: PageProps) {
     timeframe: "past",
     includePhotos: true,
   });
-  const memoriesForClient = memories.map((event) => ({
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    dateTimeStart: event.dateTimeStart.toISOString(),
-    tags: parseTags(event.tags),
-    coverUrl: event.photos?.[0]?.storageUrl ?? null,
-  }));
+  const memoriesForClient = memories.map((event) => {
+    // Use attached photo first, then fall back to Google Places photo
+    const attachedPhoto = event.photos?.[0]?.storageUrl ?? null;
+    let placePhotoUrl: string | null = null;
+    if (event.placePhotoUrls) {
+      try {
+        const urls = typeof event.placePhotoUrls === "string"
+          ? JSON.parse(event.placePhotoUrls)
+          : event.placePhotoUrls;
+        placePhotoUrl = Array.isArray(urls) && urls.length > 0 ? urls[0] : null;
+      } catch {
+        placePhotoUrl = null;
+      }
+    }
+    return {
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      dateTimeStart: event.dateTimeStart.toISOString(),
+      tags: parseTags(event.tags),
+      coverUrl: attachedPhoto ?? placePhotoUrl,
+    };
+  });
 
   return (
     <MemoriesClient memories={memoriesForClient} spaceId={space.id} />

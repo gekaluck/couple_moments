@@ -30,6 +30,9 @@ export default function UpcomingPlansColumn({
   onCreatePlan,
 }: UpcomingPlansColumnProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
+  const visiblePlans = plans.slice(0, visibleCount);
+  const hasMore = plans.length > visibleCount;
 
   return (
     <div className="flex flex-col gap-4">
@@ -65,7 +68,7 @@ export default function UpcomingPlansColumn({
         />
       ) : (
         <div className="flex flex-col gap-4">
-          {plans.map((plan) => (
+          {visiblePlans.map((plan) => (
             <PlanCard
               key={plan.id}
               id={plan.id}
@@ -77,6 +80,15 @@ export default function UpcomingPlansColumn({
               createdBy={plan.createdBy}
             />
           ))}
+          {hasMore ? (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => prev + 5)}
+              className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 transition hover:bg-rose-100 hover:shadow-sm"
+            >
+              Show more ({plans.length - visibleCount} remaining)
+            </button>
+          ) : null}
         </div>
       )}
       <CreatePlanModal
