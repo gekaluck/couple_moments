@@ -36,7 +36,7 @@ export default function PlanCard({
       className="animate-fade-in-up group rounded-2xl border border-rose-200 bg-rose-50 p-5 transition-all duration-200 hover:scale-[1.02] hover:border-rose-300 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
-        <h4 className="text-base font-semibold text-rose-900 line-clamp-2 break-words">{title}</h4>
+        <h4 className="min-w-0 flex-1 text-base font-semibold text-rose-900 line-clamp-2 break-words overflow-hidden">{title}</h4>
         {commentCount > 0 ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white/80 px-2 py-1 text-xs text-rose-600 shadow-sm">
             <MessageSquare className="h-3.5 w-3.5" />

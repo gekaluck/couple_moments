@@ -277,8 +277,8 @@ export default function PlanningIdeaList({
               className="card-hover group rounded-2xl border border-[var(--panel-border)] bg-white/70 p-5"
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-words">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-words overflow-hidden">
                     {idea.title}
                   </h3>
                   {idea.description ? (
