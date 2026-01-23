@@ -15,6 +15,7 @@ import IconButton from "@/components/ui/IconButton";
 import TagBadge from "@/components/ui/TagBadge";
 import ConfirmForm from "@/components/ConfirmForm";
 import PhotoUploader from "@/components/photos/PhotoUploader";
+import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 const PencilIcon = () => (
   <svg
@@ -305,13 +306,16 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       : null;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen page-enter">
       <header className="border-b border-[var(--panel-border)] bg-white/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[var(--text-muted)]">
-              Couple Moments
-            </p>
+            <Breadcrumbs
+              items={[
+                { label: isFromMemories ? "Memories" : "Calendar", href: backHref },
+                { label: event.title },
+              ]}
+            />
             <h1 className="mt-2 text-3xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
               Event details
             </h1>

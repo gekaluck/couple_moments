@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 
 import EmptyState from "./EmptyState";
@@ -21,6 +21,8 @@ type UpcomingPlansColumnProps = {
   commentCounts: Record<string, number>;
   mapsApiKey?: string;
   onCreatePlan: (formData: FormData) => Promise<void>;
+  autoOpen?: boolean;
+  todayHref?: string;
 };
 
 export default function UpcomingPlansColumn({
@@ -28,11 +30,19 @@ export default function UpcomingPlansColumn({
   commentCounts,
   mapsApiKey,
   onCreatePlan,
+  autoOpen = false,
+  todayHref,
 }: UpcomingPlansColumnProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
   const visiblePlans = plans.slice(0, visibleCount);
   const hasMore = plans.length > visibleCount;
+
+  useEffect(() => {
+    if (autoOpen) {
+      setIsCreateOpen(true);
+    }
+  }, [autoOpen]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -50,13 +60,23 @@ export default function UpcomingPlansColumn({
             </p>
           </div>
         </div>
-        <button
-          className="button-hover rounded-full bg-rose-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-rose-600 hover:shadow-[var(--shadow-lg)]"
-          onClick={() => setIsCreateOpen(true)}
-          type="button"
-        >
-          Create plan
-        </button>
+        <div className="flex items-center gap-2">
+          {todayHref ? (
+            <a
+              className="rounded-full border border-rose-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 transition hover:bg-rose-50"
+              href={todayHref}
+            >
+              Today
+            </a>
+          ) : null}
+          <button
+            className="button-hover rounded-full bg-rose-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-rose-600 hover:shadow-[var(--shadow-lg)]"
+            onClick={() => setIsCreateOpen(true)}
+            type="button"
+          >
+            Create plan
+          </button>
+        </div>
       </div>
       {plans.length === 0 ? (
         <EmptyState
@@ -67,7 +87,7 @@ export default function UpcomingPlansColumn({
           onAction={() => setIsCreateOpen(true)}
         />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="stagger-children flex flex-col gap-4">
           {visiblePlans.map((plan) => (
             <PlanCard
               key={plan.id}

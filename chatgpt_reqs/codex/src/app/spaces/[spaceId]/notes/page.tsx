@@ -8,6 +8,7 @@ import { formatTimestamp, getInitials } from "@/lib/formatters";
 import ConfirmForm from "@/components/ConfirmForm";
 import IconButton from "@/components/ui/IconButton";
 import EmptyState from "@/components/ui/EmptyState";
+import MutationToast from "@/components/ui/MutationToast";
 import {
   countNotesForSpace,
   createNoteForSpace,
@@ -113,6 +114,18 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
   const hasMore = notes.length > pageSize;
   const pageNotes = hasMore ? notes.slice(0, pageSize) : notes;
   const hasNextPage = page < totalPages;
+  const buildNotesHref = (toast?: string) => {
+    const params = new URLSearchParams();
+    params.set("type", filter);
+    if (query) {
+      params.set("q", query);
+    }
+    params.set("page", `${page}`);
+    if (toast) {
+      params.set("toast", toast);
+    }
+    return `/spaces/${spaceIdForActions}/notes?${params.toString()}`;
+  };
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -120,9 +133,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
     const content = formData.get("content")?.toString().trim() ?? "";
 
     if (!content) {
-      redirect(
-        `/spaces/${spaceIdForActions}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
-      );
+      redirect(buildNotesHref());
     }
 
     await createNoteForSpace({
@@ -131,9 +142,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
       body: content,
       kind: "MANUAL",
     });
-    redirect(
-      `/spaces/${spaceIdForActions}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
-    );
+    redirect(buildNotesHref("note-added"));
   }
 
   async function handleDelete(formData: FormData) {
@@ -141,25 +150,28 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
     const currentUserId = await requireUserId();
     const noteId = formData.get("noteId")?.toString();
     if (!noteId) {
-      redirect(
-        `/spaces/${spaceIdForActions}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
-      );
+      redirect(buildNotesHref());
     }
     await deleteNote(noteId, currentUserId);
-    redirect(
-      `/spaces/${spaceIdForActions}/notes?type=${encodeURIComponent(filter)}&q=${encodeURIComponent(query)}`,
-    );
+    redirect(buildNotesHref("note-deleted"));
   }
 
   return (
     <>
-      <section className="surface p-6">
+      <MutationToast
+        messages={{
+          "note-added": "Note saved!",
+          "note-deleted": "Note removed.",
+        }}
+      />
+      <section className="surface-muted p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+            <p className="section-kicker">Notes</p>
+            <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
               Notes center
             </h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
+            <p className="section-subtitle">
               Capture quick thoughts, links, and reminders.
             </p>
           </div>
@@ -216,7 +228,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
           </div>
         </form>
       </section>
-      <section className="flex flex-col gap-4">
+      <section className="stagger-children flex flex-col gap-4">
         {pageNotes.length === 0 ? (
           <div className="surface p-6">
             <EmptyState
@@ -329,4 +341,3 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
     </>
   );
 }
-

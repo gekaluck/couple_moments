@@ -39,6 +39,20 @@
   --special-event-border: #f9a8d4;
   --special-event-text: #9d174d;
 
+  /* Semantic feedback colors */
+  --status-success: #16a34a;
+  --status-success-soft: #dcfce7;
+  --status-success-border: #86efac;
+  --status-success-text: #166534;
+  --status-warning: #d97706;
+  --status-warning-soft: #fef3c7;
+  --status-warning-border: #fcd34d;
+  --status-warning-text: #92400e;
+  --status-info: #0284c7;
+  --status-info-soft: #e0f2fe;
+  --status-info-border: #7dd3fc;
+  --status-info-text: #075985;
+
   /* Partner colors for availability */
   --partner-a: #e11d48;
   --partner-a-light: #ffe4e6;
@@ -84,6 +98,40 @@
   --accent: var(--accent-primary);
   --accent-soft: #fde9ec;
   --accent-strong: var(--accent-primary-dark);
+
+  /* Semantic feedback colors */
+  --success: #059669;
+  --success-light: #d1fae5;
+  --success-border: #6ee7b7;
+  --success-text: #065f46;
+
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --warning-border: #fcd34d;
+  --warning-text: #92400e;
+
+  --error: #dc2626;
+  --error-light: #fee2e2;
+  --error-border: #fca5a5;
+  --error-text: #991b1b;
+
+  --info: #0284c7;
+  --info-light: #e0f2fe;
+  --info-border: #7dd3fc;
+  --info-text: #075985;
+
+  /* Spacing scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* Calendar specific */
+  --calendar-today: rgba(225, 29, 72, 0.08);
+  --calendar-weekend: rgba(100, 116, 139, 0.04);
+  --calendar-now-marker: #e11d48;
 }
 
 @theme inline {
@@ -100,6 +148,7 @@ body {
       rgba(255, 241, 242, 0) 60%
     ),
     radial-gradient(1200px 600px at 110% 10%, #f3f4f6 0%, rgba(243, 244, 246, 0) 55%),
+    radial-gradient(800px 400px at 50% 120%, rgba(255, 237, 213, 0.4) 0%, rgba(255, 237, 213, 0) 55%),
     var(--app-bg);
   color: var(--text-primary);
   font-family: var(--font-sans);
@@ -112,6 +161,26 @@ h3,
 .brand-text {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+.section-kicker {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
 .surface {
@@ -120,6 +189,14 @@ h3,
   border-radius: 24px;
   box-shadow: var(--panel-shadow);
   backdrop-filter: blur(18px);
+}
+
+.surface-muted {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(16px);
 }
 
 .surface-strong {
@@ -205,7 +282,7 @@ h3,
 }
 
 .stagger-children > * {
-  animation: fadeInUp 0.4s ease-out;
+  animation: fadeInUp 0.25s ease-out;
 }
 
 .stagger-children > *:nth-child(1) {
@@ -470,4 +547,389 @@ h3,
 
 .fab:active {
   transform: scale(1.05);
+}
+
+/* ========================================
+   Section Headers & Visual Hierarchy
+   ======================================== */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.section-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-dark));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, var(--panel-border), transparent);
+  margin: var(--space-lg) 0;
+}
+
+/* ========================================
+   Feedback States
+   ======================================== */
+
+.feedback-success {
+  background: var(--success-light);
+  border: 1px solid var(--success-border);
+  color: var(--success-text);
+  border-radius: 12px;
+  padding: var(--space-sm) var(--space-md);
+}
+
+.feedback-warning {
+  background: var(--warning-light);
+  border: 1px solid var(--warning-border);
+  color: var(--warning-text);
+  border-radius: 12px;
+  padding: var(--space-sm) var(--space-md);
+}
+
+.feedback-error {
+  background: var(--error-light);
+  border: 1px solid var(--error-border);
+  color: var(--error-text);
+  border-radius: 12px;
+  padding: var(--space-sm) var(--space-md);
+}
+
+.feedback-info {
+  background: var(--info-light);
+  border: 1px solid var(--info-border);
+  color: var(--info-text);
+  border-radius: 12px;
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Inline validation */
+.field-error {
+  font-size: 0.75rem;
+  color: var(--error-text);
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.input-error {
+  border-color: var(--error) !important;
+  background-color: var(--error-light) !important;
+}
+
+.input-success {
+  border-color: var(--success) !important;
+}
+
+/* ========================================
+   Tonal Backgrounds
+   ======================================== */
+
+.bg-tonal-rose {
+  background: linear-gradient(135deg, rgba(255, 241, 242, 0.5) 0%, rgba(254, 226, 226, 0.3) 100%);
+}
+
+.bg-tonal-amber {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.5) 0%, rgba(253, 230, 138, 0.3) 100%);
+}
+
+.bg-tonal-emerald {
+  background: linear-gradient(135deg, rgba(209, 250, 229, 0.5) 0%, rgba(167, 243, 208, 0.3) 100%);
+}
+
+.bg-tonal-sky {
+  background: linear-gradient(135deg, rgba(224, 242, 254, 0.5) 0%, rgba(186, 230, 253, 0.3) 100%);
+}
+
+.bg-tonal-violet {
+  background: linear-gradient(135deg, rgba(237, 233, 254, 0.5) 0%, rgba(221, 214, 254, 0.3) 100%);
+}
+
+.bg-tonal-slate {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%);
+}
+
+/* Subtle noise texture overlay */
+.bg-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ========================================
+   Calendar Enhancements
+   ======================================== */
+
+.calendar-today {
+  background-color: var(--calendar-today);
+  position: relative;
+}
+
+.calendar-today::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+}
+
+.calendar-weekend {
+  background-color: var(--calendar-weekend);
+}
+
+.calendar-now-marker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--calendar-now-marker);
+  z-index: 10;
+}
+
+.calendar-now-marker::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  background: var(--calendar-now-marker);
+  border-radius: 50%;
+}
+
+/* Calendar density modes */
+.calendar-compact .calendar-cell {
+  min-height: 80px;
+  padding: 0.25rem;
+}
+
+.calendar-comfortable .calendar-cell {
+  min-height: 120px;
+  padding: 0.5rem;
+}
+
+/* Event type indicators */
+.event-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.event-dot-planned {
+  background: var(--event-upcoming);
+}
+
+.event-dot-memory {
+  background: var(--event-memory);
+}
+
+.event-dot-idea {
+  background: var(--idea-new);
+}
+
+/* ========================================
+   Tag Chips - Clickable Filters
+   ======================================== */
+
+.tag-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.tag-filter:hover {
+  transform: scale(1.05);
+}
+
+.tag-filter-active {
+  box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+.tag-filter-inactive {
+  opacity: 0.6;
+}
+
+/* ========================================
+   Breadcrumbs
+   ======================================== */
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.breadcrumb-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb-link:hover {
+  color: var(--accent-primary);
+}
+
+.breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: var(--text-tertiary);
+}
+
+/* ========================================
+   Page Load Animations
+   ======================================== */
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.3s ease-out;
+}
+
+.page-enter-stagger > * {
+  opacity: 0;
+  animation: pageEnter 0.4s ease-out forwards;
+}
+
+.page-enter-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.page-enter-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.page-enter-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.page-enter-stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.page-enter-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.page-enter-stagger > *:nth-child(6) { animation-delay: 0.3s; }
+
+/* Panel expand/collapse */
+@keyframes panelExpand {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: scaleY(1);
+  }
+}
+
+.panel-expand {
+  animation: panelExpand 0.25s ease-out;
+  transform-origin: top;
+}
+
+/* ========================================
+   Quick Action Bar
+   ======================================== */
+
+.quick-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(8px);
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.quick-action-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+}
+
+/* ========================================
+   Today Shortcut Badge
+   ======================================== */
+
+.today-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-dark));
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.today-badge:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
 }

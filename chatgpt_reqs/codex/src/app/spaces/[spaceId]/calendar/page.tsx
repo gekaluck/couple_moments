@@ -33,7 +33,14 @@ import OnboardingTour from "@/components/onboarding/OnboardingTour";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
-  searchParams?: Promise<{ month?: string; new?: string; editBlock?: string; repeat?: string }>;
+  searchParams?: Promise<{
+    month?: string;
+    new?: string;
+    editBlock?: string;
+    repeat?: string;
+    action?: string;
+    density?: string;
+  }>;
 };
 
 export default async function CalendarPage({ params, searchParams }: PageProps) {
@@ -44,10 +51,15 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     ? new Date(`${search.month}-01T00:00:00`)
     : new Date();
   const now = Number.isNaN(selectedMonth.getTime()) ? new Date() : selectedMonth;
+  const density = search.density === "compact" ? "compact" : "comfortable";
+  const isCompact = density === "compact";
   const initialEventDate =
     search.new && /^\d{4}-\d{2}-\d{2}$/.test(search.new) ? search.new : null;
   const editBlockId = search.editBlock ?? null;
   const repeatEventId = search.repeat ?? null;
+  const openAction = search.action ?? "";
+  const autoOpenIdea = openAction === "idea";
+  const autoOpenPlan = openAction === "plan";
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     redirect("/spaces/onboarding");
@@ -167,12 +179,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeUrl = formData.get("placeUrl")?.toString() || null;
 
     if (!title || !date) {
-      redirect(`/spaces/${spaceIdForActions}/calendar`);
+      return;
     }
 
     const dateTimeStart = new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
-      redirect(`/spaces/${spaceIdForActions}/calendar`);
+      return;
     }
 
     await createEventForSpace(spaceIdForActions, currentUserId, {
@@ -193,7 +205,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       placeUrl,
     });
 
-    redirect(`/spaces/${spaceIdForActions}/calendar`);
+    return;
   }
 
   async function handleCreateBlock(formData: FormData) {
@@ -205,13 +217,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const note = formData.get("note")?.toString().trim() ?? "";
 
     if (!title || !start || !end) {
-      redirect(`/spaces/${spaceIdForActions}/calendar`);
+      return;
     }
 
     const startAt = new Date(`${start}T00:00:00`);
     const endAt = new Date(`${end}T23:59:59`);
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-      redirect(`/spaces/${spaceIdForActions}/calendar`);
+      return;
     }
 
     await createAvailabilityBlock(spaceIdForActions, currentUserId, {
@@ -221,7 +233,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       endAt,
     });
 
-    redirect(`/spaces/${spaceIdForActions}/calendar`);
+    return;
   }
 
   async function handleUpdateBlock(formData: FormData) {
@@ -388,8 +400,25 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const today = new Date();
+  const nowLabel = today.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
   const monthParam = (date: Date) =>
     `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, "0")}`;
+  const buildCalendarHref = (monthValue: string, extra?: Record<string, string>) => {
+    const params = new URLSearchParams();
+    params.set("month", monthValue);
+    if (density === "compact") {
+      params.set("density", "compact");
+    }
+    if (extra) {
+      Object.entries(extra).forEach(([key, value]) => {
+        params.set(key, value);
+      });
+    }
+    return `/spaces/${space.id}/calendar?${params.toString()}`;
+  };
 
   const blocksByDay = new Map<string, typeof blocks>();
   for (const block of blocks) {
@@ -496,9 +525,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       <section className="surface p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-              Calendar
+            <p className="section-kicker">Calendar</p>
+            <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+              {formatMonthTitle(now)}
             </h2>
+            <p className="section-subtitle">
+              Tap any day to add something special or block time.
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
             <CalendarAddControls
@@ -509,23 +542,40 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             />
             <Link
               className="pill-button button-hover"
-              href={`/spaces/${space.id}/calendar?month=${monthParam(prevMonth)}`}
+              href={buildCalendarHref(monthParam(prevMonth))}
             >
               Prev
             </Link>
             <Link
               className="pill-button button-hover"
-              href={`/spaces/${space.id}/calendar?month=${monthParam(today)}`}
+              href={buildCalendarHref(monthParam(today))}
             >
               Today
             </Link>
             <Link
               className="pill-button button-hover"
-              href={`/spaces/${space.id}/calendar?month=${monthParam(nextMonth)}`}
+              href={buildCalendarHref(monthParam(nextMonth))}
             >
               Next
             </Link>
-            <span>{formatMonthTitle(now)}</span>
+            <div className="flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+              <Link
+                className={`rounded-full px-3 py-1 transition ${
+                  isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
+                }`}
+                href={buildCalendarHref(monthParam(now), { density: "compact" })}
+              >
+                Compact
+              </Link>
+              <Link
+                className={`rounded-full px-3 py-1 transition ${
+                  !isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
+                }`}
+                href={buildCalendarHref(monthParam(now), { density: "comfortable" })}
+              >
+                Comfortable
+              </Link>
+            </div>
             <a
               className="pill-button button-hover inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent-strong)]"
               href={`/api/spaces/${space.id}/calendar.ics`}
@@ -548,6 +598,20 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             </a>
           </div>
         </div>
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--text-tertiary)]">
+          <div className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+            Upcoming
+          </div>
+          <div className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
+            Memory
+          </div>
+          <div className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-amber-400" />
+            Unavailable
+          </div>
+        </div>
         <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <div key={day} className="px-2 py-1">
@@ -565,16 +629,20 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             const isPast =
               day.date <
               new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const maxEvents = 3;
+            const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+            const maxEvents = isCompact ? 2 : 3;
             const visibleEvents = dayEvents.slice(0, maxEvents);
             const overflowCount = Math.max(dayEvents.length - maxEvents, 0);
+            const dayCellBase = isCompact ? "min-h-[90px] p-1.5" : "min-h-[120px] p-2";
 
             return (
               <div
                 key={key}
-                className={`relative min-h-[110px] rounded-xl border p-2 text-xs transition hover:shadow-[var(--shadow-sm)] ${
+                className={`relative rounded-xl border text-xs transition hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${
                   day.isCurrentMonth
-                    ? "bg-white/80"
+                    ? isWeekend
+                      ? "bg-rose-50/50"
+                      : "bg-white/80"
                     : "bg-white/40 text-[var(--text-muted)]"
                 } ${isPast ? "opacity-60" : ""} ${
                   isToday
@@ -585,7 +653,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                 <Link
                   aria-label={`Add event on ${key}`}
                   className="absolute inset-0 z-0"
-                  href={`/spaces/${space.id}/calendar?month=${monthParam(now)}&new=${key}`}
+                  href={buildCalendarHref(monthParam(now), { new: key })}
                 />
                 <div className="flex items-center justify-between text-xs font-semibold text-[var(--text-muted)]">
                   {day.date.getDate()}
@@ -595,6 +663,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     </span>
                   ) : null}
                 </div>
+                {isToday ? (
+                  <div className="mt-1 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-500">
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse-soft" />
+                    Now {nowLabel}
+                  </div>
+                ) : null}
                 <div className="relative z-10 mt-2 flex flex-col gap-1">
                   {dayBlocks.map((block) => {
                     const blockAccent =
@@ -615,7 +689,9 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                       <Link
                         key={block.id}
                         className="rounded-lg border-2 border-dashed px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] opacity-80"
-                        href={`/spaces/${space.id}/calendar?month=${monthParam(now)}&editBlock=${block.id}`}
+                        href={buildCalendarHref(monthParam(now), {
+                          editBlock: block.id,
+                        })}
                         style={{
                           borderColor: blockAccent,
                           backgroundColor: blockSoft,
@@ -682,7 +758,16 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           })}
         </div>
       </section>
-      <PlanningSection>
+      <PlanningSection
+        actions={(
+          <Link
+            className="pill-button button-hover"
+            href={buildCalendarHref(monthParam(today))}
+          >
+            Today
+          </Link>
+        )}
+      >
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <IdeasColumn
             ideas={ideasForPlanning}
@@ -694,6 +779,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             onScheduleIdea={handleScheduleIdea}
             onAddComment={handleIdeaComment}
             onDeleteIdea={handleDeleteIdea}
+            autoOpen={autoOpenIdea}
           />
           <UpcomingPlansColumn
             plans={upcomingEvents.map((event) => ({
@@ -709,12 +795,14 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             commentCounts={eventCommentCounts}
             mapsApiKey={mapsApiKey}
             onCreatePlan={handleCreate}
+            autoOpen={autoOpenPlan}
+            todayHref={buildCalendarHref(monthParam(today))}
           />
         </div>
       </PlanningSection>
       <AvailabilityBlockModal
         isOpen={Boolean(editBlock)}
-        onCloseHref={`/spaces/${space.id}/calendar?month=${monthParam(now)}`}
+        onCloseHref={buildCalendarHref(monthParam(now))}
         onSubmit={handleUpdateBlock}
         block={
           editBlock
