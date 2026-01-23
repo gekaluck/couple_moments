@@ -1,6 +1,7 @@
 "use client";
 
-import { useOptimistic } from "react";
+import { useOptimistic, useTransition } from "react";
+import { toast } from "sonner";
 
 import { formatTimestamp } from "@/lib/formatters";
 
@@ -34,6 +35,7 @@ export default function IdeaComments({
     initialComments,
     (state, comment: Comment) => [...state, comment],
   );
+  const [isPending, startTransition] = useTransition();
 
   async function handleSubmit(formData: FormData) {
     const content = formData.get("content")?.toString().trim() ?? "";
@@ -49,7 +51,14 @@ export default function IdeaComments({
         email: currentUser.email,
       },
     });
-    await onSubmit(formData);
+    startTransition(async () => {
+      try {
+        await onSubmit(formData);
+        toast.success("Comment posted");
+      } catch {
+        toast.error("Failed to post comment");
+      }
+    });
   }
 
   return (
@@ -72,10 +81,11 @@ export default function IdeaComments({
         />
         <div className="flex justify-end">
           <button
-            className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+            className="rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
             type="submit"
+            disabled={isPending}
           >
-            Post comment
+            {isPending ? "Posting..." : "Post comment"}
           </button>
         </div>
       </form>

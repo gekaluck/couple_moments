@@ -24,6 +24,7 @@ export default function CreateIdeaModal({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [place, setPlace] = useState<PlaceSelection | null>(null);
+  const [errors, setErrors] = useState<{ title?: string }>({});
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -63,6 +64,12 @@ export default function CreateIdeaModal({
                   onSubmit={(event) => {
                     event.preventDefault();
                     const formData = new FormData(event.currentTarget);
+                    const title = formData.get("title")?.toString().trim() ?? "";
+                    if (!title) {
+                      setErrors({ title: "Please add a title." });
+                      return;
+                    }
+                    setErrors({});
                     startTransition(async () => {
                       try {
                         await onSubmit(formData);
@@ -76,11 +83,21 @@ export default function CreateIdeaModal({
                   }}
                 >
                   <input
+                    aria-describedby={errors.title ? "idea-title-error" : undefined}
+                    aria-invalid={errors.title ? "true" : "false"}
                     className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-amber-400"
                     name="title"
                     placeholder="Idea title"
                     required
                   />
+                  {errors.title ? (
+                    <p
+                      className="text-xs text-[var(--status-warning-text)]"
+                      id="idea-title-error"
+                    >
+                      {errors.title}
+                    </p>
+                  ) : null}
                   <textarea
                     className="min-h-[120px] rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-amber-400"
                     name="description"

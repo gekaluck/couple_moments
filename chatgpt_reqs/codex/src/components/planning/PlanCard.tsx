@@ -33,7 +33,7 @@ export default function PlanCard({
   return (
     <Link
       href={`/events/${id}`}
-      className="animate-fade-in-up group rounded-2xl border border-rose-200 bg-rose-50 p-5 transition-all duration-200 hover:scale-[1.02] hover:border-rose-300 hover:shadow-md"
+      className="card-hover animate-fade-in-up group rounded-2xl border border-rose-200 bg-rose-50 p-5 transition-all duration-200"
     >
       <div className="flex items-start justify-between gap-3">
         <h4 className="min-w-0 flex-1 text-base font-semibold text-rose-900 line-clamp-2 break-words overflow-hidden">{title}</h4>
@@ -61,7 +61,7 @@ export default function PlanCard({
         </div>
         {createdBy ? (
           <span className="text-xs text-[var(--text-tertiary)]">
-            by {createdBy.name || createdBy.email}
+            by <span className="font-semibold text-[var(--text-primary)]">{createdBy.name || createdBy.email}</span>
           </span>
         ) : null}
       </div>

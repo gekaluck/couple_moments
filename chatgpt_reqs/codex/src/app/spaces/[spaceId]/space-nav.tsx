@@ -38,6 +38,9 @@ function HeartIcon() {
 export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
   const pathname = usePathname();
   const items = navItems(spaceId);
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-${`${today.getDate()}`.padStart(2, "0")}`;
+  const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
 
   return (
     <nav className="site-nav sticky top-0 z-50 border-b border-[var(--border-light)] bg-white/80 backdrop-blur-md shadow-[var(--shadow-sm)]">
@@ -80,6 +83,31 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
               Log out
             </button>
           </form>
+        </div>
+      </div>
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 pb-4">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--text-tertiary)]">
+          Quick actions
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            className="button-hover rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)] shadow-sm transition hover:border-rose-200 hover:text-[var(--accent-strong)]"
+            href={`/spaces/${spaceId}/calendar?month=${monthParam}&new=${todayKey}`}
+          >
+            New event
+          </Link>
+          <Link
+            className="button-hover rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 shadow-sm transition hover:border-amber-300 hover:bg-amber-100"
+            href={`/spaces/${spaceId}/calendar?action=idea`}
+          >
+            New idea
+          </Link>
+          <Link
+            className="button-hover rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-100"
+            href={`/spaces/${spaceId}/calendar?action=plan`}
+          >
+            New plan
+          </Link>
         </div>
       </div>
     </nav>

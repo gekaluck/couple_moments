@@ -145,14 +145,15 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
 
   return (
     <>
-      <section className="surface p-6 bg-slate-50">
+      <section className="surface-muted p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-              Memories
+            <p className="section-kicker">Memories</p>
+            <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+              Revisit your highlights
             </h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Revisit past dates and highlights.
+            <p className="section-subtitle">
+              Filter by year or tag to rediscover your favorites.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -192,6 +193,35 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             </div>
           </div>
         </div>
+        {tags.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+            <button
+              className={`rounded-full border px-3 py-1 transition ${
+                tag === "all"
+                  ? "border-rose-300 bg-rose-100 text-rose-700"
+                  : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
+              }`}
+              onClick={() => setTag("all")}
+              type="button"
+            >
+              All
+            </button>
+            {tags.map((value) => (
+              <button
+                key={value}
+                className={`rounded-full border px-3 py-1 transition ${
+                  tag === value
+                    ? "border-rose-300 bg-rose-100 text-rose-700"
+                    : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
+                }`}
+                onClick={() => setTag(value)}
+                type="button"
+              >
+                {value}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
       {filtered.length === 0 ? (
         <div className="surface p-6">
@@ -206,7 +236,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           />
         </div>
       ) : null}
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <div className="stagger-children mx-auto flex max-w-4xl flex-col gap-6">
         {filtered.map((event) => {
           const gradient =
             event.tags

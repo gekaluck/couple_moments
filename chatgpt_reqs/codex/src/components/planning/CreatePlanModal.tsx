@@ -24,6 +24,7 @@ export default function CreatePlanModal({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [place, setPlace] = useState<PlaceSelection | null>(null);
+  const [errors, setErrors] = useState<{ title?: string; date?: string }>({});
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -63,6 +64,16 @@ export default function CreatePlanModal({
                   onSubmit={(event) => {
                     event.preventDefault();
                     const formData = new FormData(event.currentTarget);
+                    const title = formData.get("title")?.toString().trim() ?? "";
+                    const date = formData.get("date")?.toString().trim() ?? "";
+                    if (!title || !date) {
+                      setErrors({
+                        title: title ? undefined : "Please add a title.",
+                        date: date ? undefined : "Please choose a date.",
+                      });
+                      return;
+                    }
+                    setErrors({});
                     startTransition(async () => {
                       try {
                         await onSubmit(formData);
@@ -76,13 +87,22 @@ export default function CreatePlanModal({
                   }}
                 >
                   <input
+                    aria-describedby={errors.title ? "plan-title-error" : undefined}
+                    aria-invalid={errors.title ? "true" : "false"}
                     className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-rose-300"
                     name="title"
                     placeholder="Plan title"
                     required
                   />
+                  {errors.title ? (
+                    <p className="text-xs text-[var(--status-warning-text)]" id="plan-title-error">
+                      {errors.title}
+                    </p>
+                  ) : null}
                   <div className="grid gap-3 md:grid-cols-2">
                     <input
+                      aria-describedby={errors.date ? "plan-date-error" : undefined}
+                      aria-invalid={errors.date ? "true" : "false"}
                       className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-rose-300"
                       name="date"
                       type="date"
@@ -94,6 +114,11 @@ export default function CreatePlanModal({
                       type="time"
                     />
                   </div>
+                  {errors.date ? (
+                    <p className="text-xs text-[var(--status-warning-text)]" id="plan-date-error">
+                      {errors.date}
+                    </p>
+                  ) : null}
                   <textarea
                     className="min-h-[100px] rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-rose-300"
                     name="description"
