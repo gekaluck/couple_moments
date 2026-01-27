@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import Modal from "@/components/Modal";
@@ -44,6 +44,15 @@ export default function CalendarAddControls({
   }>({});
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const clearModalParams = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    ["new", "repeat", "action", "editBlock"].forEach((key) => params.delete(key));
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
 
   useEffect(() => {
     if (initialEventDate) {
@@ -123,6 +132,7 @@ export default function CalendarAddControls({
                 await onCreateEvent(formData);
                 toast.success(prefillData ? "Event created!" : "Event saved!");
                 setOpenPanel(null);
+                clearModalParams();
                 router.refresh();
               } catch {
                 toast.error("Failed to save event");
@@ -254,6 +264,7 @@ export default function CalendarAddControls({
                 await onCreateBlock(formData);
                 toast.success("Availability blocked!");
                 setOpenPanel(null);
+                clearModalParams();
                 router.refresh();
               } catch {
                 toast.error("Failed to block time");

@@ -47,9 +47,16 @@ export default function TagFilter({
   const styles = variantStyles[variant];
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick?.();
+        }
+      }}
       className={`tag-filter ${isActive ? styles.base : `${styles.inactive} border`} ${isActive ? "tag-filter-active" : ""}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-white/80" : "bg-current opacity-50"}`} />
@@ -57,6 +64,7 @@ export default function TagFilter({
       {onRemove && isActive && (
         <button
           type="button"
+          aria-label={`Remove ${label} filter`}
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
@@ -66,6 +74,6 @@ export default function TagFilter({
           <X className="h-3 w-3" />
         </button>
       )}
-    </button>
+    </div>
   );
 }

@@ -30,7 +30,7 @@ export default function Breadcrumbs({
         const isHome = showHome && index === 0;
 
         return (
-          <div key={item.label} className="breadcrumb-item">
+          <div key={`${item.label}-${index}`} className="breadcrumb-item">
             {index > 0 && (
               <ChevronRight
                 className="breadcrumb-separator h-4 w-4"
