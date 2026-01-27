@@ -794,7 +794,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             }))}
             commentCounts={eventCommentCounts}
             todayHref={buildCalendarHref(monthParam(today))}
-            newEventHref={`?month=${monthParam(today)}&new=${formatDateInput(today)}`}
+            newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
           />
         </div>
       </PlanningSection>

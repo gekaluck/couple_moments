@@ -96,4 +96,4 @@ normalizeTags('outdoor, food') → '["outdoor","food"]'
 - Classes: `.surface`, `.pill-button`
 
 ## Full Context
-See `PROJECT_CONTEXT.md` in repo root for complete architecture decisions, data model details, and roadmap.
+See `Architecture.md` in repo root for complete architecture decisions, data model details, and roadmap.

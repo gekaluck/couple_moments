@@ -13,9 +13,10 @@ Primary goals:
 ## System Context
 - Web client: Next.js App Router (React 19).
 - Backend: Next.js server runtime (API routes + server actions).
-- Database: PostgreSQL (Prisma with `@prisma/adapter-pg`).
+- Database: PostgreSQL (Prisma with `@prisma/adapter-pg` + `pg`).
 - External services:
   - Google Maps Places (search + place metadata).
+  - Cloudinary (photo uploads).
 
 ## High-Level Architecture
 ```
@@ -35,20 +36,20 @@ src/
   lib/                         # Data access + business helpers
 prisma/                        # Prisma schema + migrations
 scripts/                       # Dev/seed scripts
+public/                        # Static assets
 ```
 
 ### App Layer (Routes)
-- `src/app/layout.tsx`: Global layout, fonts, Toaster, and error boundary.
-- `src/app/spaces/[spaceId]/...`: Primary product surfaces (calendar, ideas,
-  notes, memories, activity, settings).
-- `src/app/events/[eventId]/...`: Event detail, comments, rating, photos.
-- `src/app/api/...`: API routes used for auth, calendar export (ICS), and
-  couple-space operations that are not handled by server actions.
+- `src/app/layout.tsx`: Global layout, fonts, Toaster.
+- `src/app/spaces/[spaceId]/...`: Primary surfaces (calendar, notes, memories,
+  activity, settings).
+- `src/app/events/[eventId]/...`: Event detail, comments, ratings, photos.
+- `src/app/api/...`: Auth, calendar export (ICS), and couple-space operations.
 
 ### Components
 UI is composed from reusable building blocks under `src/components/`:
 - UI primitives: buttons, badges, tag input, icon buttons, modals.
-- Feature modules: planning cards, onboarding tour, photo uploader.
+- Feature modules: planning cards, onboarding, photo uploader.
 - Feedback helpers: toasts, confirm dialogs, loading states.
 
 ### Data & Domain Layer
@@ -68,11 +69,11 @@ Key entities (see `prisma/schema.prisma`):
 Indexes are added on high-traffic fields to support list views.
 
 ## Auth & Sessions
-- Login/Register: API routes create a session token stored in-memory (Map).
+- Login/Register: API routes create a session token stored in `Session` table.
 - Session token stored in HTTP-only cookie `cm_session`.
-- Middleware-style checks use `requireUserId()` (server-side) to enforce auth.
-- Logout deletes the session from memory and clears the cookie.
-- **Note:** Sessions are lost on server restart - migrate to Redis/DB for production.
+- Server-side checks use `requireUserId()` to enforce auth.
+- Logout deletes the session row and clears the cookie.
+- Expired sessions are cleaned up on read; add a scheduled cleanup if needed.
 
 ## Core Flows
 
@@ -90,10 +91,14 @@ Indexes are added on high-traffic fields to support list views.
 1) Notes page uses server actions for create/delete.
 2) Activity and notes list views are server-rendered.
 
+### Photo Uploads
+1) Client uploads to Cloudinary with unsigned preset.
+2) App stores the resulting URL in `Photo`.
+
 ## Integrations
 - Google Maps Places: `PlaceSearch` client component uses public API key.
 - Calendar export: `/api/spaces/[spaceId]/calendar.ics` generates ICS content.
-- Photo uploads: Schema exists but upload routes not yet implemented.
+- Cloudinary uploads: `PhotoUploader` posts to Cloudinary and stores URLs.
 
 ## UI/UX Architecture
 - Tailwind CSS + CSS variables in `globals.css` for tokens.
@@ -114,18 +119,17 @@ npm run dev
 Required environment variables:
 ```
 DATABASE_URL=postgresql://...
-SESSION_SECRET=...
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=...
 ```
 
 ## Operational Notes
 - Session cleanup for expired sessions should be scheduled if needed.
 - Large data sets may require further indexing or pagination.
-- UI uses optimistic updates in comments for perceived latency reduction.
+- Cloudinary uploads rely on unsigned presets; lock them down to your domain.
 
 ## Known Risks / TODO
-- Sessions in-memory: Lost on restart, needs Redis/DB for production.
-- Photo uploads: Schema exists, routes not implemented.
-- Email notifications: Schema exists, no cron/worker implemented.
 - Add automated tests for auth and server actions.
-- Consider rate limiting for critical actions.
+- Implement email reminders (schema exists, job not implemented).
+- Consider rate limiting and audit logging for critical actions.
