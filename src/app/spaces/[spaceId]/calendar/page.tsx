@@ -246,13 +246,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const note = formData.get("note")?.toString().trim() ?? "";
 
     if (!blockId || !title || !start || !end) {
-      redirect(`/spaces/${spaceIdForActions}/calendar`);
+      return;
     }
 
     const startAt = new Date(`${start}T00:00:00`);
     const endAt = new Date(`${end}T23:59:59`);
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-      redirect(`/spaces/${spaceIdForActions}/calendar`);
+      return;
     }
 
     await updateAvailabilityBlock(blockId, currentUserId, {
@@ -262,7 +262,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       endAt,
     });
 
-    redirect(`/spaces/${spaceIdForActions}/calendar`);
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleCreateIdea(formData: FormData) {
