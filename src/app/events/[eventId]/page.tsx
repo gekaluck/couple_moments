@@ -221,7 +221,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     "use server";
     const currentUserId = await requireUserId();
     await deleteEvent(eventIdForActions, currentUserId);
-    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
+    redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleComment(formData: FormData) {
