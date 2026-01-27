@@ -3,11 +3,12 @@ export type CalendarDay = {
   isCurrentMonth: boolean;
 };
 
-export function getMonthGrid(date: Date) {
+export function getMonthGrid(date: Date, weekStartsOn: 0 | 1 = 0) {
   const year = date.getFullYear();
   const month = date.getMonth();
   const firstOfMonth = new Date(year, month, 1);
-  const startOffset = firstOfMonth.getDay();
+  // Calculate offset based on week start (0 = Sunday, 1 = Monday)
+  const startOffset = (firstOfMonth.getDay() - weekStartsOn + 7) % 7;
   const startDate = new Date(year, month, 1 - startOffset);
 
   const days: CalendarDay[] = [];
