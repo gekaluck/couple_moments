@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
-import { dateKey, formatMonthTitle, getMonthGrid } from "@/lib/calendar";
+import {
+  dateKey,
+  formatEventTime,
+  formatMonthTitle,
+  getMonthGrid,
+} from "@/lib/calendar";
 import {
   createAvailabilityBlock,
   listAvailabilityBlocks,
@@ -31,6 +37,7 @@ import IdeasColumn from "@/components/planning/IdeasColumn";
 import UpcomingPlansColumn from "@/components/planning/UpcomingPlansColumn";
 import AvailabilityBlockModal from "./availability-block-modal";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
+import EventBubble from "./event-bubble";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -45,6 +52,16 @@ type PageProps = {
 };
 
 export default async function CalendarPage({ params, searchParams }: PageProps) {
+  const cookieStore = await cookies();
+  const calendarWeekStart =
+    cookieStore.get("cm_calendar_week_start")?.value === "monday"
+      ? "monday"
+      : "sunday";
+  const weekStartsOn = calendarWeekStart === "monday" ? 1 : 0;
+  const calendarTimeFormat =
+    cookieStore.get("cm_calendar_time_format")?.value === "12h"
+      ? "12h"
+      : "24h";
   const userId = await requireUserId();
   const { spaceId } = await params;
   const search = (await searchParams) ?? {};
@@ -396,10 +413,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
-  const monthDays = getMonthGrid(now);
+  const monthDays = getMonthGrid(now, weekStartsOn);
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const today = new Date();
+  const dayLabels = calendarWeekStart === "monday"
+    ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const nowLabel = today.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -613,7 +633,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
         </div>
         <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          {dayLabels.map((day) => (
             <div key={day} className="px-2 py-1">
               {day}
             </div>
@@ -729,22 +749,18 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                   })}
                   {visibleEvents.map((event) => {
                     const eventIsPast = event.dateTimeStart < today;
+                    const eventTime =
+                      event.timeIsSet && event.dateTimeStart
+                        ? formatEventTime(event.dateTimeStart, calendarTimeFormat)
+                        : null;
                     return (
-                      <Link
+                      <EventBubble
                         key={event.id}
-                        className={`rounded-lg border px-2 py-1 text-xs transition hover:scale-[1.01] hover:shadow-md ${
-                          eventIsPast
-                            ? "border-slate-300 bg-slate-50 text-slate-600 hover:border-slate-400"
-                            : "border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300"
-                        }`}
                         href={`/events/${event.id}`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="truncate text-[13px] font-semibold">
-                            {event.title}
-                          </div>
-                        </div>
-                      </Link>
+                        title={event.title}
+                        timeLabel={eventTime}
+                        isPast={eventIsPast}
+                      />
                     );
                   })}
                   {overflowCount > 0 ? (

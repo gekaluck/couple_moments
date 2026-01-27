@@ -188,12 +188,12 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     const placeUrl = formData.get("placeUrl")?.toString() || null;
 
     if (!title || !date) {
-      redirect(`/events/${eventIdForActions}`);
+      return;
     }
 
     const dateTimeStart = new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
-      redirect(`/events/${eventIdForActions}`);
+      return;
     }
 
     await updateEvent(eventIdForActions, currentUserId, {
@@ -213,14 +213,15 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       placeUrl,
     });
 
-    redirect(`/events/${eventIdForActions}`);
+    revalidatePath(`/events/${eventIdForActions}`);
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleDelete() {
     "use server";
     const currentUserId = await requireUserId();
     await deleteEvent(eventIdForActions, currentUserId);
-    redirect(`/spaces/${spaceIdForActions}/calendar`);
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleComment(formData: FormData) {

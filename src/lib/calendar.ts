@@ -36,3 +36,14 @@ export function dateKey(date: Date) {
   const day = `${date.getDate()}`.padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+export function formatEventTime(
+  date: Date,
+  format: "24h" | "12h" = "24h",
+) {
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: format === "12h",
+  });
+}
