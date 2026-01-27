@@ -114,18 +114,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
   const hasMore = notes.length > pageSize;
   const pageNotes = hasMore ? notes.slice(0, pageSize) : notes;
   const hasNextPage = page < totalPages;
-  const buildNotesHref = (toast?: string) => {
-    const params = new URLSearchParams();
-    params.set("type", filter);
-    if (query) {
-      params.set("q", query);
-    }
-    params.set("page", `${page}`);
-    if (toast) {
-      params.set("toast", toast);
-    }
-    return `/spaces/${spaceIdForActions}/notes?${params.toString()}`;
-  };
+  const notesBaseHref = `/spaces/${spaceIdForActions}/notes`;
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -133,7 +122,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
     const content = formData.get("content")?.toString().trim() ?? "";
 
     if (!content) {
-      redirect(buildNotesHref());
+      redirect(notesBaseHref);
     }
 
     await createNoteForSpace({
@@ -142,7 +131,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
       body: content,
       kind: "MANUAL",
     });
-    redirect(buildNotesHref("note-added"));
+    redirect(`${notesBaseHref}?toast=note-added`);
   }
 
   async function handleDelete(formData: FormData) {
@@ -150,10 +139,10 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
     const currentUserId = await requireUserId();
     const noteId = formData.get("noteId")?.toString();
     if (!noteId) {
-      redirect(buildNotesHref());
+      redirect(notesBaseHref);
     }
     await deleteNote(noteId, currentUserId);
-    redirect(buildNotesHref("note-deleted"));
+    redirect(`${notesBaseHref}?toast=note-deleted`);
   }
 
   return (

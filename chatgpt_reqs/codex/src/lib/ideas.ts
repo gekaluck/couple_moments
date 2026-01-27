@@ -167,6 +167,14 @@ export async function updateIdea(
 }
 
 export async function deleteIdea(ideaId: string, userId: string) {
+  // Delete associated comments first
+  await prisma.note.deleteMany({
+    where: {
+      parentType: "IDEA",
+      parentId: ideaId,
+    },
+  });
+
   const idea = await prisma.idea.delete({
     where: { id: ideaId },
   });

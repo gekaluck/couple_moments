@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import TodayBadge from "@/components/ui/TodayBadge";
 
 type NavItem = {
   id: string;
@@ -76,42 +75,28 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
               </Link>
             );
           })}
+          <span className="mx-1 h-6 w-px bg-[var(--border-medium)]" />
+          <Link
+            className="rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm transition hover:border-rose-300 hover:text-rose-600"
+            href={`/spaces/${spaceId}/calendar?month=${monthParam}&new=${todayKey}`}
+          >
+            + Event
+          </Link>
+          <Link
+            className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 shadow-sm transition hover:border-amber-300 hover:bg-amber-100"
+            href={`/spaces/${spaceId}/calendar?action=idea`}
+          >
+            + Idea
+          </Link>
+          <span className="mx-1 h-6 w-px bg-[var(--border-medium)]" />
           <form action="/api/auth/logout" method="post">
             <button
-              className="ml-2 rounded-full border border-[var(--border-medium)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)]"
+              className="rounded-full border border-[var(--border-medium)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)]"
               type="submit"
             >
               Log out
             </button>
           </form>
-        </div>
-      </div>
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 pb-4">
-        <div className="flex items-center gap-3">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--text-tertiary)]">
-            Quick actions
-          </span>
-          <TodayBadge href={`/spaces/${spaceId}/calendar?month=${monthParam}`} />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            className="button-hover rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-primary)] shadow-sm transition hover:border-rose-200 hover:text-[var(--accent-strong)]"
-            href={`/spaces/${spaceId}/calendar?month=${monthParam}&new=${todayKey}`}
-          >
-            New event
-          </Link>
-          <Link
-            className="button-hover rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 shadow-sm transition hover:border-amber-300 hover:bg-amber-100"
-            href={`/spaces/${spaceId}/calendar?action=idea`}
-          >
-            New idea
-          </Link>
-          <Link
-            className="button-hover rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-100"
-            href={`/spaces/${spaceId}/calendar?action=plan`}
-          >
-            New plan
-          </Link>
         </div>
       </div>
     </nav>

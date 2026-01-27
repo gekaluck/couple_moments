@@ -15,7 +15,6 @@ import IconButton from "@/components/ui/IconButton";
 import TagBadge from "@/components/ui/TagBadge";
 import ConfirmForm from "@/components/ConfirmForm";
 import PhotoUploader from "@/components/photos/PhotoUploader";
-import Breadcrumbs from "@/components/ui/Breadcrumbs";
 
 const PencilIcon = () => (
   <svg
@@ -310,18 +309,15 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       <header className="border-b border-[var(--panel-border)] bg-white/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-6">
           <div>
-            <Breadcrumbs
-              items={[
-                { label: isFromMemories ? "Memories" : "Calendar", href: backHref },
-                { label: event.title },
-              ]}
-            />
-            <h1 className="mt-2 text-3xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-              Event details
+            <p className="text-xs font-medium text-[var(--text-tertiary)]">
+              {isFromMemories ? "Memories" : "Calendar"} / Event
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+              {event.title}
             </h1>
           </div>
           <Link
-            className="text-sm text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+            className="rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm transition hover:border-rose-300 hover:text-rose-600"
             href={backHref}
           >
             {isFromMemories ? "Back to memories" : "Back to calendar"}

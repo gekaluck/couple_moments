@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
@@ -59,7 +60,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const repeatEventId = search.repeat ?? null;
   const openAction = search.action ?? "";
   const autoOpenIdea = openAction === "idea";
-  const autoOpenPlan = openAction === "plan";
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     redirect("/spaces/onboarding");
@@ -390,10 +390,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const currentUserId = await requireUserId();
     const ideaId = formData.get("ideaId")?.toString();
     if (!ideaId) {
-      redirect(`/spaces/${spaceIdForActions}/calendar`);
+      return;
     }
     await deleteIdea(ideaId, currentUserId);
-    redirect(`/spaces/${spaceIdForActions}/calendar`);
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   const monthDays = getMonthGrid(now);
@@ -793,10 +793,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                 : undefined,
             }))}
             commentCounts={eventCommentCounts}
-            mapsApiKey={mapsApiKey}
-            onCreatePlan={handleCreate}
-            autoOpen={autoOpenPlan}
             todayHref={buildCalendarHref(monthParam(today))}
+            newEventHref={`?month=${monthParam(today)}&new=${formatDateInput(today)}`}
           />
         </div>
       </PlanningSection>
