@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
@@ -13,6 +14,15 @@ type PageProps = {
 };
 
 export default async function SettingsPage({ params }: PageProps) {
+  const cookieStore = await cookies();
+  const calendarWeekStart =
+    cookieStore.get("cm_calendar_week_start")?.value === "monday"
+      ? "monday"
+      : "sunday";
+  const calendarTimeFormat =
+    cookieStore.get("cm_calendar_time_format")?.value === "12h"
+      ? "12h"
+      : "24h";
   const userId = await requireUserId();
   const { spaceId } = await params;
   const space = await getCoupleSpaceForUser(spaceId, userId);
@@ -31,6 +41,36 @@ export default async function SettingsPage({ params }: PageProps) {
     where: { id: userId },
     select: { name: true, email: true },
   });
+
+  async function handleCalendarWeekStart(formData: FormData) {
+    "use server";
+    const value = formData.get("weekStart")?.toString();
+    if (value !== "monday" && value !== "sunday") {
+      return;
+    }
+    const nextCookies = await cookies();
+    nextCookies.set("cm_calendar_week_start", value, {
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+    redirect(`/spaces/${space.id}/settings`);
+  }
+
+  async function handleCalendarTimeFormat(formData: FormData) {
+    "use server";
+    const value = formData.get("timeFormat")?.toString();
+    if (value !== "12h" && value !== "24h") {
+      return;
+    }
+    const nextCookies = await cookies();
+    nextCookies.set("cm_calendar_time_format", value, {
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+    redirect(`/spaces/${space.id}/settings`);
+  }
 
   return (
     <>
@@ -165,6 +205,76 @@ export default async function SettingsPage({ params }: PageProps) {
             </span>
           </div>
         </div>
+      </section>
+
+      <section className="surface p-6">
+        <h3 className="text-base font-semibold text-[var(--text-primary)]">
+          Calendar Preferences
+        </h3>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Choose which day your calendar weeks start on.
+        </p>
+        <form
+          action={handleCalendarWeekStart}
+          className="mt-4 flex flex-wrap items-center gap-3"
+        >
+          <label className="flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/80 px-4 py-2 text-sm">
+            <input
+              type="radio"
+              name="weekStart"
+              value="sunday"
+              defaultChecked={calendarWeekStart === "sunday"}
+            />
+            Sunday
+          </label>
+          <label className="flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/80 px-4 py-2 text-sm">
+            <input
+              type="radio"
+              name="weekStart"
+              value="monday"
+              defaultChecked={calendarWeekStart === "monday"}
+            />
+            Monday
+          </label>
+          <button
+            type="submit"
+            className="pill-button button-hover text-xs font-semibold"
+          >
+            Save
+          </button>
+        </form>
+        <p className="mt-6 text-sm text-[var(--text-muted)]">
+          Pick your preferred time format for calendar events.
+        </p>
+        <form
+          action={handleCalendarTimeFormat}
+          className="mt-3 flex flex-wrap items-center gap-3"
+        >
+          <label className="flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/80 px-4 py-2 text-sm">
+            <input
+              type="radio"
+              name="timeFormat"
+              value="24h"
+              defaultChecked={calendarTimeFormat === "24h"}
+            />
+            24-hour (19:00)
+          </label>
+          <label className="flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/80 px-4 py-2 text-sm">
+            <input
+              type="radio"
+              name="timeFormat"
+              value="12h"
+              defaultChecked={calendarTimeFormat === "12h"}
+            />
+            12-hour (7 PM)
+          </label>
+          <button
+            type="submit"
+            className="pill-button button-hover text-xs font-semibold"
+          >
+            Save
+          </button>
+        </form>
       </section>
 
       <OnboardingSettings spaceId={space.id} />
