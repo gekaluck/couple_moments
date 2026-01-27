@@ -16,7 +16,6 @@ Primary goals:
 - Database: PostgreSQL (Prisma with `@prisma/adapter-pg`).
 - External services:
   - Google Maps Places (search + place metadata).
-  - Cloudinary (photo uploads).
 
 ## High-Level Architecture
 ```
@@ -69,10 +68,11 @@ Key entities (see `prisma/schema.prisma`):
 Indexes are added on high-traffic fields to support list views.
 
 ## Auth & Sessions
-- Login/Register: API routes create a session token stored in DB.
+- Login/Register: API routes create a session token stored in-memory (Map).
 - Session token stored in HTTP-only cookie `cm_session`.
 - Middleware-style checks use `requireUserId()` (server-side) to enforce auth.
-- Logout deletes the session record and clears the cookie.
+- Logout deletes the session from memory and clears the cookie.
+- **Note:** Sessions are lost on server restart - migrate to Redis/DB for production.
 
 ## Core Flows
 
@@ -92,8 +92,8 @@ Indexes are added on high-traffic fields to support list views.
 
 ## Integrations
 - Google Maps Places: `PlaceSearch` client component uses public API key.
-- Cloudinary uploads: `PhotoUploader` uses upload preset and cloud name.
 - Calendar export: `/api/spaces/[spaceId]/calendar.ics` generates ICS content.
+- Photo uploads: Schema exists but upload routes not yet implemented.
 
 ## UI/UX Architecture
 - Tailwind CSS + CSS variables in `globals.css` for tokens.
@@ -116,8 +116,6 @@ Required environment variables:
 DATABASE_URL=postgresql://...
 SESSION_SECRET=...
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=...
 ```
 
 ## Operational Notes
@@ -126,6 +124,8 @@ NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=...
 - UI uses optimistic updates in comments for perceived latency reduction.
 
 ## Known Risks / TODO
+- Sessions in-memory: Lost on restart, needs Redis/DB for production.
+- Photo uploads: Schema exists, routes not implemented.
+- Email notifications: Schema exists, no cron/worker implemented.
 - Add automated tests for auth and server actions.
-- Centralize icon usage for consistency.
-- Consider rate limiting and audit logging for critical actions.
+- Consider rate limiting for critical actions.
