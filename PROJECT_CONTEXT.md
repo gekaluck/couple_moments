@@ -1,8 +1,7 @@
 # Couple Moments - Project Context Document
 
-**Last Updated:** January 20, 2026  
-**Project Name:** Couple Moments (codename: `date_mvp`)  
-**Primary Folder:** `chatgpt_reqs/codex/`
+**Last Updated:** January 27, 2026
+**Project Name:** Couple Moments (codename: `date_mvp`)
 
 ---
 
@@ -725,7 +724,6 @@ Budget Tracking
 
 ### 1. **Clone and Install**
 ```bash
-cd chatgpt_reqs/codex
 npm install
 ```
 
