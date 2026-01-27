@@ -6,6 +6,7 @@ import Modal from "@/components/Modal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import TagBadge from "@/components/ui/TagBadge";
 
 import { formatTimeAgo, getInitials } from "@/lib/formatters";
 
@@ -42,9 +43,8 @@ type IdeaCardProps = {
   onSchedule: (formData: FormData) => Promise<void>;
   onAddComment: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
+  onTagClick?: (tag: string) => void;
 };
-
-const TAG_GRADIENT = "from-amber-400 to-orange-500";
 
 export default function IdeaCard({
   idea,
@@ -54,6 +54,7 @@ export default function IdeaCard({
   onSchedule,
   onAddComment,
   onDelete,
+  onTagClick,
 }: IdeaCardProps) {
   const router = useRouter();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -81,7 +82,7 @@ export default function IdeaCard({
   return (
     <div
       id={`idea-${idea.id}`}
-      className={`animate-fade-in-up rounded-2xl border border-amber-200 bg-amber-50 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md ${hasOpenModal ? "relative z-50" : ""}`}
+      className={`card-hover animate-fade-in-up rounded-2xl border border-amber-200 bg-amber-50 p-5 transition-all duration-200 ${hasOpenModal ? "relative z-50" : ""}`}
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 flex-1">
@@ -114,18 +115,22 @@ export default function IdeaCard({
           {idea.tags.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {idea.tags.map((tag) => (
-                <span
+                <button
                   key={tag}
-                  className={`inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${TAG_GRADIENT} px-3 py-1 text-xs font-medium text-white shadow-[var(--shadow-sm)]`}
+                  className="tag-interactive inline-flex items-center"
+                  onClick={() => onTagClick?.(tag)}
+                  type="button"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                  {tag}
-                </span>
+                  <TagBadge label={tag} />
+                </button>
               ))}
             </div>
           ) : null}
           <p className="mt-3 text-xs text-[var(--text-tertiary)]">
-            Created by {idea.createdBy.name || idea.createdBy.email}
+            Created {formatTimeAgo(idea.createdAt)} by{" "}
+            <span className="font-semibold text-[var(--text-primary)]">
+              {idea.createdBy.name || idea.createdBy.email}
+            </span>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

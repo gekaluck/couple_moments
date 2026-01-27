@@ -38,6 +38,9 @@ function HeartIcon() {
 export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
   const pathname = usePathname();
   const items = navItems(spaceId);
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-${`${today.getDate()}`.padStart(2, "0")}`;
+  const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
 
   return (
     <nav className="site-nav sticky top-0 z-50 border-b border-[var(--border-light)] bg-white/80 backdrop-blur-md shadow-[var(--shadow-sm)]">
@@ -72,9 +75,23 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
               </Link>
             );
           })}
+          <span className="mx-1 h-6 w-px bg-[var(--border-medium)]" />
+          <Link
+            className="rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm transition hover:border-rose-300 hover:text-rose-600"
+            href={`/spaces/${spaceId}/calendar?month=${monthParam}&new=${todayKey}`}
+          >
+            + Event
+          </Link>
+          <Link
+            className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 shadow-sm transition hover:border-amber-300 hover:bg-amber-100"
+            href={`/spaces/${spaceId}/calendar?action=idea`}
+          >
+            + Idea
+          </Link>
+          <span className="mx-1 h-6 w-px bg-[var(--border-medium)]" />
           <form action="/api/auth/logout" method="post">
             <button
-              className="ml-2 rounded-full border border-[var(--border-medium)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)]"
+              className="rounded-full border border-[var(--border-medium)] px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)]"
               type="submit"
             >
               Log out

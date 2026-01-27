@@ -122,11 +122,12 @@ export default async function ActivityPage({ params }: PageProps) {
 
   return (
     <>
-      <section className="surface p-6">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+      <section className="surface-muted p-6">
+        <p className="section-kicker">Activity</p>
+        <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
           Activity feed
         </h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
+        <p className="section-subtitle">
           Every meaningful action across your Couple Space.
         </p>
       </section>
@@ -141,7 +142,7 @@ export default async function ActivityPage({ params }: PageProps) {
           </div>
         ) : null}
         {groupedEntries.map(([key, entries]) => (
-          <div key={key} className="flex flex-col gap-3">
+          <div key={key} className="stagger-children flex flex-col gap-3">
             <div className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-tertiary)]">
               {formatDayHeading(entries[0].createdAt)}
             </div>

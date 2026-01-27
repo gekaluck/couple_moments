@@ -6,6 +6,7 @@ import { getInitials } from "@/lib/formatters";
 import { prisma } from "@/lib/prisma";
 
 import InviteCard from "./invite-card";
+import OnboardingSettings from "./onboarding-settings";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -165,6 +166,8 @@ export default async function SettingsPage({ params }: PageProps) {
           </div>
         </div>
       </section>
+
+      <OnboardingSettings spaceId={space.id} />
     </>
   );
 }

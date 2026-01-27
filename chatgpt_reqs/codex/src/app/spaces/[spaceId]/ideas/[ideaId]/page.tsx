@@ -96,9 +96,16 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <Link className="pill-button" href={`/spaces/${space.id}/ideas`}>
-          Back to ideas
-        </Link>
+        <nav className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+          <Link
+            className="transition hover:text-[var(--accent-strong)]"
+            href={`/spaces/${space.id}/ideas`}
+          >
+            Ideas
+          </Link>
+          <span>/</span>
+          <span>Details</span>
+        </nav>
         <h1 className="text-3xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
           {idea.title}
         </h1>

@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Calendar } from "lucide-react";
+import Link from "next/link";
 
 import EmptyState from "./EmptyState";
 import PlanCard from "./PlanCard";
-import CreatePlanModal from "./CreatePlanModal";
 
 type Plan = {
   id: string;
@@ -19,17 +19,16 @@ type Plan = {
 type UpcomingPlansColumnProps = {
   plans: Plan[];
   commentCounts: Record<string, number>;
-  mapsApiKey?: string;
-  onCreatePlan: (formData: FormData) => Promise<void>;
+  todayHref?: string;
+  newEventHref?: string;
 };
 
 export default function UpcomingPlansColumn({
   plans,
   commentCounts,
-  mapsApiKey,
-  onCreatePlan,
+  todayHref,
+  newEventHref,
 }: UpcomingPlansColumnProps) {
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
   const visiblePlans = plans.slice(0, visibleCount);
   const hasMore = plans.length > visibleCount;
@@ -50,24 +49,33 @@ export default function UpcomingPlansColumn({
             </p>
           </div>
         </div>
-        <button
-          className="button-hover rounded-full bg-rose-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-rose-600 hover:shadow-[var(--shadow-lg)]"
-          onClick={() => setIsCreateOpen(true)}
-          type="button"
-        >
-          Create plan
-        </button>
+        <div className="flex items-center gap-2">
+          {todayHref ? (
+            <Link
+              className="rounded-full border border-rose-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 transition hover:bg-rose-50"
+              href={todayHref}
+            >
+              Today
+            </Link>
+          ) : null}
+          {newEventHref ? (
+            <Link
+              className="button-hover rounded-full bg-rose-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-rose-600 hover:shadow-[var(--shadow-lg)]"
+              href={newEventHref}
+            >
+              New event
+            </Link>
+          ) : null}
+        </div>
       </div>
       {plans.length === 0 ? (
         <EmptyState
           icon={<Calendar className="h-8 w-8 text-rose-500" />}
-          title="No plans yet"
-          description="Start planning your next adventure!"
-          actionLabel="Create plan"
-          onAction={() => setIsCreateOpen(true)}
+          title="No upcoming plans"
+          description="Create an event from the calendar to start planning!"
         />
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="stagger-children flex flex-col gap-4">
           {visiblePlans.map((plan) => (
             <PlanCard
               key={plan.id}
@@ -91,12 +99,6 @@ export default function UpcomingPlansColumn({
           ) : null}
         </div>
       )}
-      <CreatePlanModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        onSubmit={onCreatePlan}
-        mapsApiKey={mapsApiKey}
-      />
     </div>
   );
 }
