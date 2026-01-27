@@ -1,6 +1,7 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 type ModalProps = {
   isOpen: boolean;
@@ -10,6 +11,12 @@ type ModalProps = {
 };
 
 export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -28,11 +35,11 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) {
+  if (!isOpen || !mounted) {
     return null;
   }
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-6">
       <button
         aria-label="Close modal"
@@ -59,4 +66,6 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
