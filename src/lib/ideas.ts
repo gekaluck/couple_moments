@@ -80,6 +80,7 @@ export async function createIdeaForSpace(
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: spaceId,
     entityType: "IDEA",
     entityId: idea.id,
     userId,
@@ -156,6 +157,7 @@ export async function updateIdea(
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: idea.coupleSpaceId,
     entityType: "IDEA",
     entityId: idea.id,
     userId,
@@ -180,6 +182,7 @@ export async function deleteIdea(ideaId: string, userId: string) {
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: idea.coupleSpaceId,
     entityType: "IDEA",
     entityId: idea.id,
     userId,
@@ -239,6 +242,7 @@ export async function createIdeaComment(
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: idea.coupleSpaceId,
     entityType: "IDEA",
     entityId: ideaId,
     userId,

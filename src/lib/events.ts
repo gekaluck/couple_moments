@@ -153,6 +153,7 @@ export async function createEventForSpace(
       });
 
       await createChangeLogEntry({
+        coupleSpaceId: spaceId,
         entityType: "IDEA",
         entityId: input.linkedIdeaId,
         userId,
@@ -163,6 +164,7 @@ export async function createEventForSpace(
   }
 
   await createChangeLogEntry({
+    coupleSpaceId: spaceId,
     entityType: "EVENT",
     entityId: event.id,
     userId,
@@ -247,6 +249,7 @@ export async function updateEvent(
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: event.coupleSpaceId,
     entityType: "EVENT",
     entityId: event.id,
     userId,
@@ -258,11 +261,20 @@ export async function updateEvent(
 }
 
 export async function deleteEvent(eventId: string, userId: string) {
+  // Delete associated comments first
+  await prisma.note.deleteMany({
+    where: {
+      parentType: "EVENT",
+      parentId: eventId,
+    },
+  });
+
   const event = await prisma.event.delete({
     where: { id: eventId },
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: event.coupleSpaceId,
     entityType: "EVENT",
     entityId: event.id,
     userId,
@@ -349,6 +361,7 @@ export async function createEventComment(
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: event.coupleSpaceId,
     entityType: "EVENT",
     entityId: eventId,
     userId,
@@ -439,6 +452,7 @@ export async function updateEventRating(
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: event.coupleSpaceId,
     entityType: "EVENT",
     entityId: eventId,
     userId,

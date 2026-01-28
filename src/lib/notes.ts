@@ -78,6 +78,7 @@ export async function createNoteForSpace(params: {
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: params.spaceId,
     entityType: "NOTE",
     entityId: note.id,
     userId: params.userId,
@@ -94,6 +95,7 @@ export async function deleteNote(noteId: string, userId: string) {
   });
 
   await createChangeLogEntry({
+    coupleSpaceId: note.coupleSpaceId,
     entityType: "NOTE",
     entityId: note.id,
     userId,
