@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createChangeLogEntry } from "@/lib/change-log";
 import { createNoteForSpace } from "@/lib/notes";
 import { serializeTags } from "@/lib/tags";
+import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 
 type IdeaStatus = "NEW" | "PLANNED" | "DONE";
 
@@ -59,6 +60,9 @@ export async function createIdeaForSpace(
   userId: string,
   input: IdeaInput,
 ) {
+  const space = await getCoupleSpaceForUser(spaceId, userId);
+  if (!space) throw new Error("Not authorized");
+
   const idea = await prisma.idea.create({
     data: {
       coupleSpaceId: spaceId,
@@ -110,6 +114,14 @@ export async function updateIdea(
     placePhotoUrls: string[] | null;
   }>,
 ) {
+  const existing = await prisma.idea.findFirst({
+    where: {
+      id: ideaId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
+  });
+  if (!existing) throw new Error("Idea not found");
+
   const data: Record<string, unknown> = {};
   if (updates.title !== undefined) {
     data.title = updates.title.trim();
@@ -169,6 +181,14 @@ export async function updateIdea(
 }
 
 export async function deleteIdea(ideaId: string, userId: string) {
+  const existing = await prisma.idea.findFirst({
+    where: {
+      id: ideaId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
+  });
+  if (!existing) throw new Error("Idea not found");
+
   // Delete associated comments first
   await prisma.note.deleteMany({
     where: {
@@ -225,8 +245,11 @@ export async function createIdeaComment(
   userId: string,
   content: string,
 ) {
-  const idea = await prisma.idea.findUnique({
-    where: { id: ideaId },
+  const idea = await prisma.idea.findFirst({
+    where: {
+      id: ideaId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
   });
   if (!idea) {
     return null;

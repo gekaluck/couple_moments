@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createChangeLogEntry } from "@/lib/change-log";
+import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 
 type NoteKind = "MANUAL" | "EVENT_COMMENT" | "IDEA_COMMENT";
 type NoteParentType = "EVENT" | "IDEA";
@@ -65,6 +66,9 @@ export async function createNoteForSpace(params: {
   parentId?: string | null;
   replyToNoteId?: string | null;
 }) {
+  const space = await getCoupleSpaceForUser(params.spaceId, params.userId);
+  if (!space) throw new Error("Not authorized");
+
   const note = await prisma.note.create({
     data: {
       coupleSpaceId: params.spaceId,
@@ -90,6 +94,15 @@ export async function createNoteForSpace(params: {
 }
 
 export async function deleteNote(noteId: string, userId: string) {
+  const existing = await prisma.note.findFirst({
+    where: {
+      id: noteId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
+  });
+  if (!existing) throw new Error("Note not found");
+  if (existing.authorUserId !== userId) throw new Error("Not authorized");
+
   const note = await prisma.note.delete({
     where: { id: noteId },
   });
@@ -111,6 +124,14 @@ export async function toggleNoteReaction(
   userId: string,
   emoji: string,
 ) {
+  const note = await prisma.note.findFirst({
+    where: {
+      id: noteId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
+  });
+  if (!note) throw new Error("Note not found");
+
   const existing = await prisma.reaction.findFirst({
     where: {
       targetType: "NOTE",
