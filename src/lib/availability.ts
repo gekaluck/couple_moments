@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 
 export async function listAvailabilityBlocks(params: {
   spaceId: string;
@@ -31,6 +32,9 @@ export async function createAvailabilityBlock(
     endAt: Date;
   },
 ) {
+  const space = await getCoupleSpaceForUser(spaceId, userId);
+  if (!space) throw new Error("Not authorized");
+
   return prisma.availabilityBlock.create({
     data: {
       coupleSpaceId: spaceId,

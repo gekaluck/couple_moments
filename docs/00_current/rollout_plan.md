@@ -8,13 +8,12 @@
 ## Current Milestone (checklist)
 These are correctness and security issues that will cause real problems with the first users.
 
-### P0-1. Add authorization checks to all mutation functions
+### ~~P0-1. Add authorization checks to all mutation functions~~ ✓ Done
 
 **Sources:** Architecture (P0 #2), Code (Critical #1), Product (3d)
+**Completed:** 2026-01-30 — [ADR-2026-01-30-mutation-auth-checks.md](../20_adrs/ADR-2026-01-30-mutation-auth-checks.md)
 
-`updateEvent()`, `deleteEvent()`, `updateIdea()`, `deleteIdea()`, `createIdeaComment()`, and `deleteNote()` trust that callers verified membership. Make each function self-contained: accept `userId`, verify space membership before executing. The read functions (`getEventForUser`, `getIdeaForUser`) already do this — mutations must match.
-
-For `deleteNote()` specifically, also enforce author-only deletion: verify `userId === note.authorUserId`. This resolves the product rule gap (can one partner delete the other's comments?) with the expected default: no.
+13 mutation functions across 4 files (`notes.ts`, `events.ts`, `ideas.ts`, `availability.ts`) now verify space membership before executing writes. `deleteNote()` additionally enforces author-only deletion. `deleteEvent()` and `deleteIdea()` check membership before deleting child notes to prevent unauthorized data destruction. No function signatures changed.
 
 ### P0-2. Revert idea status when its linked event is deleted
 

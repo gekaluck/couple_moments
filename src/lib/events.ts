@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createChangeLogEntry } from "@/lib/change-log";
 import { createNoteForSpace } from "@/lib/notes";
 import { serializeTags } from "@/lib/tags";
+import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 
 type EventInput = {
   title: string;
@@ -96,6 +97,9 @@ export async function createEventForSpace(
   userId: string,
   input: EventInput,
 ) {
+  const space = await getCoupleSpaceForUser(spaceId, userId);
+  if (!space) throw new Error("Not authorized");
+
   const event = await prisma.event.create({
     data: {
       coupleSpaceId: spaceId,
@@ -196,6 +200,14 @@ export async function updateEvent(
     placePhotoUrls: string[] | null;
   }>,
 ) {
+  const existing = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
+  });
+  if (!existing) throw new Error("Event not found");
+
   const data: Record<string, unknown> = {};
   if (updates.title !== undefined) {
     data.title = updates.title.trim();
@@ -261,6 +273,14 @@ export async function updateEvent(
 }
 
 export async function deleteEvent(eventId: string, userId: string) {
+  const existing = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
+  });
+  if (!existing) throw new Error("Event not found");
+
   // Delete associated comments first
   await prisma.note.deleteMany({
     where: {
@@ -344,8 +364,11 @@ export async function createEventComment(
   userId: string,
   content: string,
 ) {
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
   });
   if (!event) {
     return null;
@@ -386,6 +409,14 @@ export async function toggleEventReaction(
   userId: string,
   emoji: string,
 ) {
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      coupleSpace: { memberships: { some: { userId } } },
+    },
+  });
+  if (!event) throw new Error("Event not found");
+
   const existing = await prisma.reaction.findFirst({
     where: {
       targetType: "EVENT",
