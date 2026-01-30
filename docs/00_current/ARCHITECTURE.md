@@ -1,4 +1,4 @@
-# Architecture - Couple Moments
+# Architecture
 
 ## Overview
 Couple Moments is a Next.js 16 application built with the App Router. It uses
@@ -68,6 +68,29 @@ Key entities (see `prisma/schema.prisma`):
 
 Indexes are added on high-traffic fields to support list views.
 
+## Key Patterns
+
+### Server Actions (preferred for mutations)
+```typescript
+async function handleCreate(formData: FormData) {
+  "use server";
+  const userId = await requireUserId();
+  // validate, create, redirect
+}
+```
+
+### Auth enforcement
+Every page starts with `await requireUserId()` - redirects to /login if no session.
+
+### Tags stored as JSON string
+```typescript
+parseTags('["outdoor","food"]') -> ['outdoor', 'food']
+normalizeTags('outdoor, food') -> '["outdoor","food"]'
+```
+
+### Modal state via URL params
+`?new=2026-01-15` opens new event modal with date prefilled.
+
 ## Auth & Sessions
 - Login/Register: API routes create a session token stored in `Session` table.
 - Session token stored in HTTP-only cookie `cm_session`.
@@ -92,13 +115,13 @@ Indexes are added on high-traffic fields to support list views.
 2) Activity and notes list views are server-rendered.
 
 ### Photo Uploads
-1) Client uploads to Cloudinary with unsigned preset.
-2) App stores the resulting URL in `Photo`.
+- UI support exists, but the upload flow is not fully implemented yet.
+- Storage integration (Cloudinary) is planned but not complete.
 
 ## Integrations
 - Google Maps Places: `PlaceSearch` client component uses public API key.
 - Calendar export: `/api/spaces/[spaceId]/calendar.ics` generates ICS content.
-- Cloudinary uploads: `PhotoUploader` posts to Cloudinary and stores URLs.
+- Cloudinary uploads: planned integration; currently not fully implemented.
 
 ## UI/UX Architecture
 - Tailwind CSS + CSS variables in `globals.css` for tokens.
@@ -109,7 +132,7 @@ Indexes are added on high-traffic fields to support list views.
 - Next.js server runtime (Node).
 - PostgreSQL required (Neon, Railway, or local).
 - `prisma generate` runs on install; migrations stored in `prisma/migrations`.
-- See `DEPLOYMENT.md` for environment variables and hosting options.
+- See `docs/00_current/DEPLOYMENT.md` for environment variables and hosting options.
 
 ## Local Development
 ```
@@ -127,9 +150,14 @@ NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=...
 ## Operational Notes
 - Session cleanup for expired sessions should be scheduled if needed.
 - Large data sets may require further indexing or pagination.
-- Cloudinary uploads rely on unsigned presets; lock them down to your domain.
+- If Cloudinary uploads are enabled, lock unsigned presets down to your domain.
 
 ## Known Risks / TODO
 - Add automated tests for auth and server actions.
 - Implement email reminders (schema exists, job not implemented).
 - Consider rate limiting and audit logging for critical actions.
+
+## Links
+- CONTEXT.md
+- DECISIONS.md
+- rollout_plan.md
