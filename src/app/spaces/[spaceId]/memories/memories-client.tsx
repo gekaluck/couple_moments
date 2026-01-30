@@ -119,6 +119,7 @@ const TAG_GRADIENTS: Record<string, string> = {
 export default function MemoriesClient({ memories, spaceId }: MemoriesClientProps) {
   const [year, setYear] = useState("all");
   const [tag, setTag] = useState("all");
+  const [search, setSearch] = useState("");
 
   const years = useMemo(
     () =>
@@ -135,13 +136,19 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
     [memories],
   );
 
-  const filtered = memories.filter((event) => {
-    const matchesYear =
-      year === "all" ||
-      new Date(event.dateTimeStart).getFullYear().toString() === year;
-    const matchesTag = tag === "all" || event.tags.includes(tag);
-    return matchesYear && matchesTag;
-  });
+  const filtered = memories
+    .filter((event) => {
+      const matchesYear =
+        year === "all" ||
+        new Date(event.dateTimeStart).getFullYear().toString() === year;
+      const matchesTag = tag === "all" || event.tags.includes(tag);
+      const matchesSearch =
+        search.trim() === "" ||
+        event.title.toLowerCase().includes(search.toLowerCase()) ||
+        (event.description?.toLowerCase().includes(search.toLowerCase()) ?? false);
+      return matchesYear && matchesTag && matchesSearch;
+    })
+    .sort((a, b) => new Date(b.dateTimeStart).getTime() - new Date(a.dateTimeStart).getTime());
 
   return (
     <div className="page-enter-stagger">
@@ -157,6 +164,26 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <div className="relative flex h-10 items-center">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <circle cx="11" cy="11" r="8" strokeWidth="1.5" />
+                  <path d="m21 21-4.35-4.35" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </span>
+              <input
+                className="h-10 w-48 rounded-full border border-[var(--panel-border)] bg-white/80 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
+                placeholder="Search memories..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
             <div className="relative flex h-10 items-center">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent-strong)]">
                 <CalendarIcon />
@@ -229,7 +256,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             variant="memories"
             title="No memories yet"
             description={
-              year !== "all" || tag !== "all"
+              year !== "all" || tag !== "all" || search.trim() !== ""
                 ? "No memories match these filters. Try adjusting your selection."
                 : "Your shared memories will appear here after you complete dates together."
             }

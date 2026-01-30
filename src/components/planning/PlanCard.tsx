@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, MessageSquare } from "lucide-react";
+import { CalendarClock, MapPin, MessageSquare } from "lucide-react";
 
 type PlanCardProps = {
   id: string;
@@ -11,6 +11,7 @@ type PlanCardProps = {
   timeIsSet?: boolean;
   commentCount?: number;
   createdBy?: { name: string | null; email: string };
+  placeName?: string | null;
 };
 
 function formatDateTime(date: Date, timeIsSet?: boolean) {
@@ -29,6 +30,7 @@ export default function PlanCard({
   timeIsSet = true,
   commentCount = 0,
   createdBy,
+  placeName,
 }: PlanCardProps) {
   return (
     <Link
@@ -51,20 +53,28 @@ export default function PlanCard({
           {description}
         </p>
       ) : null}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-          <CalendarClock className="h-4 w-4 text-rose-500" />
-          {formatDateTime(dateTimeStart, timeIsSet)}
-          {!timeIsSet ? (
-            <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
-              Anytime
+      <div className="mt-3 flex flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+            <CalendarClock className="h-4 w-4 text-rose-500" />
+            {formatDateTime(dateTimeStart, timeIsSet)}
+            {!timeIsSet ? (
+              <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
+                Anytime
+              </span>
+            ) : null}
+          </div>
+          {createdBy ? (
+            <span className="text-xs text-[var(--text-tertiary)]">
+              by <span className="font-semibold text-[var(--text-primary)]">{createdBy.name || createdBy.email}</span>
             </span>
           ) : null}
         </div>
-        {createdBy ? (
-          <span className="text-xs text-[var(--text-tertiary)]">
-            by <span className="font-semibold text-[var(--text-primary)]">{createdBy.name || createdBy.email}</span>
-          </span>
+        {placeName ? (
+          <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+            <MapPin className="h-4 w-4 text-rose-500" />
+            <span className="text-[var(--text-muted)]">{placeName}</span>
+          </div>
         ) : null}
       </div>
     </Link>

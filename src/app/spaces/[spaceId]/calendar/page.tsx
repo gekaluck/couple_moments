@@ -28,6 +28,7 @@ import {
   deleteIdea,
   listIdeaCommentsForIdeas,
   listIdeasForSpace,
+  updateIdea,
 } from "@/lib/ideas";
 import { normalizeTags, parseTags } from "@/lib/tags";
 import { buildCreatorPalette, getCreatorInitials } from "@/lib/creator-colors";
@@ -413,6 +414,67 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
+  async function handleUpdateIdea(formData: FormData) {
+    "use server";
+    const currentUserId = await requireUserId();
+    const ideaId = formData.get("ideaId")?.toString();
+    const title = formData.get("title")?.toString().trim() ?? "";
+    const description = formData.get("description")?.toString().trim() ?? "";
+    const tags = normalizeTags(formData.get("tags"));
+    const placeId = formData.get("placeId")?.toString() || null;
+    const placeName = formData.get("placeName")?.toString() || null;
+    const placeAddress = formData.get("placeAddress")?.toString() || null;
+    const placeWebsite = formData.get("placeWebsite")?.toString() || null;
+    const parseJsonArray = (value?: string | null) => {
+      if (!value) {
+        return null;
+      }
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return parsed.map((item) => `${item}`);
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    };
+    const placeOpeningHours = parseJsonArray(
+      formData.get("placeOpeningHours")?.toString() ?? null,
+    );
+    const placePhotoUrls = parseJsonArray(
+      formData.get("placePhotoUrls")?.toString() ?? null,
+    );
+    const placeLat = formData.get("placeLat")
+      ? Number(formData.get("placeLat"))
+      : null;
+    const placeLng = formData.get("placeLng")
+      ? Number(formData.get("placeLng"))
+      : null;
+    const placeUrl = formData.get("placeUrl")?.toString() || null;
+
+    if (!ideaId || !title) {
+      return;
+    }
+
+    await updateIdea(ideaId, currentUserId, {
+      title,
+      description: description || null,
+      tags,
+      placeId,
+      placeName,
+      placeAddress,
+      placeWebsite,
+      placeOpeningHours,
+      placePhotoUrls,
+      placeLat: Number.isNaN(placeLat) ? null : placeLat,
+      placeLng: Number.isNaN(placeLng) ? null : placeLng,
+      placeUrl,
+    });
+
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
+  }
+
   const monthDays = getMonthGrid(now, weekStartsOn);
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -795,6 +857,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             onScheduleIdea={handleScheduleIdea}
             onAddComment={handleIdeaComment}
             onDeleteIdea={handleDeleteIdea}
+            onEditIdea={handleUpdateIdea}
             autoOpen={autoOpenIdea}
           />
           <UpcomingPlansColumn
@@ -807,6 +870,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               createdBy: event.createdBy
                 ? { name: event.createdBy.name, email: event.createdBy.email }
                 : undefined,
+              placeName: event.placeName,
             }))}
             commentCounts={eventCommentCounts}
             todayHref={buildCalendarHref(monthParam(today))}
