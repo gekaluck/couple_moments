@@ -42,6 +42,7 @@ type IdeasColumnProps = {
   onScheduleIdea: (formData: FormData) => Promise<void>;
   onAddComment: (formData: FormData) => Promise<void>;
   onDeleteIdea: (formData: FormData) => Promise<void>;
+  onEditIdea: (formData: FormData) => Promise<void>;
   autoOpen?: boolean;
 };
 
@@ -55,6 +56,7 @@ export default function IdeasColumn({
   onScheduleIdea,
   onAddComment,
   onDeleteIdea,
+  onEditIdea,
   autoOpen = false,
 }: IdeasColumnProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -159,9 +161,11 @@ export default function IdeasColumn({
               commentCount={commentCounts[idea.id] ?? 0}
               comments={commentsByIdea[idea.id] ?? []}
               currentUserId={currentUserId}
+              mapsApiKey={mapsApiKey}
               onSchedule={onScheduleIdea}
               onAddComment={onAddComment}
               onDelete={onDeleteIdea}
+              onEdit={onEditIdea}
               onTagClick={(tag) => setActiveTag(tag)}
             />
           ))}

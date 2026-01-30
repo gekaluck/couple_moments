@@ -179,12 +179,8 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     const placePhotoUrls = parseJsonArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
-    const placeLat = formData.get("placeLat")
-      ? Number(formData.get("placeLat"))
-      : null;
-    const placeLng = formData.get("placeLng")
-      ? Number(formData.get("placeLng"))
-      : null;
+    const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
+    const placeLng = parseFloat(formData.get("placeLng")?.toString() ?? "");
     const placeUrl = formData.get("placeUrl")?.toString() || null;
 
     if (!title || !date) {
@@ -221,7 +217,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     "use server";
     const currentUserId = await requireUserId();
     await deleteEvent(eventIdForActions, currentUserId);
-    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
+    redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
   async function handleComment(formData: FormData) {

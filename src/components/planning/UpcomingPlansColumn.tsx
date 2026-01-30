@@ -14,6 +14,7 @@ type Plan = {
   dateTimeStart: Date;
   timeIsSet?: boolean;
   createdBy?: { name: string | null; email: string };
+  placeName?: string | null;
 };
 
 type UpcomingPlansColumnProps = {
@@ -86,6 +87,7 @@ export default function UpcomingPlansColumn({
               timeIsSet={plan.timeIsSet}
               commentCount={commentCounts[plan.id] ?? 0}
               createdBy={plan.createdBy}
+              placeName={plan.placeName}
             />
           ))}
           {hasMore ? (

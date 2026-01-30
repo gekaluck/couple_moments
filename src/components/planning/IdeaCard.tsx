@@ -1,14 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Calendar, Loader2, MapPin, MessageSquare, Trash2 } from "lucide-react";
+import { Calendar, Loader2, MapPin, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/Modal";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
+import TagInput from "@/components/ui/TagInput";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import TagBadge from "@/components/ui/TagBadge";
 
 import { formatTimeAgo, getInitials } from "@/lib/formatters";
+
+function getTodayDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 type Idea = {
   id: string;
@@ -40,9 +50,11 @@ type IdeaCardProps = {
   commentCount: number;
   comments: IdeaComment[];
   currentUserId: string;
+  mapsApiKey?: string;
   onSchedule: (formData: FormData) => Promise<void>;
   onAddComment: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
+  onEdit: (formData: FormData) => Promise<void>;
   onTagClick?: (tag: string) => void;
 };
 
@@ -51,15 +63,34 @@ export default function IdeaCard({
   commentCount,
   comments,
   currentUserId,
+  mapsApiKey,
   onSchedule,
   onAddComment,
   onDelete,
+  onEdit,
   onTagClick,
 }: IdeaCardProps) {
   const router = useRouter();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const todayStr = getTodayDateString();
+  const [editPlace, setEditPlace] = useState<PlaceSelection | null>(
+    idea.placeId && idea.placeLat != null && idea.placeLng != null && idea.placeUrl
+      ? {
+          placeId: idea.placeId,
+          name: idea.placeName ?? "",
+          address: idea.placeAddress ?? "",
+          lat: idea.placeLat,
+          lng: idea.placeLng,
+          url: idea.placeUrl,
+          website: idea.placeWebsite ?? undefined,
+          openingHours: idea.placeOpeningHours ?? undefined,
+          photoUrls: idea.placePhotoUrls ?? undefined,
+        }
+      : null
+  );
   const [localComments, setLocalComments] = useState<IdeaComment[]>(comments);
   const [localCount, setLocalCount] = useState(commentCount);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -77,7 +108,7 @@ export default function IdeaCard({
     setLocalCount(commentCount);
   }, [comments, commentCount]);
 
-  const hasOpenModal = isScheduleOpen || isDeleteOpen;
+  const hasOpenModal = isScheduleOpen || isEditOpen || isDeleteOpen;
 
   return (
     <div
@@ -141,6 +172,14 @@ export default function IdeaCard({
             type="button"
           >
             <Calendar className="h-4 w-4" />
+          </button>
+          <button
+            className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-2 text-xs font-semibold text-sky-700 transition hover:shadow-[var(--shadow-sm)] hover:bg-sky-50"
+            title="Edit idea"
+            onClick={() => setIsEditOpen(true)}
+            type="button"
+          >
+            <Pencil className="h-4 w-4" />
           </button>
           <button
             className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)]"
@@ -337,6 +376,7 @@ export default function IdeaCard({
               className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
               name="date"
               type="date"
+              min={todayStr}
               required
             />
             <input
@@ -363,6 +403,110 @@ export default function IdeaCard({
             </div>
           </form>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        title="Edit idea"
+      >
+        <form
+          className="grid gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            const title = formData.get("title")?.toString().trim() ?? "";
+            if (!title) {
+              return;
+            }
+            startTransition(async () => {
+              try {
+                await onEdit(formData);
+                toast.success("Idea updated!");
+                router.refresh();
+                setIsEditOpen(false);
+              } catch {
+                toast.error("Failed to update idea");
+              }
+            });
+          }}
+        >
+          <input type="hidden" name="ideaId" value={idea.id} />
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">
+              Title
+            </label>
+            <input
+              className="w-full rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-amber-400"
+              name="title"
+              defaultValue={idea.title}
+              placeholder="Idea title"
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">
+              Description
+            </label>
+            <textarea
+              className="min-h-[100px] w-full rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-amber-400"
+              name="description"
+              defaultValue={idea.description ?? ""}
+              placeholder="Notes, links, or vibe"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">
+              Tags
+            </label>
+            <TagInput name="tags" defaultValue={idea.tags.join(", ")} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">
+              Place
+            </label>
+            <PlaceSearch
+              placeholder="Search a place"
+              apiKey={mapsApiKey}
+              initialValue={idea.placeName ?? undefined}
+              onSelect={(selection) => setEditPlace(selection)}
+            />
+          </div>
+          <input type="hidden" name="placeId" value={editPlace?.placeId ?? ""} />
+          <input type="hidden" name="placeName" value={editPlace?.name ?? ""} />
+          <input type="hidden" name="placeAddress" value={editPlace?.address ?? ""} />
+          <input type="hidden" name="placeWebsite" value={editPlace?.website ?? ""} />
+          <input
+            type="hidden"
+            name="placeOpeningHours"
+            value={editPlace?.openingHours ? JSON.stringify(editPlace.openingHours) : ""}
+          />
+          <input
+            type="hidden"
+            name="placePhotoUrls"
+            value={editPlace?.photoUrls ? JSON.stringify(editPlace.photoUrls) : ""}
+          />
+          <input type="hidden" name="placeLat" value={editPlace?.lat?.toString() ?? ""} />
+          <input type="hidden" name="placeLng" value={editPlace?.lng?.toString() ?? ""} />
+          <input type="hidden" name="placeUrl" value={editPlace?.url ?? ""} />
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              className="rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+              onClick={() => setIsEditOpen(false)}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
+              type="submit"
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+              {isPending ? "Saving..." : "Save changes"}
+            </button>
+          </div>
+        </form>
       </Modal>
 
       <ConfirmDialog

@@ -109,7 +109,9 @@ export default async function ActivityPage({ params }: PageProps) {
   const activity = await listActivityForSpace(space.id);
 
   const grouped = activity.reduce<Map<string, typeof activity>>((acc, entry) => {
-    const key = entry.createdAt.toISOString().slice(0, 10);
+    // Use local date for grouping to avoid timezone issues
+    const d = entry.createdAt;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const list = acc.get(key) ?? [];
     list.push(entry);
     acc.set(key, list);

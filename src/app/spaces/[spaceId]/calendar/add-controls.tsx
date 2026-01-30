@@ -28,6 +28,14 @@ type CalendarAddControlsProps = {
   prefillData?: PrefillData | null;
 };
 
+function getTodayDateString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function CalendarAddControls({
   onCreateEvent,
   onCreateBlock,
@@ -36,6 +44,7 @@ export default function CalendarAddControls({
 }: CalendarAddControlsProps) {
   const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(null);
   const [eventDate, setEventDate] = useState<string | undefined>(undefined);
+  const todayStr = getTodayDateString();
   const [errors, setErrors] = useState<{
     eventTitle?: string;
     eventDate?: string;
@@ -167,6 +176,7 @@ export default function CalendarAddControls({
               name="date"
               type="date"
               defaultValue={eventDate}
+              min={todayStr}
               required
             />
             <input

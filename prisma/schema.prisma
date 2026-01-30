@@ -62,6 +62,7 @@ model CoupleSpace {
   ideas       Idea[]
   availabilityBlocks AvailabilityBlock[]
   notes       Note[]
+  changeLogs  ChangeLogEntry[]
 }
 
 model Membership {
@@ -219,16 +220,20 @@ model Reaction {
 }
 
 model ChangeLogEntry {
-  id          String      @id @default(cuid())
-  createdAt   DateTime    @default(now())
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
 
-  entityType  EntityType
-  entityId    String
-  userId      String
-  changeType  ChangeType
-  summary     String
+  coupleSpaceId String?
+  entityType    EntityType
+  entityId      String
+  userId        String
+  changeType    ChangeType
+  summary       String
 
-  user        User        @relation(fields: [userId], references: [id])
+  coupleSpace   CoupleSpace? @relation(fields: [coupleSpaceId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+
+  @@index([coupleSpaceId, createdAt])
 }
 
 enum EntityType {

@@ -21,7 +21,7 @@ function summarizeNote(note: { body: string; kind: string }) {
 }
 
 export async function listActivityForSpace(spaceId: string): Promise<ActivityEntry[]> {
-  const [events, ideas, notes] = await Promise.all([
+  const [events, ideas, notes, changeLogs] = await Promise.all([
     prisma.event.findMany({
       where: { coupleSpaceId: spaceId },
       select: { id: true, title: true },
@@ -34,28 +34,17 @@ export async function listActivityForSpace(spaceId: string): Promise<ActivityEnt
       where: { coupleSpaceId: spaceId },
       include: { author: true },
     }),
+    prisma.changeLogEntry.findMany({
+      where: { coupleSpaceId: spaceId },
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
-  const eventIdList = events.map((event) => event.id);
-  const ideaIdList = ideas.map((idea) => idea.id);
   const eventTitleById = new Map(events.map((event) => [event.id, event.title]));
   const ideaTitleById = new Map(ideas.map((idea) => [idea.id, idea.title]));
 
-  const filteredLogs = await prisma.changeLogEntry.findMany({
-    where: {
-      OR: [
-        {
-          entityType: "EVENT",
-          entityId: { in: eventIdList },
-        },
-        {
-          entityType: "IDEA",
-          entityId: { in: ideaIdList },
-        },
-      ],
-    },
-    include: { user: true },
-  });
+  const filteredLogs = changeLogs;
 
   const logEntries: ActivityEntry[] = filteredLogs.map((entry) => {
     const entityTitle =
@@ -113,7 +102,6 @@ export async function listActivityForSpace(spaceId: string): Promise<ActivityEnt
     };
   });
 
-  // TODO: include deletions or other activity not represented by current notes.
   const combined = [...logEntries, ...noteEntries];
   combined.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 

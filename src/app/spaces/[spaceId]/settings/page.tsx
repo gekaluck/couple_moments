@@ -30,6 +30,8 @@ export default async function SettingsPage({ params }: PageProps) {
   if (!space) {
     redirect("/spaces/onboarding");
   }
+  // Store for server actions (avoids TypeScript narrowing issues)
+  const spaceIdForActions = space.id;
 
   const members = await listSpaceMembers(space.id);
   const currentUser = members.find((m) => m.userId === userId);
@@ -54,7 +56,7 @@ export default async function SettingsPage({ params }: PageProps) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 365,
     });
-    redirect(`/spaces/${space.id}/settings`);
+    redirect(`/spaces/${spaceIdForActions}/settings`);
   }
 
   async function handleCalendarTimeFormat(formData: FormData) {
@@ -69,7 +71,7 @@ export default async function SettingsPage({ params }: PageProps) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 365,
     });
-    redirect(`/spaces/${space.id}/settings`);
+    redirect(`/spaces/${spaceIdForActions}/settings`);
   }
 
   return (
