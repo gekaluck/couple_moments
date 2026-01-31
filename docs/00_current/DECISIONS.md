@@ -23,6 +23,18 @@ This file records high-level decisions and trade-offs. Add dated entries as they
 - Alternatives considered: Manual idea recovery UI — rejected as it adds complexity and doesn't match user expectations. Leave idea in PLANNED state — rejected as it creates permanent data loss.
 - Consequences: Ideas now automatically return to "New Ideas" list when their linked event is deleted, matching natural user mental model. Activity log provides transparency. Edge case of missing ideas handled gracefully.
 
+## 2026-01-30 - Middleware auth guard (P0-3)
+- Context: Protected routes (`/spaces/*`, `/events/*`, `/api/*`) relied solely on page-level and mutation-level authorization checks. No early guard to reject unauthenticated requests before route handlers execute.
+- Decision: Added Next.js middleware that checks for `cm_session` cookie presence. Returns 401 for API routes, redirects to `/login` for page routes. Keeps logic minimal (cookie presence only, no validation). Existing `requireUserId()` checks remain as the authoritative layer.
+- Alternatives considered: Validate token in middleware — rejected as it duplicates logic and adds latency. Rely only on route-level checks — rejected as defense in depth is preferable.
+- Consequences: Unauthenticated requests fail faster (at middleware layer). Reduces unnecessary route handler execution. Provides user-friendly redirects for page routes. Does not replace existing authorization - acts as safety net.
+
+## 2026-01-30 - Sanitize ICS header (P0-4)
+- Context: Calendar export route used `space.name` directly in `Content-Disposition` filename without sanitization. Malicious space names with control characters (CR/LF/quotes) could inject arbitrary HTTP headers.
+- Decision: Added `sanitizeForHeader()` helper that strips `\r`, `\n`, `"`, `\\`, collapses whitespace, and trims. Falls back to "couple-moments" if result is empty. Applied to both calendar name and filename.
+- Alternatives considered: URL-encode filename — rejected as it doesn't prevent header injection, only filename issues. Validate space name on creation — rejected as too restrictive and doesn't fix existing data.
+- Consequences: Header injection vector closed. Legitimate space names preserved (just cleaned). No schema changes or migrations needed. Safe to deploy independently.
+
 ## ADR Index
 - ADR-2026-01-30-custom-session-auth.md
 - ADR-2026-01-30-tags-json-string.md
