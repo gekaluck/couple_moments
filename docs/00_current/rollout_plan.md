@@ -25,8 +25,11 @@ These are correctness and security issues that will cause real problems with the
 ### P0-3. Add middleware.ts auth guard
 
 **Source:** Architecture (P0 #1)
+**Status:** Done
+**Plan:** TECH_PLAN_P0-3.md
+**Implemented:** middleware.ts
 
-Add a Next.js middleware that checks for the `cm_session` cookie on `/spaces/*`, `/events/*`, and `/api/couple-spaces/*` routes. Redirect to `/login` if absent. This is a safety net — pages and API routes keep their existing checks as the authoritative layer.
+Add a Next.js middleware that checks for the `cm_session` cookie on `/spaces/*`, `/events/*`, and `/api/couple-spaces/*` routes. Redirect to `/login` if absent. This is a safety net - pages and API routes keep their existing checks as the authoritative layer.
 
 ### P0-4. Sanitize ICS Content-Disposition header
 
