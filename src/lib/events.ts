@@ -278,6 +278,11 @@ export async function deleteEvent(eventId: string, userId: string) {
       id: eventId,
       coupleSpace: { memberships: { some: { userId } } },
     },
+    select: {
+      id: true,
+      originIdeaId: true,
+      coupleSpaceId: true,
+    },
   });
   if (!existing) throw new Error("Event not found");
 
@@ -288,6 +293,37 @@ export async function deleteEvent(eventId: string, userId: string) {
       parentId: eventId,
     },
   });
+
+  // If this event was created from an idea, revert the idea to NEW status
+  if (existing.originIdeaId) {
+    try {
+      const idea = await prisma.idea.findUnique({
+        where: { id: existing.originIdeaId },
+      });
+
+      if (idea) {
+        await prisma.idea.update({
+          where: { id: existing.originIdeaId },
+          data: {
+            convertedToEventId: null,
+            status: "NEW",
+          },
+        });
+
+        await createChangeLogEntry({
+          coupleSpaceId: existing.coupleSpaceId,
+          entityType: "IDEA",
+          entityId: existing.originIdeaId,
+          userId,
+          changeType: "UPDATE",
+          summary: "Idea restored (event deleted).",
+        });
+      }
+    } catch (error) {
+      // If idea doesn't exist or update fails, continue with event deletion
+      console.error("Failed to revert idea:", error);
+    }
+  }
 
   const event = await prisma.event.delete({
     where: { id: eventId },

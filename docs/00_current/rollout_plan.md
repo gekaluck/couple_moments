@@ -15,11 +15,12 @@ These are correctness and security issues that will cause real problems with the
 
 13 mutation functions across 4 files (`notes.ts`, `events.ts`, `ideas.ts`, `availability.ts`) now verify space membership before executing writes. `deleteNote()` additionally enforces author-only deletion. `deleteEvent()` and `deleteIdea()` check membership before deleting child notes to prevent unauthorized data destruction. No function signatures changed.
 
-### P0-2. Revert idea status when its linked event is deleted
+### ~~P0-2. Revert idea status when its linked event is deleted~~ ✓ Done
 
 **Source:** Product (3a)
+**Completed:** 2026-01-30 — PR: feature/p0-2-revert-idea-on-event-delete
 
-When `deleteEvent()` runs on an event with `originIdeaId`, clear the linked idea's `convertedToEventId` and set `status = NEW`. Without this, deleting a scheduled event permanently buries the idea with no recovery path.
+`deleteEvent()` now reverts linked ideas by clearing `convertedToEventId` and setting `status = NEW`. Added graceful error handling for missing ideas and a changelog entry for idea restoration. Deleting a scheduled event now properly restores the idea to the "New Ideas" list.
 
 ### P0-3. Add middleware.ts auth guard
 
