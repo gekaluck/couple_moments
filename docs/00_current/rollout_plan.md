@@ -34,7 +34,9 @@ Add a Next.js middleware that checks for the `cm_session` cookie on `/spaces/*`,
 ### ~~P0-4. Sanitize ICS Content-Disposition header~~ ✓ Done
 
 **Source:** Code (Important)
-**Completed:** 2026-01-30 — PR: feature/p0-4-sanitize-ics-header
+**Status:** Done
+**Plan:** TECH_PLAN_P0-4.md
+**Implemented:** src/app/api/spaces/[spaceId]/calendar.ics/route.ts
 
 Added `sanitizeForHeader()` helper to strip control characters (CR/LF), quotes, and backslashes from `space.name` before using it in the `Content-Disposition` filename. Prevents header injection attacks. Falls back to "couple-moments" if sanitized name is empty.
 

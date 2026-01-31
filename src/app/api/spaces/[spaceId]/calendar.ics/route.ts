@@ -3,6 +3,17 @@ import { requireUserId } from "@/lib/current-user";
 import { listEventsForSpace } from "@/lib/events";
 import { generateICalendar } from "@/lib/ical";
 
+/**
+ * Sanitize a string for safe use in HTTP headers
+ * Removes control characters, quotes, and backslashes that could enable header injection
+ */
+function sanitizeForHeader(input: string): string {
+  return input
+    .replace(/[\r\n"\\]/g, "") // Remove CR, LF, quotes, backslashes
+    .replace(/\s+/g, " ") // Collapse whitespace
+    .trim();
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ spaceId: string }> },
@@ -22,7 +33,11 @@ export async function GET(
       timeframe: "upcoming",
     });
 
-    const calendarName = space.name || "Couple Moments";
+    // Sanitize space name to prevent header injection
+    const rawName = space.name || "Couple Moments";
+    const safeName = sanitizeForHeader(rawName) || "couple-moments";
+    
+    const calendarName = safeName;
     const ical = generateICalendar(
       events.map((event) => ({
         id: event.id,
