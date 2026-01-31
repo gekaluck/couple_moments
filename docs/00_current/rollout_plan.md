@@ -22,20 +22,23 @@ These are correctness and security issues that will cause real problems with the
 
 `deleteEvent()` now reverts linked ideas by clearing `convertedToEventId` and setting `status = NEW`. Added graceful error handling for missing ideas and a changelog entry for idea restoration. Deleting a scheduled event now properly restores the idea to the "New Ideas" list.
 
-### P0-3. Add middleware.ts auth guard
+### ~~P0-3. Add middleware.ts auth guard~~ ✓ Done
 
 **Source:** Architecture (P0 #1)
+**Status:** Done
+**Plan:** TECH_PLAN_P0-3.md
+**Implemented:** middleware.ts
 
-Add a Next.js middleware that checks for the `cm_session` cookie on `/spaces/*`, `/events/*`, and `/api/couple-spaces/*` routes. Redirect to `/login` if absent. This is a safety net — pages and API routes keep their existing checks as the authoritative layer.
+Add a Next.js middleware that checks for the `cm_session` cookie on `/spaces/*`, `/events/*`, and `/api/couple-spaces/*` routes. Redirect to `/login` if absent. This is a safety net - pages and API routes keep their existing checks as the authoritative layer.
 
-### P0-4. Sanitize ICS Content-Disposition header
+### ~~P0-4. Sanitize ICS Content-Disposition header~~ ✓ Done
 
 **Source:** Code (Important)
 **Status:** Done
 **Plan:** TECH_PLAN_P0-4.md
 **Implemented:** src/app/api/spaces/[spaceId]/calendar.ics/route.ts
 
-`calendar.ics` route uses `space.name` in the `Content-Disposition` header without sanitizing quotes or newlines. Strip or escape control characters. Narrow fix, real injection vector.
+Added `sanitizeForHeader()` helper to strip control characters (CR/LF), quotes, and backslashes from `space.name` before using it in the `Content-Disposition` filename. Prevents header injection attacks. Falls back to "couple-moments" if sanitized name is empty.
 
 ## Next
 - Tighten form feedback (loading + inline validation).
