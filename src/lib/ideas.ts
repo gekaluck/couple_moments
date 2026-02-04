@@ -184,10 +184,17 @@ export async function deleteIdea(ideaId: string, userId: string) {
   const existing = await prisma.idea.findFirst({
     where: {
       id: ideaId,
-      coupleSpace: { memberships: { some: { userId } } },
+      coupleSpace: {
+        memberships: {
+          some: { userId }
+        }
+      }
     },
   });
-  if (!existing) throw new Error("Idea not found");
+
+  if (!existing) {
+    throw new Error("Idea not found or you do not have permission to delete it.");
+  }
 
   // Delete associated comments first
   await prisma.note.deleteMany({

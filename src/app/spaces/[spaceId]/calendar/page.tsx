@@ -39,6 +39,7 @@ import UpcomingPlansColumn from "@/components/planning/UpcomingPlansColumn";
 import AvailabilityBlockModal from "./availability-block-modal";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import EventBubble from "./event-bubble";
+import { CalendarEmptyState } from "@/components/calendar/CalendarEmptyState"; // [NEW]
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -91,23 +92,23 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     : null;
   const prefillData = repeatEvent
     ? {
-        title: repeatEvent.title,
-        description: repeatEvent.description ?? "",
-        tags: parseTags(repeatEvent.tags).join(", "),
-        placeId: repeatEvent.placeId,
-        placeName: repeatEvent.placeName,
-        placeAddress: repeatEvent.placeAddress,
-        placeLat: repeatEvent.placeLat,
-        placeLng: repeatEvent.placeLng,
-        placeUrl: repeatEvent.placeUrl,
-        placeWebsite: repeatEvent.placeWebsite,
-        placeOpeningHours: Array.isArray(repeatEvent.placeOpeningHours)
-          ? (repeatEvent.placeOpeningHours as string[])
-          : null,
-        placePhotoUrls: Array.isArray(repeatEvent.placePhotoUrls)
-          ? (repeatEvent.placePhotoUrls as string[])
-          : null,
-      }
+      title: repeatEvent.title,
+      description: repeatEvent.description ?? "",
+      tags: parseTags(repeatEvent.tags).join(", "),
+      placeId: repeatEvent.placeId,
+      placeName: repeatEvent.placeName,
+      placeAddress: repeatEvent.placeAddress,
+      placeLat: repeatEvent.placeLat,
+      placeLng: repeatEvent.placeLng,
+      placeUrl: repeatEvent.placeUrl,
+      placeWebsite: repeatEvent.placeWebsite,
+      placeOpeningHours: Array.isArray(repeatEvent.placeOpeningHours)
+        ? (repeatEvent.placeOpeningHours as string[])
+        : null,
+      placePhotoUrls: Array.isArray(repeatEvent.placePhotoUrls)
+        ? (repeatEvent.placePhotoUrls as string[])
+        : null,
+    }
     : null;
 
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -630,17 +631,15 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             </Link>
             <div className="flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
               <Link
-                className={`rounded-full px-3 py-1 transition ${
-                  isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
-                }`}
+                className={`rounded-full px-3 py-1 transition ${isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
+                  }`}
                 href={buildCalendarHref(monthParam(now), { density: "compact" })}
               >
                 Compact
               </Link>
               <Link
-                className={`rounded-full px-3 py-1 transition ${
-                  !isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
-                }`}
+                className={`rounded-full px-3 py-1 transition ${!isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
+                  }`}
                 href={buildCalendarHref(monthParam(now), { density: "comfortable" })}
               >
                 Comfortable
@@ -668,162 +667,172 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             </a>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--text-tertiary)]">
-          <div className="inline-flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-            Upcoming
-          </div>
-          <div className="inline-flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
-            Memory
-          </div>
-          <div className="inline-flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-amber-400" />
-            Unavailable
-          </div>
-        </div>
-        <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
-          {dayLabels.map((day) => (
-            <div key={day} className="px-2 py-1">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="mt-2 grid grid-cols-7 gap-2">
-          {monthDays.map((day) => {
-            const key = dateKey(day.date);
-            const dayEvents = eventsByDay.get(key) ?? [];
-            const dayBlocks = blocksByDay.get(key) ?? [];
-            const todayKey = dateKey(today);
-            const isToday = dateKey(day.date) === todayKey;
-            const isPast =
-              day.date <
-              new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
-            const maxEvents = isCompact ? 2 : 3;
-            const visibleEvents = dayEvents.slice(0, maxEvents);
-            const overflowCount = Math.max(dayEvents.length - maxEvents, 0);
-            const dayCellBase = isCompact ? "min-h-[90px] p-1.5" : "min-h-[120px] p-2";
 
-            return (
-              <div
-                key={key}
-                className={`relative rounded-xl border text-xs transition hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${
-                  day.isCurrentMonth
-                    ? isWeekend
-                      ? "bg-rose-50/50"
-                      : "bg-white/80"
-                    : "bg-white/40 text-[var(--text-muted)]"
-                } ${isPast ? "opacity-60" : ""} ${
-                  isToday
-                    ? "border-rose-400 border-2"
-                    : "border-[var(--panel-border)]"
-                }`}
-              >
-                <Link
-                  aria-label={`Add event on ${key}`}
-                  className="absolute inset-0 z-0"
-                  href={buildCalendarHref(monthParam(now), { new: key })}
-                />
-                <div className="flex items-center justify-between text-xs font-semibold text-[var(--text-muted)]">
-                  {day.date.getDate()}
-                  {isToday ? (
-                    <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)]">
-                      Today
-                    </span>
-                  ) : null}
-                </div>
-                {isToday ? (
-                  <div className="mt-1 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-500">
-                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse-soft" />
-                    Now {nowLabel}
-                  </div>
-                ) : null}
-                <div className="relative z-10 mt-2 flex flex-col gap-1">
-                  {dayBlocks.map((block) => {
-                    const blockAccent =
-                      creatorPalette.get(block.createdByUserId)?.accent ??
-                      "var(--accent-secondary)";
-                    const blockSoft =
-                      creatorPalette.get(block.createdByUserId)?.accentSoft ??
-                      "#fef3c7";
-                    const blockText =
-                      creatorPalette.get(block.createdByUserId)?.accentText ??
-                      "#b45309";
-                    const initials = getCreatorInitials({
-                      id: block.createdByUserId,
-                      name: block.createdBy?.name ?? null,
-                      email: block.createdBy?.email ?? "??",
-                    });
-                    return (
-                      <Link
-                        key={block.id}
-                        className="rounded-lg border-2 border-dashed px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] opacity-80"
-                        href={buildCalendarHref(monthParam(now), {
-                          editBlock: block.id,
-                        })}
-                        style={{
-                          borderColor: blockAccent,
-                          backgroundColor: blockSoft,
-                          color: blockText,
-                        }}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="flex min-w-0 items-center gap-1 truncate font-semibold">
-                            <svg
-                              aria-hidden="true"
-                              className="h-3 w-3 flex-shrink-0"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                            >
-                              <circle cx="12" cy="12" r="9" strokeWidth="1.5" />
-                              <path
-                                d="M12 7.5v5l3 2"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                            <span className="truncate">{block.title}</span>
-                          </span>
-                          <span
-                            className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white"
-                            style={{ backgroundColor: blockAccent }}
-                          >
-                            {initials}
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                  {visibleEvents.map((event) => {
-                    const eventIsPast = event.dateTimeStart < today;
-                    const eventTime =
-                      event.timeIsSet && event.dateTimeStart
-                        ? formatEventTime(event.dateTimeStart, calendarTimeFormat)
-                        : null;
-                    return (
-                      <EventBubble
-                        key={event.id}
-                        href={`/events/${event.id}`}
-                        title={event.title}
-                        timeLabel={eventTime}
-                        isPast={eventIsPast}
-                      />
-                    );
-                  })}
-                  {overflowCount > 0 ? (
-                    <div className="rounded-lg border border-dashed border-[var(--panel-border)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
-                      ... +{overflowCount} more
-                    </div>
-                  ) : null}
-                </div>
+        {/* Check for empty state */}
+        {events.length === 0 && blocks.length === 0 ? (
+          <div className="mt-8">
+            <CalendarEmptyState
+              actionHref={buildCalendarHref(monthParam(now), { new: dateKey(now) })}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--text-tertiary)]">
+              <div className="inline-flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                Upcoming
               </div>
-            );
-          })}
-        </div>
-      </section>
+              <div className="inline-flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
+                Memory
+              </div>
+              <div className="inline-flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-amber-400" />
+                Unavailable
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+              {dayLabels.map((day) => (
+                <div key={day} className="px-2 py-1">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 grid grid-cols-7 gap-2">
+              {monthDays.map((day) => {
+                const key = dateKey(day.date);
+                const dayEvents = eventsByDay.get(key) ?? [];
+                const dayBlocks = blocksByDay.get(key) ?? [];
+                const todayKey = dateKey(today);
+                const isToday = dateKey(day.date) === todayKey;
+                const isPast =
+                  day.date <
+                  new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+                const maxEvents = isCompact ? 2 : 3;
+                const visibleEvents = dayEvents.slice(0, maxEvents);
+                const overflowCount = Math.max(dayEvents.length - maxEvents, 0);
+                const dayCellBase = isCompact ? "min-h-[90px] p-1.5" : "min-h-[120px] p-2";
+
+                return (
+                  <div
+                    key={key}
+                    className={`relative rounded-xl border text-xs transition hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${day.isCurrentMonth
+                      ? isWeekend
+                        ? "bg-rose-50/50"
+                        : "bg-white/80"
+                      : "bg-white/40 text-[var(--text-muted)]"
+                      } ${isPast ? "opacity-60" : ""} ${isToday
+                        ? "border-rose-400 border-2"
+                        : "border-[var(--panel-border)]"
+                      }`}
+                  >
+                    <Link
+                      aria-label={`Add event on ${key}`}
+                      className="absolute inset-0 z-0"
+                      href={buildCalendarHref(monthParam(now), { new: key })}
+                    />
+                    <div className="flex items-center justify-between text-xs font-semibold text-[var(--text-muted)]">
+                      {day.date.getDate()}
+                      {isToday ? (
+                        <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)]">
+                          Today
+                        </span>
+                      ) : null}
+                    </div>
+                    {isToday ? (
+                      <div className="mt-1 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-500">
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse-soft" />
+                        Now {nowLabel}
+                      </div>
+                    ) : null}
+                    <div className="relative z-10 mt-2 flex flex-col gap-1">
+                      {dayBlocks.map((block) => {
+                        const blockAccent =
+                          creatorPalette.get(block.createdByUserId)?.accent ??
+                          "var(--accent-secondary)";
+                        const blockSoft =
+                          creatorPalette.get(block.createdByUserId)?.accentSoft ??
+                          "#fef3c7";
+                        const blockText =
+                          creatorPalette.get(block.createdByUserId)?.accentText ??
+                          "#b45309";
+                        const initials = getCreatorInitials({
+                          id: block.createdByUserId,
+                          name: block.createdBy?.name ?? null,
+                          email: block.createdBy?.email ?? "??",
+                        });
+                        return (
+                          <Link
+                            key={block.id}
+                            className="rounded-lg border-2 border-dashed px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] opacity-80"
+                            href={buildCalendarHref(monthParam(now), {
+                              editBlock: block.id,
+                            })}
+                            style={{
+                              borderColor: blockAccent,
+                              backgroundColor: blockSoft,
+                              color: blockText,
+                            }}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="flex min-w-0 items-center gap-1 truncate font-semibold">
+                                <svg
+                                  aria-hidden="true"
+                                  className="h-3 w-3 flex-shrink-0"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                >
+                                  <circle cx="12" cy="12" r="9" strokeWidth="1.5" />
+                                  <path
+                                    d="M12 7.5v5l3 2"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                                <span className="truncate">{block.title}</span>
+                              </span>
+                              <span
+                                className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white"
+                                style={{ backgroundColor: blockAccent }}
+                              >
+                                {initials}
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                      {visibleEvents.map((event) => {
+                        const eventIsPast = event.dateTimeStart < today;
+                        const eventTime =
+                          event.timeIsSet && event.dateTimeStart
+                            ? formatEventTime(event.dateTimeStart, calendarTimeFormat)
+                            : null;
+                        return (
+                          <EventBubble
+                            key={event.id}
+                            href={`/events/${event.id}`}
+                            title={event.title}
+                            timeLabel={eventTime}
+                            isPast={eventIsPast}
+                          />
+                        );
+                      })}
+                      {overflowCount > 0 ? (
+                        <div className="rounded-lg border border-dashed border-[var(--panel-border)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
+                          ... +{overflowCount} more
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section >
       <PlanningSection
         actions={(
           <Link
@@ -873,12 +882,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         block={
           editBlock
             ? {
-                id: editBlock.id,
-                title: editBlock.title,
-                note: editBlock.note,
-                startDate: formatDateInput(editBlock.startAt),
-                endDate: formatDateInput(editBlock.endAt),
-              }
+              id: editBlock.id,
+              title: editBlock.title,
+              note: editBlock.note,
+              startDate: formatDateInput(editBlock.startAt),
+              endDate: formatDateInput(editBlock.endAt),
+            }
             : null
         }
       />

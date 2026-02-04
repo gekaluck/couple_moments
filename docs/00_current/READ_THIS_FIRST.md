@@ -20,3 +20,10 @@ Do not read the archive unless explicitly instructed.
 - Goal: make focused, reviewable changes that move the current milestone.
 - Constraints: follow CLAUDE.md; do not invent architecture details.
 - Artifacts: update docs and ADRs when decisions change.
+
+### Environment Configuration
+The application uses Cloudinary for image uploads (e.g., in Ideas and Memories). Ensure the following environment variables are set in your `.env` file:
+- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`
+- `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET`
+
+Without these, image upload functionality will fail silently or throw errors.
