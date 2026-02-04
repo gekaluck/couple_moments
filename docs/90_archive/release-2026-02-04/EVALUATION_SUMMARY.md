@@ -1,3 +1,5 @@
+> **Implemented: P0/P1 complete.** All P0 and P1 items from this evaluation have been addressed. This file is archived for historical reference. See `docs/00_current/rollout_plan.md` for the current working milestone.
+
 # Evaluation Summary
 
 **Date:** 2026-01-30

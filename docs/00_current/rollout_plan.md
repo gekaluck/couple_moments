@@ -1,128 +1,99 @@
-# Couple Moments - Rollout Plan
+# Couple Moments — Rollout Plan
 
-**Created:** January 27, 2026
-**Status:** Pre-production
+**Updated:** 2026-02-04
+**Status:** P0/P1 complete — moving to deployment and polish
 
 ---
 
-## Current Milestone (checklist)
-These are correctness and security issues that will cause real problems with the first users.
+## Completed Milestones
 
-### ~~P0-1. Add authorization checks to all mutation functions~~ ✓ Done
+### P0 — Critical Fixes (Done)
 
-**Sources:** Architecture (P0 #2), Code (Critical #1), Product (3d)
-**Completed:** 2026-01-30 — [ADR-2026-01-30-mutation-auth-checks.md](../20_adrs/ADR-2026-01-30-mutation-auth-checks.md)
+| Item | Summary |
+|------|---------|
+| P0-1 | Authorization checks on all mutation functions |
+| P0-2 | Revert idea status on event deletion |
+| P0-3 | Middleware auth guard |
+| P0-4 | Sanitize ICS Content-Disposition header |
 
-13 mutation functions across 4 files (`notes.ts`, `events.ts`, `ideas.ts`, `availability.ts`) now verify space membership before executing writes. `deleteNote()` additionally enforces author-only deletion. `deleteEvent()` and `deleteIdea()` check membership before deleting child notes to prevent unauthorized data destruction. No function signatures changed.
+### P1 — Robustness (Done)
 
-### ~~P0-2. Revert idea status when its linked event is deleted~~ ✓ Done
+| Item | Summary |
+|------|---------|
+| P1-1 | Zod validation on API route inputs |
+| P1-2 | Per-user ratings (Rating model) |
+| P1-3 | Rate limiting on auth endpoints |
+| P1-4 | Comment deletion on event/idea detail pages |
 
-**Source:** Product (3a)
-**Completed:** 2026-01-30 — PR: feature/p0-2-revert-idea-on-event-delete
+Full evaluation details archived in `docs/90_archive/release-2026-02-04/EVALUATION_SUMMARY.md`.
 
-`deleteEvent()` now reverts linked ideas by clearing `convertedToEventId` and setting `status = NEW`. Added graceful error handling for missing ideas and a changelog entry for idea restoration. Deleting a scheduled event now properly restores the idea to the "New Ideas" list.
+---
 
-### ~~P0-3. Add middleware.ts auth guard~~ ✓ Done
+## Current Milestone
 
-**Source:** Architecture (P0 #1)
-**Status:** Done
-**Plan:** TECH_PLAN_P0-3.md
-**Implemented:** middleware.ts
+### M1. Deployment — Hosting + DB + Env Vars
 
-Add a Next.js middleware that checks for the `cm_session` cookie on `/spaces/*`, `/events/*`, and `/api/couple-spaces/*` routes. Redirect to `/login` if absent. This is a safety net - pages and API routes keep their existing checks as the authoritative layer.
+Get the app running in production for two real users.
 
-### ~~P0-4. Sanitize ICS Content-Disposition header~~ ✓ Done
+- [ ] Provision PostgreSQL (Railway / Neon / Supabase)
+- [ ] Configure production environment variables (`DATABASE_URL`, session secret, Cloudinary keys)
+- [ ] Run `prisma migrate deploy` against production DB
+- [ ] Deploy Next.js app (Railway / Vercel / Fly.io)
+- [ ] Verify auth flow, space creation, and event CRUD on production
+- [ ] Set up domain / HTTPS
 
-**Source:** Code (Important)
-**Status:** Done
-**Plan:** TECH_PLAN_P0-4.md
-**Implemented:** src/app/api/spaces/[spaceId]/calendar.ics/route.ts
+See `docs/00_current/DEPLOYMENT.md` for platform options and step-by-step instructions.
 
-Added `sanitizeForHeader()` helper to strip control characters (CR/LF), quotes, and backslashes from `space.name` before using it in the `Content-Disposition` filename. Prevents header injection attacks. Falls back to "couple-moments" if sanitized name is empty.
+### M2. Photo Upload MVP
 
-## Next
-- Tighten form feedback (loading + inline validation).
-- Add error boundaries for core pages.
-Also
-## 3) P1 — Should Fix Soon
+Replace Cloudinary placeholder with working upload flow.
 
-These improve robustness and address user-facing logic issues. Do after P0.
+- [ ] Confirm Cloudinary unsigned preset is configured and env vars are set
+- [ ] Wire up photo upload on event detail page (client-side upload → save URL)
+- [ ] Display uploaded photos in event detail and memories views
+- [ ] Add basic file-size and type validation on the client
 
-### P1-1. Add Zod validation on server action and API route inputs
+### M3. UX Polish Round 2
 
-**Sources:** Architecture (P0 #3), Code (Minor – parseJsonOrForm), Maintainability (#5)
-**Status:** Done (routes only)
+Improvements surfaced during evaluation — do after deployment is stable.
 
-Replace ad-hoc `if (!title) return` checks with declarative Zod schemas at each entry point. Catches malformed input before the data layer. Also fixes the `parseJsonOrForm` fallback-to-`{}` problem.
+- [ ] Add empty-state messaging for spaces with no events/ideas
+- [ ] Add loading skeletons for calendar, event list, and idea list pages
+- [ ] Add inline form validation feedback (client-side, complementing Zod on server)
+- [ ] Standardize card layouts across event and idea lists
+- [ ] Add error boundaries for core pages
+- [ ] Tighten form feedback (loading spinners on submit buttons)
 
-### ~~P1-2. Fix rating to be per-user or explicitly shared~~ ✅ Done
+---
 
-**Source:** Product (3c)
+## Remaining Backlog
 
-**Status:** Done
-**Implemented:** Rating model keyed by `(userId, eventId)`; event page reads current user's rating.
+### P1-5. Cascade deletes for space-owned entities
 
-### ~~P1-3. Add rate limiting on auth endpoints~~ ✅ Done
+Configure `onDelete: Cascade` from `CoupleSpace` to `Event`, `Idea`, `Note`, `AvailabilityBlock` and from `Event` to `Photo`, `Notification`. Low urgency — application-level cleanup covers this today.
 
-**Sources:** Architecture (P1 #4), Code (Important)
+### P2 — Deferred Items
 
-**Status:** Done
-**Implemented:** 5 attempts/min per IP for login/register routes via in-memory limiter.
+| Item | Why defer |
+|------|-----------|
+| Reconcile EventType enum with runtime date logic | Nothing reads `type` after creation |
+| Test infrastructure | Not blocking launch for 2 users |
+| CSRF tokens on API routes | SameSite=lax + server actions cover main vectors |
+| Password strength policy | Low-impact for invite-only app |
+| Invite code rotation/expiration | 2-member cap limits damage |
+| Accessibility audit | Schedule as a dedicated pass |
 
-### ~~P1-4. Add comment deletion on event and idea detail pages~~ ✅ Done
-**Source:** Product (3e)
+### Tech Debt
 
-**Status:** Done
-**Implemented:** Author-only delete controls on event and idea detail comment lists.
+- Scheduled cleanup for expired sessions
+- Type-safe env validation
+- CI/CD pipeline baseline
 
-### P1-5. Add cascade deletes for space-owned entities
-
-**Source:** Architecture (P1 #5)
-
-Configure `onDelete: Cascade` from `CoupleSpace` to `Event`, `Idea`, `Note`, `AvailabilityBlock` and from `Event` to `Photo`, `Notification`. Prevents orphan accumulation if a space or event is deleted. The application-level cleanup in `deleteEvent`/`deleteIdea` remains but the database becomes the safety net.
-
-
-## 4) P2 — Defer
-
-These are valid findings but premature or low-impact at current scale.
-
-| Item | Source(s) | Why defer |
-|------|-----------|-----------|
-| Reconcile `EventType` enum with runtime date logic | Product, Architecture | Nothing reads `type` after creation. Resolve before building notifications/analytics. |
-| Test infrastructure (API integration tests first) | Maintainability, Architecture | Important but not blocking launch for 2 users. Start after P0/P1 stabilize. |
-| CSRF tokens on API routes | Code | `SameSite=lax` + server actions' built-in CSRF protection cover the main vectors. |
-| Password strength policy | Code | Low-impact for invite-only couples app. |
-| UX: empty states, loading skeletons, inline validation | UX | Polish, not correctness. Do after logic is right. |
-| Invite code rotation/expiration | Product | 2-member cap limits damage. |
-| Leave-space flow | Product | Requires product decisions on content ownership. Wait for user demand. |
-| Availability conflict detection | Product | Useful but requires UI coordination work. |
-| Extract Place into its own model | Architecture | Manageable duplication across 2 models. |
-| Replace JSON-string tags with relation | Architecture | Works for display; no tag-based search on roadmap. |
-| Accessibility audit | UX | Important, but schedule as a dedicated pass. |
-
-## Tech Debt
-- Scheduled cleanup for expired sessions.
-- Add request logging and rate limiting.
-- Type-safe env validation.
-- CI/CD pipeline baseline.
+---
 
 ## Definition of Done
-- Tests: `npm run build` passes; smoke test checklist complete.
-- Docs: update `docs/00_current/rollout_plan.md` status.
-- Review: changes reviewed and merged.
 
-## 5) Explicit Non-Actions
-
-These were raised by evaluators but are **not problems** to solve.
-
-- **Do not restructure `lib/` into repository/service/types subdirectories.** (Maintainability #3) The current entity files are 100-460 lines. This is not a cohesion problem. Adding directory nesting increases navigation cost for no measurable benefit at this scale.
-
-- **Do not add a repository/ORM abstraction layer.** (Maintainability #4) One data store, one ORM, pre-production. Prisma is used correctly through `lib/` helpers. Abstracting it adds indirection without value.
-
-- **Do not add auto-transition from PLANNED to MEMORY.** (Product non-issue) The UI uses runtime date comparison, which produces the correct visual result. No background job needed.
-
-- **Do not sync idea edits back to converted events.** (Product non-issue) Once an idea becomes an event, the event is the source of truth. Independent editing is correct.
-
-- **Do not add comment threading.** (Product non-issue) Flat comments are appropriate for 2-user conversational context. Schema supports it if needed later.
-
-- **Do not separate business logic from API routes into a service layer.** (Maintainability #2) Server actions already act as thin controllers calling `lib/` functions. The current pattern is the right one for Next.js App Router. API routes that have inline logic should be tightened opportunistically, not restructured.
+- `npm run build` passes
+- Smoke test checklist complete
+- Docs updated
+- Changes reviewed and merged

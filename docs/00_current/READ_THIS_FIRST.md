@@ -12,6 +12,7 @@ This is the entry point for all agents. Start here before touching code.
 - CONTEXT.md: operational working memory (commands, structure, conventions)
 - ARCHITECTURE.md: canonical architecture and integrations
 - DECISIONS.md: links to ADRs and decision notes
+- DEPLOYMENT.md: platform options and step-by-step deploy instructions
 - rollout_plan.md: milestone execution checklist
 
 Do not read the archive unless explicitly instructed.
