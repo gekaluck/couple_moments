@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { deleteIdea, getIdeaForUser, updateIdea } from "@/lib/ideas";
 import { parseJsonOrForm } from "@/lib/request";
@@ -21,23 +22,23 @@ export async function PUT(request: Request, { params }: PageProps) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const body = await parseJsonOrForm<{
-    title?: string | null;
-    description?: string | null;
-    status?: string | null;
-    tags?: unknown;
-  }>(request);
-
-  const status =
-    body.status === "NEW" || body.status === "PLANNED" || body.status === "DONE"
-      ? body.status
-      : undefined;
+  const body = await parseJsonOrForm<Record<string, unknown>>(request);
+  const schema = z.object({
+    title: z.string().trim().min(1).optional().nullable(),
+    description: z.string().trim().optional().nullable(),
+    status: z.enum(["NEW", "PLANNED", "DONE"]).optional().nullable(),
+    tags: z.union([z.string(), z.array(z.string())]).optional().nullable(),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
 
   const idea = await updateIdea(ideaId, userId, {
-    title: body.title?.trim(),
-    description: body.description ?? undefined,
-    status,
-    tags: body.tags !== undefined ? normalizeTags(body.tags) : undefined,
+    title: parsed.data.title?.trim(),
+    description: parsed.data.description ?? undefined,
+    status: parsed.data.status ?? undefined,
+    tags: parsed.data.tags !== undefined ? normalizeTags(parsed.data.tags) : undefined,
   });
 
   return NextResponse.json({ idea });

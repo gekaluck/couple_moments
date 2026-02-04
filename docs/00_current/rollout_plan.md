@@ -50,26 +50,30 @@ These improve robustness and address user-facing logic issues. Do after P0.
 
 ### P1-1. Add Zod validation on server action and API route inputs
 
-**Sources:** Architecture (P0 #3), Code (Minor — parseJsonOrForm), Maintainability (#5)
+**Sources:** Architecture (P0 #3), Code (Minor – parseJsonOrForm), Maintainability (#5)
+**Status:** Done (routes only)
 
 Replace ad-hoc `if (!title) return` checks with declarative Zod schemas at each entry point. Catches malformed input before the data layer. Also fixes the `parseJsonOrForm` fallback-to-`{}` problem.
 
-### P1-2. Fix rating to be per-user or explicitly shared
+### ~~P1-2. Fix rating to be per-user or explicitly shared~~ ✅ Done
 
 **Source:** Product (3c)
 
-The current single `rating` field means Partner B silently overwrites Partner A's rating. Either store two ratings (one per member, recommended for a couples app) or show who last rated and prompt before overwriting.
+**Status:** Done
+**Implemented:** Rating model keyed by `(userId, eventId)`; event page reads current user's rating.
 
-### P1-3. Add rate limiting on auth endpoints
+### ~~P1-3. Add rate limiting on auth endpoints~~ ✅ Done
 
 **Sources:** Architecture (P1 #4), Code (Important)
 
-`/api/auth/login` and `/api/auth/register` have no throttling. Add basic rate limiting (e.g., per-IP, 5 attempts/minute).
+**Status:** Done
+**Implemented:** 5 attempts/min per IP for login/register routes via in-memory limiter.
 
-### P1-4. Add comment deletion on event and idea detail pages
+### ~~P1-4. Add comment deletion on event and idea detail pages~~ ✅ Done
 **Source:** Product (3e)
 
-Comments can currently only be deleted from the Notes page, which users won't discover. Show a delete button (author-only, per P0-1) on the entity where the comment was posted.
+**Status:** Done
+**Implemented:** Author-only delete controls on event and idea detail comment lists.
 
 ### P1-5. Add cascade deletes for space-owned entities
 

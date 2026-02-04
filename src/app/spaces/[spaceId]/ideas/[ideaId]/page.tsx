@@ -6,6 +6,7 @@ import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import { createEventForSpace } from "@/lib/events";
 import { createIdeaComment, getIdeaForUser, listIdeaComments } from "@/lib/ideas";
+import { deleteNote } from "@/lib/notes";
 import { prisma } from "@/lib/prisma";
 import { normalizeTags, parseTags } from "@/lib/tags";
 import IdeaComments from "./idea-comments";
@@ -88,6 +89,17 @@ export default async function IdeaDetailPage({ params }: PageProps) {
       redirect(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
     }
     await createIdeaComment(ideaIdForActions, currentUserId, content);
+    revalidatePath(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
+  }
+
+  async function handleDeleteComment(formData: FormData) {
+    "use server";
+    const currentUserId = await requireUserId();
+    const commentId = formData.get("commentId")?.toString();
+    if (!commentId) {
+      return;
+    }
+    await deleteNote(commentId, currentUserId);
     revalidatePath(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
   }
 
@@ -177,15 +189,18 @@ export default async function IdeaDetailPage({ params }: PageProps) {
           body: comment.body,
           createdAt: comment.createdAt.toISOString(),
           author: {
+            id: comment.author.id,
             name: comment.author.name,
             email: comment.author.email,
           },
         }))}
+        currentUserId={userId}
         currentUser={{
           name: currentUser.name,
           email: currentUser.email,
         }}
         onSubmit={handleIdeaComment}
+        onDelete={handleDeleteComment}
       />
     </div>
   );

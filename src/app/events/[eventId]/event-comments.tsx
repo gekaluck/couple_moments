@@ -11,6 +11,7 @@ type Comment = {
   body: string;
   createdAt: string;
   author: {
+    id: string;
     name: string | null;
     email: string;
   };
@@ -19,11 +20,13 @@ type Comment = {
 type EventCommentsProps = {
   eventId: string;
   initialComments: Comment[];
+  currentUserId: string;
   currentUser: {
     name: string | null;
     email: string;
   };
   onSubmit: (formData: FormData) => Promise<void>;
+  onDelete: (formData: FormData) => Promise<void>;
 };
 
 const AVATAR_GRADIENTS = [
@@ -34,14 +37,26 @@ const AVATAR_GRADIENTS = [
 export default function EventComments({
   eventId,
   initialComments,
+  currentUserId,
   currentUser,
   onSubmit,
+  onDelete,
 }: EventCommentsProps) {
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
-  const [optimisticComments, addOptimisticComment] = useOptimistic(
+  const [optimisticComments, updateOptimisticComments] = useOptimistic(
     initialComments,
-    (state, comment: Comment) => [...state, comment],
+    (
+      state,
+      action:
+        | { type: "add"; comment: Comment }
+        | { type: "remove"; commentId: string },
+    ) => {
+      if (action.type === "add") {
+        return [...state, action.comment];
+      }
+      return state.filter((comment) => comment.id !== action.commentId);
+    },
   );
 
   function handleSubmit(formData: FormData) {
@@ -51,13 +66,17 @@ export default function EventComments({
     }
     formRef.current?.reset();
     startTransition(async () => {
-      addOptimisticComment({
-        id: `optimistic-${Date.now()}`,
-        body: content,
-        createdAt: new Date().toISOString(),
-        author: {
-          name: currentUser.name,
-          email: currentUser.email,
+      updateOptimisticComments({
+        type: "add",
+        comment: {
+          id: `optimistic-${Date.now()}`,
+          body: content,
+          createdAt: new Date().toISOString(),
+          author: {
+            id: currentUserId,
+            name: currentUser.name,
+            email: currentUser.email,
+          },
         },
       });
       try {
@@ -65,6 +84,24 @@ export default function EventComments({
         toast.success("Comment posted");
       } catch {
         toast.error("Failed to post comment");
+      }
+    });
+  }
+
+  function handleDelete(comment: Comment) {
+    if (!confirm("Delete this comment?")) {
+      return;
+    }
+    const formData = new FormData();
+    formData.set("commentId", comment.id);
+    startTransition(async () => {
+      updateOptimisticComments({ type: "remove", commentId: comment.id });
+      try {
+        await onDelete(formData);
+        toast.success("Comment deleted");
+      } catch {
+        updateOptimisticComments({ type: "add", comment });
+        toast.error("Failed to delete comment");
       }
     });
   }
@@ -104,7 +141,10 @@ export default function EventComments({
             No comments yet. Start the conversation.
           </p>
         ) : null}
-        {optimisticComments.map((comment, index) => (
+        {optimisticComments.map((comment, index) => {
+          const isOwnComment = comment.author.id === currentUserId;
+          const isOptimistic = comment.id.startsWith("optimistic-");
+          return (
           <div
             key={comment.id}
             className="rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3"
@@ -118,11 +158,22 @@ export default function EventComments({
                 {getInitials(comment.author.name, comment.author.email)}
               </div>
               <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-tertiary)]">
+                  <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-[var(--text-primary)]">
                     {comment.author.name || comment.author.email}
                   </span>
                   <span>• {formatTimestamp(comment.createdAt)}</span>
+                  </div>
+                  {isOwnComment && !isOptimistic ? (
+                    <button
+                      className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-500 transition hover:text-rose-600"
+                      type="button"
+                      onClick={() => handleDelete(comment)}
+                    >
+                      Delete
+                    </button>
+                  ) : null}
                 </div>
                 <p className="mt-2 text-sm text-[var(--text-primary)]">
                   {comment.body}
@@ -130,7 +181,8 @@ export default function EventComments({
               </div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </section>
   );
