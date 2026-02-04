@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { createEventForSpace, listEventsForSpace } from "@/lib/events";
@@ -64,28 +65,38 @@ export async function POST(request: Request, { params }: PageProps) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const body = await parseJsonOrForm<{
-    title?: string | null;
-    description?: string | null;
-    dateTimeStart?: string | null;
-    dateTimeEnd?: string | null;
-    tags?: unknown;
-    linkedIdeaId?: string | null;
-  }>(request);
-
-  const title = body.title?.trim();
-  const dateTimeStart = parseDate(body.dateTimeStart);
-  const dateTimeEnd =
-    body.dateTimeEnd !== undefined ? parseDate(body.dateTimeEnd) : null;
-
-  if (!title || !dateTimeStart) {
+  const body = await parseJsonOrForm<Record<string, unknown>>(request);
+  const schema = z.object({
+    title: z.string().trim().min(1),
+    description: z.string().trim().optional().nullable(),
+    dateTimeStart: z.string().trim().min(1),
+    dateTimeEnd: z.string().trim().optional().nullable(),
+    tags: z.union([z.string(), z.array(z.string())]).optional().nullable(),
+    linkedIdeaId: z.string().trim().optional().nullable(),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "Title and dateTimeStart are required." },
       { status: 400 },
     );
   }
 
-  if (body.dateTimeEnd !== undefined && !dateTimeEnd) {
+  const title = parsed.data.title;
+  const dateTimeStart = parseDate(parsed.data.dateTimeStart);
+  const dateTimeEnd =
+    parsed.data.dateTimeEnd !== undefined
+      ? parseDate(parsed.data.dateTimeEnd)
+      : null;
+
+  if (!dateTimeStart) {
+    return NextResponse.json(
+      { error: "dateTimeStart must be a valid ISO date." },
+      { status: 400 },
+    );
+  }
+
+  if (parsed.data.dateTimeEnd !== undefined && !dateTimeEnd) {
     return NextResponse.json(
       { error: "dateTimeEnd must be a valid ISO date." },
       { status: 400 },
@@ -94,11 +105,11 @@ export async function POST(request: Request, { params }: PageProps) {
 
   const event = await createEventForSpace(spaceId, userId, {
     title,
-    description: body.description?.trim() || null,
+    description: parsed.data.description?.trim() || null,
     dateTimeStart,
     dateTimeEnd,
-    tags: normalizeTags(body.tags),
-    linkedIdeaId: body.linkedIdeaId?.trim() || null,
+    tags: normalizeTags(parsed.data.tags),
+    linkedIdeaId: parsed.data.linkedIdeaId?.trim() || null,
   });
 
   return NextResponse.json({ event }, { status: 201 });

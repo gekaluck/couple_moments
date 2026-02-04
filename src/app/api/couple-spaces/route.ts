@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { createCoupleSpaceForUser, listCoupleSpacesForUser } from "@/lib/couple-spaces";
 import { parseJsonOrForm } from "@/lib/request";
@@ -20,8 +21,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const body = await parseJsonOrForm<{ name?: string | null }>(request);
-  const name = body.name?.trim() || null;
+  const body = await parseJsonOrForm<Record<string, unknown>>(request);
+  const schema = z.object({
+    name: z.string().trim().optional().nullable(),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
+
+  const name = parsed.data.name?.trim() || null;
   const space = await createCoupleSpaceForUser(userId, name);
   return NextResponse.json({ space }, { status: 201 });
 }

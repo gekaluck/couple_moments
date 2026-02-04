@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { getIdeaForUser, updateIdea } from "@/lib/ideas";
 import { createEventForSpace } from "@/lib/events";
@@ -33,21 +34,32 @@ export async function POST(request: Request, { params }: PageProps) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const body = await parseJsonOrForm<{
-    dateTimeStart?: string | null;
-    dateTimeEnd?: string | null;
-  }>(request);
-
-  const dateTimeStart = parseDate(body.dateTimeStart);
-  const dateTimeEnd = parseDate(body.dateTimeEnd);
-  if (!dateTimeStart) {
+  const body = await parseJsonOrForm<Record<string, unknown>>(request);
+  const schema = z.object({
+    dateTimeStart: z.string().trim().min(1),
+    dateTimeEnd: z.string().trim().optional().nullable(),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json(
       { error: "dateTimeStart is required." },
       { status: 400 },
     );
   }
 
-  if (body.dateTimeEnd !== undefined && !dateTimeEnd) {
+  const dateTimeStart = parseDate(parsed.data.dateTimeStart);
+  const dateTimeEnd =
+    parsed.data.dateTimeEnd !== undefined
+      ? parseDate(parsed.data.dateTimeEnd)
+      : null;
+  if (!dateTimeStart) {
+    return NextResponse.json(
+      { error: "dateTimeStart must be a valid ISO date." },
+      { status: 400 },
+    );
+  }
+
+  if (parsed.data.dateTimeEnd !== undefined && !dateTimeEnd) {
     return NextResponse.json(
       { error: "dateTimeEnd must be a valid ISO date." },
       { status: 400 },

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { getEventForUser, updateEvent, deleteEvent } from "@/lib/events";
 import { parseJsonOrForm } from "@/lib/request";
@@ -47,44 +48,49 @@ export async function PUT(request: Request, { params }: PageProps) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const body = await parseJsonOrForm<{
-    title?: string | null;
-    description?: string | null;
-    dateTimeStart?: string | null;
-    dateTimeEnd?: string | null;
-    tags?: unknown;
-  }>(request);
+  const body = await parseJsonOrForm<Record<string, unknown>>(request);
+  const schema = z.object({
+    title: z.string().trim().min(1).optional().nullable(),
+    description: z.string().trim().optional().nullable(),
+    dateTimeStart: z.string().trim().optional().nullable(),
+    dateTimeEnd: z.string().trim().optional().nullable(),
+    tags: z.union([z.string(), z.array(z.string())]).optional().nullable(),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
 
   let dateTimeStart: Date | undefined;
-  if (body.dateTimeStart !== undefined) {
-    const parsed = parseDate(body.dateTimeStart);
-    if (!parsed) {
+  if (parsed.data.dateTimeStart !== undefined) {
+    const parsedDate = parseDate(parsed.data.dateTimeStart);
+    if (!parsedDate) {
       return NextResponse.json(
         { error: "dateTimeStart must be a valid ISO date." },
         { status: 400 },
       );
     }
-    dateTimeStart = parsed;
+    dateTimeStart = parsedDate;
   }
 
   let dateTimeEnd: Date | undefined;
-  if (body.dateTimeEnd !== undefined) {
-    const parsed = parseDate(body.dateTimeEnd);
-    if (!parsed) {
+  if (parsed.data.dateTimeEnd !== undefined) {
+    const parsedDate = parseDate(parsed.data.dateTimeEnd);
+    if (!parsedDate) {
       return NextResponse.json(
         { error: "dateTimeEnd must be a valid ISO date." },
         { status: 400 },
       );
     }
-    dateTimeEnd = parsed;
+    dateTimeEnd = parsedDate;
   }
 
   const event = await updateEvent(eventId, userId, {
-    title: body.title?.trim(),
-    description: body.description ?? undefined,
+    title: parsed.data.title?.trim(),
+    description: parsed.data.description ?? undefined,
     dateTimeStart,
     dateTimeEnd,
-    tags: body.tags !== undefined ? normalizeTags(body.tags) : undefined,
+    tags: parsed.data.tags !== undefined ? normalizeTags(parsed.data.tags) : undefined,
   });
 
   return NextResponse.json({ event });

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createEventComment, createEventPhoto, deleteEvent, getEventForUser, listEventComments, updateEvent, updateEventRating } from "@/lib/events";
+import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
 import { buildCreatorPalette, getCreatorInitials } from "@/lib/creator-colors";
 import { prisma } from "@/lib/prisma";
@@ -129,6 +130,17 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const search = (await searchParams) ?? {};
   const isEditing = search.edit === "1";
   const event = await getEventForUser(eventId, userId);
+  const currentUserRating = event
+    ? await prisma.rating.findUnique({
+        where: {
+          userId_eventId: {
+            userId,
+            eventId,
+          },
+        },
+        select: { value: true },
+      })
+    : null;
   const photos = await prisma.photo.findMany({
     where: { eventId },
     orderBy: { createdAt: "asc" },
@@ -228,6 +240,17 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       return;
     }
     await createEventComment(eventIdForActions, currentUserId, content);
+    revalidatePath(`/events/${eventIdForActions}`);
+  }
+
+  async function handleDeleteComment(formData: FormData) {
+    "use server";
+    const currentUserId = await requireUserId();
+    const commentId = formData.get("commentId")?.toString();
+    if (!commentId) {
+      return;
+    }
+    await deleteNote(commentId, currentUserId);
     revalidatePath(`/events/${eventIdForActions}`);
   }
 
@@ -393,7 +416,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             {isPast ? (
               <EventRating
                 eventId={event.id}
-                currentRating={event.rating}
+                currentRating={currentUserRating?.value ?? null}
                 onRate={handleRate}
               />
             ) : null}
@@ -503,15 +526,18 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             body: comment.body,
             createdAt: comment.createdAt.toISOString(),
             author: {
+              id: comment.author.id,
               name: comment.author.name,
               email: comment.author.email,
             },
           }))}
+          currentUserId={userId}
           currentUser={{
             name: currentUser.name,
             email: currentUser.email,
           }}
           onSubmit={handleComment}
+          onDelete={handleDeleteComment}
         />
         <EventEditModal
           isOpen={isEditing}

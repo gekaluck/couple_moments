@@ -510,11 +510,20 @@ export async function updateEventRating(
     throw new Error("Not authorized");
   }
 
-  await prisma.event.update({
-    where: { id: eventId },
-    data: {
-      rating,
-      ratedAt: new Date(),
+  await prisma.rating.upsert({
+    where: {
+      userId_eventId: {
+        userId,
+        eventId,
+      },
+    },
+    create: {
+      userId,
+      eventId,
+      value: rating,
+    },
+    update: {
+      value: rating,
     },
   });
 
