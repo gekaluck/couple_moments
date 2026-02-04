@@ -26,7 +26,7 @@ export async function PUT(request: Request, { params }: PageProps) {
   const schema = z.object({
     title: z.string().trim().min(1).optional().nullable(),
     description: z.string().trim().optional().nullable(),
-    status: z.string().trim().optional().nullable(),
+    status: z.enum(["NEW", "PLANNED", "DONE"]).optional().nullable(),
     tags: z.union([z.string(), z.array(z.string())]).optional().nullable(),
   });
   const parsed = schema.safeParse(body);
@@ -34,17 +34,10 @@ export async function PUT(request: Request, { params }: PageProps) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const status =
-    parsed.data.status === "NEW" ||
-    parsed.data.status === "PLANNED" ||
-    parsed.data.status === "DONE"
-      ? parsed.data.status
-      : undefined;
-
   const idea = await updateIdea(ideaId, userId, {
     title: parsed.data.title?.trim(),
     description: parsed.data.description ?? undefined,
-    status,
+    status: parsed.data.status ?? undefined,
     tags: parsed.data.tags !== undefined ? normalizeTags(parsed.data.tags) : undefined,
   });
 

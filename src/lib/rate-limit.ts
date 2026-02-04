@@ -5,10 +5,20 @@ type RateLimitEntry = {
 
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-export function getClientIp(request: Request) {
+const CLEANUP_INTERVAL_MS = 60_000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore) {
+    if (now > entry.resetAt) {
+      rateLimitStore.delete(key);
+    }
+  }
+}, CLEANUP_INTERVAL_MS).unref();
+
+export function getClientIp(request: Request): string | null {
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (forwardedFor) {
-    return forwardedFor.split(",")[0]?.trim() || "unknown";
+    return forwardedFor.split(",")[0]?.trim() || null;
   }
 
   const realIp = request.headers.get("x-real-ip");
@@ -16,7 +26,7 @@ export function getClientIp(request: Request) {
     return realIp.trim();
   }
 
-  return "unknown";
+  return null;
 }
 
 export function checkRateLimit(

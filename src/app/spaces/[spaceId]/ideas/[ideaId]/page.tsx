@@ -97,7 +97,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     const currentUserId = await requireUserId();
     const commentId = formData.get("commentId")?.toString();
     if (!commentId) {
-      redirect(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);
+      return;
     }
     await deleteNote(commentId, currentUserId);
     revalidatePath(`/spaces/${spaceIdForActions}/ideas/${ideaIdForActions}`);

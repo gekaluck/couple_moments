@@ -13,6 +13,12 @@ import {
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
+  if (!ip) {
+    return NextResponse.json(
+      { error: "Unable to determine client IP." },
+      { status: 400 },
+    );
+  }
   const rateLimit = checkRateLimit(`auth:login:${ip}`, 5, 60_000);
   if (!rateLimit.allowed) {
     return NextResponse.json(
@@ -33,8 +39,11 @@ export async function POST(request: Request) {
   });
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
+    const issues = parsed.error.flatten().fieldErrors;
+    const errorMessage =
+      Object.values(issues).flat().join(" ") || "Email and password are required.";
     return NextResponse.json(
-      { error: "Email and password are required." },
+      { error: errorMessage },
       { status: 400 },
     );
   }
