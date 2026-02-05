@@ -91,28 +91,31 @@ export async function syncAvailabilityBlocks(
     const start = timeMin || now;
     const end = timeMax || new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
     
-    // Delete existing blocks in the sync window
-    await prisma.externalAvailabilityBlock.deleteMany({
-      where: {
-        externalAccountId,
-        startAt: { gte: start },
-        endAt: { lte: end },
-      },
-    });
-    
-    // Create new blocks
-    if (busyBlocks.length > 0) {
-      await prisma.externalAvailabilityBlock.createMany({
-        data: busyBlocks.map((block) => ({
-          userId: account.userId,
+    // Use transaction to ensure atomicity - if createMany fails, deleteMany is rolled back
+    await prisma.$transaction(async (tx) => {
+      // Delete existing blocks in the sync window
+      await tx.externalAvailabilityBlock.deleteMany({
+        where: {
           externalAccountId,
-          calendarId: block.calendarId,
-          startAt: block.startAt,
-          endAt: block.endAt,
-          source: 'GOOGLE',
-        })),
+          startAt: { gte: start },
+          endAt: { lte: end },
+        },
       });
-    }
+
+      // Create new blocks
+      if (busyBlocks.length > 0) {
+        await tx.externalAvailabilityBlock.createMany({
+          data: busyBlocks.map((block) => ({
+            userId: account.userId,
+            externalAccountId,
+            calendarId: block.calendarId,
+            startAt: block.startAt,
+            endAt: block.endAt,
+            source: 'GOOGLE',
+          })),
+        });
+      }
+    });
     
     // Update sync state
     await prisma.externalSyncState.upsert({
