@@ -720,7 +720,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     nowLabel={nowLabel}
                     addEventHref={buildCalendarHref(monthParam(now), { new: key })}
                     creatorPalette={creatorPalette}
-                    calendarTimeFormat={calendarTimeFormat}
                     buildBlockEditHref={(blockId) =>
                       buildCalendarHref(monthParam(now), { editBlock: blockId })
                     }

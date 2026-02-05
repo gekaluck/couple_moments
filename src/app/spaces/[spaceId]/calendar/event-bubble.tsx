@@ -6,7 +6,6 @@ import Link from "next/link";
 type EventBubbleProps = {
   href: string;
   title: string;
-  timeLabel?: string | null;
   isPast: boolean;
 };
 

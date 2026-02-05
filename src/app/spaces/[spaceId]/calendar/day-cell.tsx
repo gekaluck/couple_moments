@@ -1,14 +1,12 @@
 import Link from "next/link";
 
 import EventBubble from "./event-bubble";
-import { formatEventTime } from "@/lib/calendar";
 import { CreatorAccent, getCreatorInitials } from "@/lib/creator-colors";
 
 type EventSummary = {
   id: string;
   title: string;
   dateTimeStart: Date;
-  timeIsSet: boolean;
 };
 
 type BlockSummary = {
@@ -30,7 +28,6 @@ type DayCellProps = {
   nowLabel: string;
   addEventHref: string;
   creatorPalette: Map<string, CreatorAccent>;
-  calendarTimeFormat: "12h" | "24h";
   buildBlockEditHref: (blockId: string) => string;
 };
 
@@ -46,7 +43,6 @@ export default function DayCell({
   nowLabel,
   addEventHref,
   creatorPalette,
-  calendarTimeFormat,
   buildBlockEditHref,
 }: DayCellProps) {
   const maxEvents = isCompact ? 2 : 3;
@@ -140,22 +136,14 @@ export default function DayCell({
             </Link>
           );
         })}
-        {visibleEvents.map((event) => {
-          const eventIsPast = event.dateTimeStart < today;
-          const eventTime =
-            event.timeIsSet && event.dateTimeStart
-              ? formatEventTime(event.dateTimeStart, calendarTimeFormat)
-              : null;
-          return (
-            <EventBubble
-              key={event.id}
-              href={`/events/${event.id}`}
-              title={event.title}
-              timeLabel={eventTime}
-              isPast={eventIsPast}
-            />
-          );
-        })}
+        {visibleEvents.map((event) => (
+          <EventBubble
+            key={event.id}
+            href={`/events/${event.id}`}
+            title={event.title}
+            isPast={event.dateTimeStart < today}
+          />
+        ))}
         {overflowCount > 0 ? (
           <div className="rounded-lg border border-dashed border-[var(--panel-border)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
             ... +{overflowCount} more
