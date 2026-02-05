@@ -16,8 +16,18 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Couple Moments",
+  title: "Duet",
   description: "Plan dates, save memories, and keep ideas together.",
+  icons: {
+    icon: [
+      { url: "/duet-favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/duet-favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/duet-favicon-48.png", type: "image/png", sizes: "48x48" },
+      { url: "/duet-icon.png", type: "image/png", sizes: "192x192" },
+    ],
+    shortcut: "/duet-favicon-32.png",
+    apple: "/duet-icon.png",
+  },
 };
 
 export default function RootLayout({

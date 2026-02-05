@@ -33,7 +33,7 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
             Help & Onboarding
           </h3>
           <p className="text-sm text-[var(--text-muted)]">
-            Learn how to use Couple Moments
+            Learn how to use Duet
           </p>
         </div>
       </div>

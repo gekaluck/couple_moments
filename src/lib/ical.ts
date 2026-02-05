@@ -67,7 +67,7 @@ export function generateICalendar(
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Couple Moments//EN",
+    "PRODID:-//Duet//EN",
     `X-WR-CALNAME:${escapeICalText(calendarName)}`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",

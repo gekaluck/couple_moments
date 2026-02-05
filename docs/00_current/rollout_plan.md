@@ -1,4 +1,4 @@
-# Couple Moments — Rollout Plan
+# Duet — Rollout Plan
 
 **Updated:** 2026-02-04
 **Status:** P0/P1 complete — moving to deployment and polish
@@ -121,3 +121,4 @@ Configure `onDelete: Cascade` from `CoupleSpace` to `Event`, `Idea`, `Note`, `Av
 - Smoke test checklist complete
 - Docs updated
 - Changes reviewed and merged
+

@@ -1,15 +1,22 @@
+import Image from "next/image";
+
 export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-16">
       <main className="surface w-full max-w-md p-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[var(--text-muted)]">
-          Couple Moments
-        </p>
-        <h1 className="mt-4 text-3xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+        <Image
+          src="/duet-logo.png"
+          alt="Duet"
+          width={300}
+          height={88}
+          className="mx-auto h-24 w-auto"
+          priority
+        />
+        <h1 className="mt-6 text-center text-3xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
           Create your account
         </h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          Start building your Couple Space in minutes.
+        <p className="mt-2 text-center text-sm text-[var(--text-muted)]">
+          Start building your space in minutes.
         </p>
         <form
           className="mt-8 flex flex-col gap-4"

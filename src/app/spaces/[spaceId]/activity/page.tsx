@@ -130,7 +130,7 @@ export default async function ActivityPage({ params }: PageProps) {
           Activity feed
         </h2>
         <p className="section-subtitle">
-          Every meaningful action across your Couple Space.
+          Every meaningful action across your space.
         </p>
       </section>
       <section className="flex flex-col gap-6">

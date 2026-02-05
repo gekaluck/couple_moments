@@ -1,4 +1,4 @@
-# Photo Upload Spec - Couple Moments
+# Photo Upload Spec - Duet
 
 **Created:** 2026-02-05
 **Status:** Draft
@@ -164,3 +164,4 @@ Open questions:
 - Non-member cannot attach photos to another space’s event.
 - Memory thumbnails prefer uploaded photos over place photos.
 - Upload errors are visible and non-destructive.
+

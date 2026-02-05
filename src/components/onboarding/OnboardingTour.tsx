@@ -12,7 +12,7 @@ type OnboardingStep = {
 
 const steps: OnboardingStep[] = [
   {
-    title: "Welcome to Couple Moments",
+    title: "Welcome to Duet",
     description: "Plan dates, save memories, and keep ideas together with your partner. Let's take a quick tour!",
     icon: <Heart className="h-8 w-8" />,
     color: "from-rose-500 to-pink-600",

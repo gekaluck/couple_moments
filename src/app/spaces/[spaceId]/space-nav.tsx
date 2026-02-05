@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -22,19 +23,6 @@ const navItems = (spaceId: string): NavItem[] => [
   { id: "settings", label: "Settings", href: `/spaces/${spaceId}/settings` },
 ];
 
-function HeartIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-5 w-5"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-    >
-      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.22 2.53C11.09 5.01 12.76 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-    </svg>
-  );
-}
-
 export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
   const pathname = usePathname();
   const items = navItems(spaceId);
@@ -44,19 +32,21 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
 
   return (
     <nav className="site-nav sticky top-0 z-50 border-b border-[var(--border-light)] bg-white/80 backdrop-blur-md shadow-[var(--shadow-sm)]">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-rose-400 to-pink-500 text-white shadow-[var(--shadow-md)]">
-            <HeartIcon />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-[var(--text-tertiary)]">
-              Couple Moments
-            </p>
-            <p className="text-xl font-bold text-transparent bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text brand-text">
-              {spaceName}
-            </p>
-          </div>
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-4">
+          <Link href={`/spaces/${spaceId}/calendar`} className="flex-shrink-0 -my-4">
+            <Image
+              src="/duet-logo.png"
+              alt="Duet"
+              width={300}
+              height={88}
+              className="h-20 w-auto drop-shadow-lg transition-transform hover:scale-105"
+              priority
+            />
+          </Link>
+          <p className="text-lg font-semibold text-transparent bg-gradient-to-r from-rose-500 to-pink-600 bg-clip-text brand-text">
+            {spaceName}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {items.map((item) => {

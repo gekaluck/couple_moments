@@ -95,7 +95,7 @@ Migration steps:
 - If user already connected, re-run OAuth consent flow.
 
 ### 2) Event creation hook
-- When creating a Couple Moments event, allow optional toggle:
+- When creating a Duet event, allow optional toggle:
   - `addToGoogleCalendar = true`
 - Create Google event via `events.insert`.
 - Store `ExternalEventLink` with `externalEventId`, `etag`.
@@ -175,3 +175,4 @@ Migration steps:
 - Availability sync window (default 60 or 90 days?)
 - Where to show external availability toggles (global vs per user)?
 - Should external blocks be stored separately or merged into AvailabilityBlock with `source`?
+

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { createCoupleSpaceForUser, joinCoupleSpaceByInvite } from "@/lib/couple-spaces";
@@ -30,7 +31,7 @@ async function handleJoin(formData: FormData) {
   if (result.error || !result.space) {
     redirect(
       `/spaces/onboarding?invite=${encodeURIComponent(inviteCode)}&error=${encodeURIComponent(
-        result.error || "Unable to join this Couple Space.",
+        result.error || "Unable to join this space.",
       )}`,
     );
   }
@@ -48,11 +49,16 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
     <div className="flex min-h-screen items-center justify-center px-6 py-16">
       <main className="flex w-full max-w-4xl flex-col gap-10">
         <header className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-[var(--text-muted)]">
-            Couple Moments
-          </p>
+          <Image
+            src="/duet-logo.png"
+            alt="Duet"
+            width={300}
+            height={88}
+            className="mx-auto h-16 w-auto"
+            priority
+          />
           <h1 className="mt-4 text-4xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-            Create or join your Couple Space
+            Create or join your space
           </h1>
           <p className="mt-2 text-sm text-[var(--text-muted)]">
             Start planning dates together in minutes.

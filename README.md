@@ -1,4 +1,4 @@
-# Couple Moments
+# Duet
 
 A private couples app for planning dates, tracking ideas, and building shared memories.
 

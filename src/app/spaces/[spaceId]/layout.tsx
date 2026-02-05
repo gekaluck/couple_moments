@@ -21,7 +21,7 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
 
   return (
     <div className="min-h-screen">
-      <SpaceNav spaceId={space.id} spaceName={space.name || "Your Couple Space"} />
+      <SpaceNav spaceId={space.id} spaceName={space.name || "Your space"} />
       <main className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-10">
         {children}
       </main>
