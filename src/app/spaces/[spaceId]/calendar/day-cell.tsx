@@ -160,8 +160,9 @@ export default function DayCell({
           return isExternal ? (
             <div
               key={block.id}
-              className="group relative rounded-md px-2 py-1 text-[11px]"
+              className="group relative rounded-lg border-2 border-dashed px-2 py-1 text-[11px]"
               style={{
+                borderColor: blockAccent,
                 backgroundColor: blockSoft,
                 color: blockText,
               }}
