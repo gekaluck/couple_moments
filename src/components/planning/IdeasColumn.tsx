@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Lightbulb } from "lucide-react";
 
 import EmptyState from "./EmptyState";
@@ -60,7 +60,6 @@ export default function IdeasColumn({
   autoOpen = false,
 }: IdeasColumnProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [activeTag, setActiveTag] = useState("all");
 
   useEffect(() => {
     if (autoOpen) {
@@ -68,20 +67,7 @@ export default function IdeasColumn({
     }
   }, [autoOpen]);
 
-  const tagOptions = useMemo(() => {
-    const unique = new Set<string>();
-    ideas.forEach((idea) => {
-      idea.tags.forEach((tag) => unique.add(tag));
-    });
-    return Array.from(unique).sort((a, b) => a.localeCompare(b));
-  }, [ideas]);
-
-  const filteredIdeas =
-    activeTag === "all"
-      ? ideas
-      : ideas.filter((idea) => idea.tags.includes(activeTag));
   const hasIdeas = ideas.length > 0;
-  const hasFilteredIdeas = filteredIdeas.length > 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -107,35 +93,6 @@ export default function IdeasColumn({
           Create idea
         </button>
       </div>
-      {tagOptions.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-          <button
-            className={`rounded-full border px-3 py-1 transition ${
-              activeTag === "all"
-                ? "border-amber-300 bg-amber-100 text-amber-700"
-                : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-amber-300 hover:text-amber-700"
-            }`}
-            onClick={() => setActiveTag("all")}
-            type="button"
-          >
-            All
-          </button>
-          {tagOptions.map((tag) => (
-            <button
-              key={tag}
-              className={`rounded-full border px-3 py-1 transition ${
-                activeTag === tag
-                  ? "border-amber-300 bg-amber-100 text-amber-700"
-                  : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-amber-300 hover:text-amber-700"
-              }`}
-              onClick={() => setActiveTag(tag)}
-              type="button"
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      ) : null}
       {!hasIdeas ? (
         <EmptyState
           icon={<Lightbulb className="h-8 w-8 text-amber-500" />}
@@ -144,17 +101,9 @@ export default function IdeasColumn({
           actionLabel="Create idea"
           onAction={() => setIsCreateOpen(true)}
         />
-      ) : !hasFilteredIdeas ? (
-        <EmptyState
-          icon={<Lightbulb className="h-8 w-8 text-amber-500" />}
-          title="No ideas match"
-          description="Try a different tag or clear the filter."
-          actionLabel="Clear filter"
-          onAction={() => setActiveTag("all")}
-        />
       ) : (
         <div className="stagger-children flex flex-col gap-4">
-          {filteredIdeas.map((idea) => (
+          {ideas.map((idea) => (
             <IdeaCard
               key={idea.id}
               idea={idea}
@@ -166,7 +115,6 @@ export default function IdeasColumn({
               onAddComment={onAddComment}
               onDelete={onDeleteIdea}
               onEdit={onEditIdea}
-              onTagClick={(tag) => setActiveTag(tag)}
             />
           ))}
         </div>

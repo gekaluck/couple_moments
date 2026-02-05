@@ -1,7 +1,7 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { Fragment, ReactNode } from "react";
+import { Dialog, Transition } from "@headlessui/react";
 
 type ModalProps = {
   isOpen: boolean;
@@ -11,61 +11,53 @@ type ModalProps = {
 };
 
 export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
-  const [mounted, setMounted] = useState(false);
+  return (
+    <Transition show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-[60]" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-200"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-150"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-[var(--surface-900)]/30 backdrop-blur-sm" />
+        </Transition.Child>
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen || !mounted) {
-    return null;
-  }
-
-  const modalContent = (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 py-6">
-      <button
-        aria-label="Close modal"
-        className="absolute inset-0 bg-black/30"
-        onClick={onClose}
-        type="button"
-      />
-      <div className="modal-panel relative w-full max-w-xl rounded-3xl border border-[var(--panel-border)] bg-white p-6 shadow-[var(--shadow-xl)] md:p-8">
-        {title ? (
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-              {title}
-            </h2>
-            <button
-              className="rounded-full border border-[var(--panel-border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
-              onClick={onClose}
-              type="button"
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center px-4 py-6 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-200"
+              enterFrom="opacity-0 translate-y-3 scale-95"
+              enterTo="opacity-100 translate-y-0 scale-100"
+              leave="ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0 scale-100"
+              leaveTo="opacity-0 translate-y-3 scale-95"
             >
-              Close
-            </button>
+              <Dialog.Panel className="w-full max-w-md transform rounded-3xl border border-[var(--panel-border)] bg-white p-6 text-left shadow-[var(--shadow-xl)] md:p-8">
+                {title ? (
+                  <div className="mb-4 flex items-center justify-between">
+                    <Dialog.Title className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+                      {title}
+                    </Dialog.Title>
+                    <button
+                      className="rounded-full border border-[var(--panel-border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+                      onClick={onClose}
+                      type="button"
+                    >
+                      Close
+                    </button>
+                  </div>
+                ) : null}
+                {children}
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
-        ) : null}
-        {children}
-      </div>
-    </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
-
-  return createPortal(modalContent, document.body);
 }

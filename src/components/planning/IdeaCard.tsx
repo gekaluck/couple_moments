@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Calendar, Loader2, MapPin, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { Calendar, MapPin, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/Modal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
@@ -9,6 +9,8 @@ import TagInput from "@/components/ui/TagInput";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import TagBadge from "@/components/ui/TagBadge";
+import Button from "@/components/ui/Button";
+import Card, { CardDescription, CardFooter, CardTitle } from "@/components/ui/Card";
 
 import { formatTimeAgo, getInitials } from "@/lib/formatters";
 
@@ -55,7 +57,6 @@ type IdeaCardProps = {
   onAddComment: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
   onEdit: (formData: FormData) => Promise<void>;
-  onTagClick?: (tag: string) => void;
 };
 
 export default function IdeaCard({
@@ -68,7 +69,6 @@ export default function IdeaCard({
   onAddComment,
   onDelete,
   onEdit,
-  onTagClick,
 }: IdeaCardProps) {
   const router = useRouter();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -111,19 +111,17 @@ export default function IdeaCard({
   const hasOpenModal = isScheduleOpen || isEditOpen || isDeleteOpen;
 
   return (
-    <div
+    <Card
       id={`idea-${idea.id}`}
-      className={`card-hover animate-fade-in-up rounded-2xl border border-amber-200 bg-amber-50 p-5 transition-all duration-200 ${hasOpenModal ? "relative z-50" : ""}`}
+      variant="amber"
+      padding="md"
+      className={`card-hover animate-fade-in-up ${hasOpenModal ? "relative z-50" : ""}`}
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-words overflow-hidden">
-            {idea.title}
-          </h3>
+          <CardTitle className="text-lg">{idea.title}</CardTitle>
           {idea.description ? (
-            <p className="mt-2 text-sm text-[var(--text-muted)] line-clamp-2">
-              {idea.description}
-            </p>
+            <CardDescription>{idea.description}</CardDescription>
           ) : null}
           {idea.placeName || idea.placeAddress ? (
             <div className="mt-2 inline-flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
@@ -146,23 +144,18 @@ export default function IdeaCard({
           {idea.tags.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {idea.tags.map((tag) => (
-                <button
-                  key={tag}
-                  className="tag-interactive inline-flex items-center"
-                  onClick={() => onTagClick?.(tag)}
-                  type="button"
-                >
-                  <TagBadge label={tag} />
-                </button>
+                <TagBadge key={tag} label={tag} />
               ))}
             </div>
           ) : null}
-          <p className="mt-3 text-xs text-[var(--text-tertiary)]">
-            Created {formatTimeAgo(idea.createdAt)} by{" "}
-            <span className="font-semibold text-[var(--text-primary)]">
-              {idea.createdBy.name || idea.createdBy.email}
+          <CardFooter className="mt-3 justify-start text-xs text-[var(--text-tertiary)]">
+            <span>
+              Created {formatTimeAgo(idea.createdAt)} by{" "}
+              <span className="font-semibold text-[var(--text-primary)]">
+                {idea.createdBy.name || idea.createdBy.email}
+              </span>
             </span>
-          </p>
+          </CardFooter>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -385,21 +378,17 @@ export default function IdeaCard({
               type="time"
             />
             <div className="flex flex-wrap justify-end gap-2">
-              <button
-                className="rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsScheduleOpen(false)}
                 type="button"
               >
                 Cancel
-              </button>
-              <button
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
-                type="submit"
-                disabled={isPending}
-              >
-                {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+              </Button>
+              <Button variant="primary" size="sm" type="submit" loading={isPending}>
                 {isPending ? "Creating..." : "Create event"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -490,21 +479,17 @@ export default function IdeaCard({
           <input type="hidden" name="placeLng" value={editPlace?.lng?.toString() ?? ""} />
           <input type="hidden" name="placeUrl" value={editPlace?.url ?? ""} />
           <div className="flex flex-wrap justify-end gap-2">
-            <button
-              className="rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setIsEditOpen(false)}
               type="button"
             >
               Cancel
-            </button>
-            <button
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
-              type="submit"
-              disabled={isPending}
-            >
-              {isPending && <Loader2 className="h-3 w-3 animate-spin" />}
+            </Button>
+            <Button variant="primary" size="sm" type="submit" loading={isPending}>
               {isPending ? "Saving..." : "Save changes"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -524,6 +509,6 @@ export default function IdeaCard({
         confirmLabel="Delete"
         variant="danger"
       />
-    </div>
+    </Card>
   );
 }
