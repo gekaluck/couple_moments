@@ -35,6 +35,15 @@ This file records high-level decisions and trade-offs. Add dated entries as they
 - Alternatives considered: URL-encode filename — rejected as it doesn't prevent header injection, only filename issues. Validate space name on creation — rejected as too restrictive and doesn't fix existing data.
 - Consequences: Header injection vector closed. Legitimate space names preserved (just cleaned). No schema changes or migrations needed. Safe to deploy independently.
 
+## 2026-02-05 - Google Calendar Integration Architecture (M4)
+- Context: Users wanted to see their existing calendar commitments (busy times) when planning dates. Manual entry of availability blocks was tedious and error-prone.
+- Decision: Implemented OAuth2 flow with Google Calendar API using FreeBusy queries. Tokens encrypted with AES-256-GCM before storage. External blocks displayed as read-only with time ranges, distinct from editable manual blocks. Both block types use dashed border style to indicate unavailability.
+- Alternatives considered:
+  - Full event sync — rejected as privacy concern (don't need event titles/details, just busy/free)
+  - iCal import — rejected as requires manual re-import, no live sync
+  - Replace manual blocks entirely — rejected as users may want to mark busy time not in their calendar
+- Consequences: Users can connect Google Calendar once and see busy times automatically. Manual blocks remain for ad-hoc unavailability. Color-coded per user for multi-partner visibility. Requires additional env vars (TOKEN_ENCRYPTION_KEY, GOOGLE_* credentials).
+
 ## ADR Index
 - ADR-2026-01-30-custom-session-auth.md
 - ADR-2026-01-30-tags-json-string.md
