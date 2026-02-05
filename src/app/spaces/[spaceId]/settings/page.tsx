@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 
 import InviteCard from "./invite-card";
 import OnboardingSettings from "./onboarding-settings";
+import GoogleCalendarSettings from "./google-calendar-settings";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -278,6 +279,8 @@ export default async function SettingsPage({ params }: PageProps) {
           </button>
         </form>
       </section>
+
+      <GoogleCalendarSettings />
 
       <OnboardingSettings spaceId={space.id} />
     </>

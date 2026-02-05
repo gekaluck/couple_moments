@@ -12,8 +12,11 @@ type EventSummary = {
 type BlockSummary = {
   id: string;
   title: string;
-  createdByUserId: string;
   createdBy?: { name: string | null; email: string } | null;
+  createdByUserId?: string;
+  source?: string;
+  startAt?: Date;
+  endAt?: Date;
 };
 
 type DayCellProps = {
@@ -84,19 +87,89 @@ export default function DayCell({
       ) : null}
       <div className="relative z-10 mt-2 flex flex-col gap-1">
         {blocks.map((block) => {
+          const isExternal = block.source === 'GOOGLE';
+          const createdByUserId = block.createdByUserId || 'external';
           const blockAccent =
-            creatorPalette.get(block.createdByUserId)?.accent ??
-            "var(--accent-secondary)";
+            creatorPalette.get(createdByUserId)?.accent ??
+            (isExternal ? "#64748b" : "var(--accent-secondary)");
           const blockSoft =
-            creatorPalette.get(block.createdByUserId)?.accentSoft ?? "#fef3c7";
+            creatorPalette.get(createdByUserId)?.accentSoft ??
+            (isExternal ? "#f1f5f9" : "#fef3c7");
           const blockText =
-            creatorPalette.get(block.createdByUserId)?.accentText ?? "#b45309";
-          const initials = getCreatorInitials({
-            id: block.createdByUserId,
+            creatorPalette.get(createdByUserId)?.accentText ??
+            (isExternal ? "#475569" : "#b45309");
+
+          // Format time for external blocks
+          const formatTime = (d: Date) => {
+            const h = d.getHours();
+            const m = d.getMinutes();
+            const ampm = h >= 12 ? 'pm' : 'am';
+            const hour = h % 12 || 12;
+            return m === 0 ? `${hour}${ampm}` : `${hour}:${m.toString().padStart(2, '0')}${ampm}`;
+          };
+
+          const timeLabel = isExternal && block.startAt && block.endAt
+            ? `${formatTime(new Date(block.startAt))}-${formatTime(new Date(block.endAt))}`
+            : null;
+
+          const tooltipText = isExternal && block.startAt && block.endAt
+            ? `Busy: ${formatTime(new Date(block.startAt))} - ${formatTime(new Date(block.endAt))}`
+            : block.title;
+
+          const initials = isExternal ? "G" : getCreatorInitials({
+            id: createdByUserId,
             name: block.createdBy?.name ?? null,
             email: block.createdBy?.email ?? "??",
           });
-          return (
+
+          const blockContent = (
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex min-w-0 items-center gap-1 truncate font-medium">
+                {isExternal ? (
+                  <span className="truncate">{timeLabel}</span>
+                ) : (
+                  <>
+                    <svg
+                      aria-hidden="true"
+                      className="h-3 w-3 flex-shrink-0"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <circle cx="12" cy="12" r="9" strokeWidth="1.5" />
+                      <path
+                        d="M12 7.5v5l3 2"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="truncate">{block.title}</span>
+                  </>
+                )}
+              </span>
+              <span
+                className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white"
+                style={{ backgroundColor: blockAccent }}
+              >
+                {initials}
+              </span>
+            </div>
+          );
+
+          return isExternal ? (
+            <div
+              key={block.id}
+              className="group relative rounded-md px-2 py-1 text-[11px]"
+              style={{
+                backgroundColor: blockSoft,
+                color: blockText,
+              }}
+              title={tooltipText}
+            >
+              {blockContent}
+            </div>
+          ) : (
             <Link
               key={block.id}
               className="rounded-lg border-2 border-dashed px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] opacity-80"
@@ -107,32 +180,7 @@ export default function DayCell({
                 color: blockText,
               }}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-1 truncate font-semibold">
-                  <svg
-                    aria-hidden="true"
-                    className="h-3 w-3 flex-shrink-0"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <circle cx="12" cy="12" r="9" strokeWidth="1.5" />
-                    <path
-                      d="M12 7.5v5l3 2"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span className="truncate">{block.title}</span>
-                </span>
-                <span
-                  className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white"
-                  style={{ backgroundColor: blockAccent }}
-                >
-                  {initials}
-                </span>
-              </div>
+              {blockContent}
             </Link>
           );
         })}

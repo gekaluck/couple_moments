@@ -34,6 +34,8 @@ model User {
   changeLogs               ChangeLogEntry[]
   notifications            Notification[]
   sessions                 Session[]
+  externalAccounts         ExternalAccount[]
+  externalAvailabilityBlocks ExternalAvailabilityBlock[]
 }
 
 model Session {
@@ -297,4 +299,83 @@ enum NoteParentType {
 enum ReactionTargetType {
   EVENT
   NOTE
+}
+
+// Google Calendar Integration Models
+
+model ExternalAccount {
+  id               String              @id @default(cuid())
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  userId           String
+  provider         String              // "GOOGLE"
+  providerAccountId String            // Google user email or ID
+  accessToken      String              // Encrypted
+  refreshToken     String?             // Encrypted
+  tokenExpiresAt   DateTime?
+  scope            String?
+  revokedAt        DateTime?
+
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calendars        ExternalCalendar[]
+  syncState        ExternalSyncState?
+  availabilityBlocks ExternalAvailabilityBlock[]
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+model ExternalCalendar {
+  id                  String          @id @default(cuid())
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  externalAccountId   String
+  calendarId          String          // Google Calendar ID
+  summary             String          // Calendar name
+  primary             Boolean         @default(false)
+  selected            Boolean         @default(false)
+  backgroundColor     String?
+  foregroundColor     String?
+
+  externalAccount     ExternalAccount @relation(fields: [externalAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([externalAccountId, calendarId])
+  @@index([externalAccountId])
+}
+
+model ExternalAvailabilityBlock {
+  id                  String          @id @default(cuid())
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  userId              String
+  externalAccountId   String
+  calendarId          String          // Which calendar this busy block is from
+  startAt             DateTime
+  endAt               DateTime
+  source              String          @default("GOOGLE")
+
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  externalAccount     ExternalAccount @relation(fields: [externalAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startAt])
+  @@index([externalAccountId])
+}
+
+model ExternalSyncState {
+  id                  String          @id @default(cuid())
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  externalAccountId   String          @unique
+  lastSyncedAt        DateTime?
+  lastSyncError       String?
+  syncToken           String?         // For incremental sync
+  channelId           String?         // For webhook notifications
+  resourceId          String?         // For webhook notifications
+  channelExpiration   DateTime?       // For webhook notifications
+
+  externalAccount     ExternalAccount @relation(fields: [externalAccountId], references: [id], onDelete: Cascade)
 }
