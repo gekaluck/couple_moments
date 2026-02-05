@@ -86,7 +86,7 @@ type CardTitleProps = {
 export function CardTitle({ children, className = "" }: CardTitleProps) {
   return (
     <h3
-      className={`min-w-0 flex-1 text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-words overflow-hidden ${className}`}
+      className={`min-w-0 flex-1 text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-all overflow-hidden ${className}`}
     >
       {children}
     </h3>
