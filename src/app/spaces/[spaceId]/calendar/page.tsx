@@ -487,8 +487,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     return `/spaces/${space.id}/calendar?${params.toString()}`;
   };
 
-  const blocksByDay = new Map<string, typeof blocks>();
-  for (const block of blocks) {
+  const blocksByDay = new Map<string, Array<{ id: string; startAt: Date; endAt: Date; title: string; createdBy: { name: string | null; email: string }; createdByUserId?: string; source?: string }>>();
+  
+  // Add manual blocks
+  for (const block of blocks.manual) {
     const cursor = new Date(block.startAt);
     cursor.setHours(0, 0, 0, 0);
     const end = new Date(block.endAt);
@@ -496,7 +498,37 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     while (cursor <= end) {
       const key = dateKey(cursor);
       const list = blocksByDay.get(key) ?? [];
-      list.push(block);
+      list.push({
+        id: block.id,
+        startAt: block.startAt,
+        endAt: block.endAt,
+        title: block.title,
+        createdBy: { name: block.createdBy.name, email: block.createdBy.email },
+        createdByUserId: block.createdByUserId,
+      });
+      blocksByDay.set(key, list);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  }
+  
+  // Add external blocks
+  for (const block of blocks.external) {
+    const cursor = new Date(block.startAt);
+    cursor.setHours(0, 0, 0, 0);
+    const end = new Date(block.endAt);
+    end.setHours(0, 0, 0, 0);
+    while (cursor <= end) {
+      const key = dateKey(cursor);
+      const list = blocksByDay.get(key) ?? [];
+      list.push({
+        id: block.id,
+        startAt: block.startAt,
+        endAt: block.endAt,
+        title: "Busy",
+        createdBy: { name: block.user.name, email: block.user.email },
+        createdByUserId: block.userId,
+        source: block.source,
+      });
       blocksByDay.set(key, list);
       cursor.setDate(cursor.getDate() + 1);
     }
@@ -577,7 +609,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   }));
 
   const editBlock = editBlockId
-    ? blocks.find((block) => block.id === editBlockId)
+    ? blocks.manual.find((block) => block.id === editBlockId)
     : null;
 
   const formatDateInput = (date: Date) => {
@@ -665,7 +697,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         </div>
 
         {/* Check for empty state */}
-        {events.length === 0 && blocks.length === 0 ? (
+        {events.length === 0 && blocks.manual.length === 0 && blocks.external.length === 0 ? (
           <div className="mt-8">
             <CalendarEmptyState
               actionHref={buildCalendarHref(monthParam(now), { new: dateKey(now) })}

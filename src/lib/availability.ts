@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
+import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
 
 export async function listAvailabilityBlocks(params: {
   spaceId: string;
@@ -7,7 +7,9 @@ export async function listAvailabilityBlocks(params: {
   to: Date;
 }) {
   const { spaceId, from, to } = params;
-  return prisma.availabilityBlock.findMany({
+  
+  // Get manual availability blocks
+  const manualBlocks = await prisma.availabilityBlock.findMany({
     where: {
       coupleSpaceId: spaceId,
       startAt: { lte: to },
@@ -20,6 +22,32 @@ export async function listAvailabilityBlocks(params: {
       startAt: "asc",
     },
   });
+  
+  // Get space members to fetch their external blocks
+  const members = await listSpaceMembers(spaceId);
+  const memberUserIds = members.map((m) => m.userId);
+  
+  // Get external availability blocks for all members
+  const externalBlocks = await prisma.externalAvailabilityBlock.findMany({
+    where: {
+      userId: { in: memberUserIds },
+      startAt: { lte: to },
+      endAt: { gte: from },
+    },
+    include: {
+      user: true,
+      externalAccount: true,
+    },
+    orderBy: {
+      startAt: "asc",
+    },
+  });
+  
+  // Return both types of blocks
+  return {
+    manual: manualBlocks,
+    external: externalBlocks,
+  };
 }
 
 export async function createAvailabilityBlock(

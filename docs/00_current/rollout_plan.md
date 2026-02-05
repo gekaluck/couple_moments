@@ -57,12 +57,36 @@ Replace Cloudinary placeholder with working upload flow.
 
 Improvements surfaced during evaluation — do after deployment is stable.
 
-- [ ] Add empty-state messaging for spaces with no events/ideas
+- [x] Add empty-state messaging for spaces with no events/ideas
 - [ ] Add loading skeletons for calendar, event list, and idea list pages
 - [ ] Add inline form validation feedback (client-side, complementing Zod on server)
-- [ ] Standardize card layouts across event and idea lists
+- [x] Standardize card layouts across event and idea lists (Button.tsx, Card standardization)
 - [ ] Add error boundaries for core pages
-- [ ] Tighten form feedback (loading spinners on submit buttons)
+- [x] Tighten form feedback (loading spinners on submit buttons)
+- [x] Extract DayCell component from calendar
+- [x] Redesign EventBubble for cleaner visual density
+- [x] Remove tag filter from planning section
+
+### M4. Google Calendar Integration (In Review)
+
+Sync busy/free time from external calendars.
+
+- [x] OAuth2 flow with Google Calendar API
+- [x] Encrypted token storage (AES-256-GCM)
+- [x] Sync FreeBusy data from selected calendars
+- [x] Display external busy blocks with time ranges
+- [x] Color-coded blocks per user
+- [x] Settings UI for managing connected calendars
+- [ ] Automatic periodic sync (cron/webhook)
+- [ ] Support for additional calendar providers
+
+See `docs/00_current/TECH_PLAN_GOOGLE_CALENDAR.md` for implementation details.
+
+**Environment variables required:**
+- `TOKEN_ENCRYPTION_KEY` — 32-byte base64 key for token encryption
+- `GOOGLE_CLIENT_ID` — OAuth client ID from Google Cloud Console
+- `GOOGLE_CLIENT_SECRET` — OAuth client secret
+- `GOOGLE_REDIRECT_URI` — Callback URL for OAuth flow
 
 ---
 
