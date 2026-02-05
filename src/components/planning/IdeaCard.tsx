@@ -57,7 +57,6 @@ type IdeaCardProps = {
   onAddComment: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
   onEdit: (formData: FormData) => Promise<void>;
-  onTagClick?: (tag: string) => void;
 };
 
 export default function IdeaCard({
@@ -70,7 +69,6 @@ export default function IdeaCard({
   onAddComment,
   onDelete,
   onEdit,
-  onTagClick,
 }: IdeaCardProps) {
   const router = useRouter();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
@@ -146,14 +144,7 @@ export default function IdeaCard({
           {idea.tags.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {idea.tags.map((tag) => (
-                <button
-                  key={tag}
-                  className="tag-interactive inline-flex items-center"
-                  onClick={() => onTagClick?.(tag)}
-                  type="button"
-                >
-                  <TagBadge label={tag} />
-                </button>
+                <TagBadge key={tag} label={tag} />
               ))}
             </div>
           ) : null}
