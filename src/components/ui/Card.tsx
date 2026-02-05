@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
 type CardProps = {
   children: ReactNode;
@@ -6,6 +6,7 @@ type CardProps = {
   variant?: "default" | "rose" | "amber" | "emerald" | "sky" | "violet" | "slate";
   hover?: boolean;
   padding?: "none" | "sm" | "md" | "lg";
+} & Omit<HTMLAttributes<HTMLDivElement>, "className" | "onClick"> & {
   onClick?: () => void;
 };
 
@@ -33,6 +34,7 @@ export default function Card({
   hover = false,
   padding = "md",
   onClick,
+  ...rest
 }: CardProps) {
   const baseStyles = "rounded-2xl border transition-all duration-200";
   const hoverStyles = hover
@@ -56,6 +58,7 @@ export default function Card({
             }
           : undefined
       }
+      {...rest}
     >
       {children}
     </div>

@@ -43,7 +43,7 @@ export default function UpcomingPlansColumn({
           </span>
           <div>
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-              Upcoming plans
+              All upcoming plans
             </h3>
             <p className="text-xs text-[var(--text-tertiary)]">
               {plans.length} plans

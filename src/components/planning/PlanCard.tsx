@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CalendarClock, MapPin, MessageSquare } from "lucide-react";
+import Card, { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 
 type PlanCardProps = {
   id: string;
@@ -33,50 +34,50 @@ export default function PlanCard({
   placeName,
 }: PlanCardProps) {
   return (
-    <Link
-      href={`/events/${id}`}
-      className="card-hover animate-fade-in-up group rounded-2xl border border-rose-200 bg-rose-50 p-5 transition-all duration-200"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <h4 className="min-w-0 flex-1 text-base font-semibold text-rose-900 line-clamp-2 break-words overflow-hidden">
-          {title}
-        </h4>
-        {commentCount > 0 ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white/80 px-2 py-1 text-xs text-rose-600 shadow-sm">
-            <MessageSquare className="h-3.5 w-3.5" />
-            {commentCount}
-          </span>
+    <Link href={`/events/${id}`} className="block">
+      <Card variant="rose" hover padding="md" className="animate-fade-in-up">
+        <CardHeader>
+          <CardTitle className="text-base text-rose-900">{title}</CardTitle>
+          {commentCount > 0 ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white/80 px-2 py-1 text-xs text-rose-600 shadow-sm">
+              <MessageSquare className="h-3.5 w-3.5" />
+              {commentCount}
+            </span>
+          ) : null}
+        </CardHeader>
+        {description ? (
+          <CardDescription className="text-[var(--text-muted)]">
+            {description}
+          </CardDescription>
         ) : null}
-      </div>
-      {description ? (
-        <p className="mt-2 text-sm text-[var(--text-muted)] line-clamp-2">
-          {description}
-        </p>
-      ) : null}
-      <div className="mt-3 flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-            <CalendarClock className="h-4 w-4 text-rose-500" />
-            {formatDateTime(dateTimeStart, timeIsSet)}
-            {!timeIsSet ? (
-              <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
-                Anytime
+        <CardFooter className="flex-col items-start gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+              <CalendarClock className="h-4 w-4 text-rose-500" />
+              {formatDateTime(dateTimeStart, timeIsSet)}
+              {!timeIsSet ? (
+                <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
+                  Anytime
+                </span>
+              ) : null}
+            </div>
+            {createdBy ? (
+              <span className="text-xs text-[var(--text-tertiary)]">
+                by{" "}
+                <span className="font-semibold text-[var(--text-primary)]">
+                  {createdBy.name || createdBy.email}
+                </span>
               </span>
             ) : null}
           </div>
-          {createdBy ? (
-            <span className="text-xs text-[var(--text-tertiary)]">
-              by <span className="font-semibold text-[var(--text-primary)]">{createdBy.name || createdBy.email}</span>
-            </span>
+          {placeName ? (
+            <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+              <MapPin className="h-4 w-4 text-rose-500" />
+              <span className="text-[var(--text-muted)]">{placeName}</span>
+            </div>
           ) : null}
-        </div>
-        {placeName ? (
-          <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-            <MapPin className="h-4 w-4 text-rose-500" />
-            <span className="text-[var(--text-muted)]">{placeName}</span>
-          </div>
-        ) : null}
-      </div>
+        </CardFooter>
+      </Card>
     </Link>
   );
 }
