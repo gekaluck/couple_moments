@@ -81,9 +81,9 @@ export default function DayCell({
         ) : null}
       </div>
       {isToday ? (
-        <div className="mt-1 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-500">
-          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse-soft" />
-          Now {nowLabel}
+        <div className="mt-1 inline-flex items-center gap-1.5 text-[9px] font-medium text-[var(--text-tertiary)]">
+          <span className="h-1 w-1 rounded-full bg-rose-400" />
+          {nowLabel}
         </div>
       ) : null}
       <div className="relative z-10 mt-2 flex flex-col gap-1">
