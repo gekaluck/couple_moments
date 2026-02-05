@@ -30,6 +30,7 @@ build/
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 
@@ -55,3 +56,4 @@ coverage/
 
 # Misc
 *.pem
+chatgpt_reqs/
