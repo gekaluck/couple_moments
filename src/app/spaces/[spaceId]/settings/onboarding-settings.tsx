@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HelpCircle, RotateCcw } from "lucide-react";
 
-const STORAGE_KEY = "cm_onboarding_completed";
+const STORAGE_KEY = "duet_onboarding_completed";
 
 type OnboardingSettingsProps = {
   spaceId: string;

@@ -37,7 +37,7 @@ const steps: OnboardingStep[] = [
   },
 ];
 
-const STORAGE_KEY = "cm_onboarding_completed";
+const STORAGE_KEY = "duet_onboarding_completed";
 
 type OnboardingTourProps = {
   spaceId: string;
