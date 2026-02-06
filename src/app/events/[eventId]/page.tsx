@@ -8,6 +8,7 @@ import { requireUserId } from "@/lib/current-user";
 import { buildCreatorPalette, getCreatorInitials } from "@/lib/creator-colors";
 import { prisma } from "@/lib/prisma";
 import { normalizeTags, parseTags } from "@/lib/tags";
+import { getEventSyncStatus } from "@/lib/integrations/google/events";
 
 import EventComments from "./event-comments";
 import EventEditModal from "./event-edit-modal";
@@ -156,6 +157,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         select: { name: true, email: true },
       })
     : null;
+  const googleSyncStatus = event ? await getEventSyncStatus(event.id) : null;
 
   if (!event) {
     notFound();
@@ -352,6 +354,14 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   <span className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white ${isPast ? "bg-slate-500" : "bg-rose-500"}`}>
                     {isPast ? "Memory" : "Upcoming"}
                   </span>
+                  {googleSyncStatus?.synced && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-700">
+                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Google Calendar
+                    </span>
+                  )}
                   <span>
                     {formatDateInput(event.dateTimeStart)}
                     {event.timeIsSet ? ` at ${formatTimeInput(event.dateTimeStart)}` : ""}

@@ -115,6 +115,7 @@ model Event {
   ratings         Rating[]
   originIdea      Idea?         @relation("IdeaConvertedEvent", fields: [originIdeaId], references: [id])
   notifications   Notification[]
+  externalEventLink ExternalEventLink?
 
   @@index([coupleSpaceId, dateTimeStart])
   @@index([dateTimeStart])
@@ -321,6 +322,7 @@ model ExternalAccount {
   calendars        ExternalCalendar[]
   syncState        ExternalSyncState?
   availabilityBlocks ExternalAvailabilityBlock[]
+  eventLinks       ExternalEventLink[]
 
   @@unique([userId, provider])
   @@index([userId])
@@ -378,4 +380,22 @@ model ExternalSyncState {
   channelExpiration   DateTime?       // For webhook notifications
 
   externalAccount     ExternalAccount @relation(fields: [externalAccountId], references: [id], onDelete: Cascade)
+}
+
+model ExternalEventLink {
+  id                  String          @id @default(cuid())
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  eventId             String          @unique
+  externalAccountId   String
+  externalEventId     String          // Google Calendar event ID
+  calendarId          String          // Which Google Calendar the event is in
+  etag                String?         // For conflict detection
+  lastSyncedAt        DateTime?
+
+  event               Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  externalAccount     ExternalAccount @relation(fields: [externalAccountId], references: [id], onDelete: Cascade)
+
+  @@index([externalAccountId])
 }

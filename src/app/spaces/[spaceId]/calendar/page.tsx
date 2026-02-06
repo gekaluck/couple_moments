@@ -31,6 +31,7 @@ import {
 } from "@/lib/ideas";
 import { normalizeTags, parseTags } from "@/lib/tags";
 import { buildCreatorPalette } from "@/lib/creator-colors";
+import { hasGoogleCalendarWithEventsScope, createGoogleCalendarEvent } from "@/lib/integrations/google/events";
 import CalendarAddControls from "./add-controls";
 import PlanningSection from "@/components/planning/PlanningSection";
 import IdeasColumn from "@/components/planning/IdeasColumn";
@@ -118,6 +119,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     to: monthEnd,
   });
   const members = await listSpaceMembers(space.id);
+  const hasGoogleCalendar = await hasGoogleCalendarWithEventsScope(userId);
   const creatorPalette = buildCreatorPalette(
     members.map((member) => ({
       id: member.userId,
@@ -161,6 +163,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const timeIsSet = rawTime.length > 0;
     const time = timeIsSet ? rawTime : "12:00";
     const tags = normalizeTags(formData.get("tags"));
+    const addToGoogleCalendar = formData.get("addToGoogleCalendar") === "true";
     const placeId = formData.get("placeId")?.toString() || null;
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
@@ -198,7 +201,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       return;
     }
 
-    await createEventForSpace(spaceIdForActions, currentUserId, {
+    const event = await createEventForSpace(spaceIdForActions, currentUserId, {
       title,
       description: description || null,
       dateTimeStart,
@@ -215,6 +218,20 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       placeLng: Number.isNaN(placeLng) ? null : placeLng,
       placeUrl,
     });
+
+    // Sync to Google Calendar if requested
+    if (addToGoogleCalendar) {
+      await createGoogleCalendarEvent(currentUserId, {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        dateTimeStart: event.dateTimeStart,
+        dateTimeEnd: event.dateTimeEnd,
+        timeIsSet: event.timeIsSet,
+        placeName: event.placeName,
+        placeAddress: event.placeAddress,
+      });
+    }
 
     return;
   }
@@ -638,6 +655,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               onCreateBlock={handleCreateBlock}
               initialEventDate={initialEventDate}
               prefillData={prefillData}
+              hasGoogleCalendar={hasGoogleCalendar}
             />
             <Link
               className="pill-button button-hover"
