@@ -1,7 +1,7 @@
 # Architecture
 
 ## Overview
-Couple Moments is a Next.js 16 application built with the App Router. It uses
+Duet is a Next.js 16 application built with the App Router. It uses
 server components and server actions for most data mutations, Prisma + PostgreSQL
 for persistence, and a session cookie with database-backed tokens for auth.
 

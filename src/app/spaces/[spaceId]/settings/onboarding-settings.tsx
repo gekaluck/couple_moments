@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { HelpCircle, RotateCcw } from "lucide-react";
 
-const STORAGE_KEY = "cm_onboarding_completed";
+const STORAGE_KEY = "duet_onboarding_completed";
 
 type OnboardingSettingsProps = {
   spaceId: string;
@@ -33,7 +33,7 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
             Help & Onboarding
           </h3>
           <p className="text-sm text-[var(--text-muted)]">
-            Learn how to use Couple Moments
+            Learn how to use Duet
           </p>
         </div>
       </div>

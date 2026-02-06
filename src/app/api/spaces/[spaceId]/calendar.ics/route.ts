@@ -34,7 +34,7 @@ export async function GET(
     });
 
     // Sanitize space name to prevent header injection
-    const rawName = space.name || "Couple Moments";
+    const rawName = space.name || "Duet";
     const safeName = sanitizeForHeader(rawName) || "couple-moments";
     
     const calendarName = safeName;

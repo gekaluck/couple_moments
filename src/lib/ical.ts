@@ -67,7 +67,7 @@ export function generateICalendar(
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Couple Moments//EN",
+    "PRODID:-//Duet//EN",
     `X-WR-CALNAME:${escapeICalText(calendarName)}`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
@@ -88,7 +88,7 @@ export function generateICalendar(
       .join(", ");
 
     lines.push("BEGIN:VEVENT");
-    lines.push(`UID:${event.id}@couplemoments.app`);
+    lines.push(`UID:${event.id}@duet.app`);
     lines.push(`DTSTAMP:${formatICalDate(new Date(), false)}`);
 
     if (allDay) {

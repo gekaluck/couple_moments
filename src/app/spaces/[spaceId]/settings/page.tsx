@@ -84,7 +84,7 @@ export default async function SettingsPage({ params }: PageProps) {
               Space Settings
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Manage your couple space and invite your partner.
+              Manage your space and invite your partner.
             </p>
           </div>
           <div className="flex items-center gap-2">

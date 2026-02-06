@@ -1,4 +1,4 @@
-# Google Calendar Integration Spec — Couple Moments
+# Google Calendar Integration Spec — Duet
 
 **Created:** 2026-02-05
 **Owner:** Product + Engineering
@@ -7,7 +7,7 @@
 ---
 
 ## Summary
-Couple Moments will integrate with Google Calendar to improve availability planning and event coordination. The integration is phased:
+Duet will integrate with Google Calendar to improve availability planning and event coordination. The integration is phased:
 
 - **Phase 1 (MVP):** Inbound availability only (busy blocks).
 - **Phase 2:** Outbound event creation with real Google invitations.
@@ -19,12 +19,12 @@ This spec defines user flows, permissions, data model changes, sync strategy, ed
 
 ## Goals
 - Provide reliable availability based on Google Calendar busy times.
-- Allow optional export of Couple Moments events into Google Calendar with invite emails.
+- Allow optional export of Duet events into Google Calendar with invite emails.
 - Minimize data access with least-privilege scopes and explicit user controls.
 - Keep the integration observable and recoverable (sync status, errors, revocation).
 
 ## Non-Goals (for MVP)
-- Full event content sync (titles, descriptions) from Google into Couple Moments.
+- Full event content sync (titles, descriptions) from Google into Duet.
 - Multi-provider support (Outlook/Apple) — future scope.
 - Background sync guaranteed within seconds (MVP can be hourly/periodic).
 
@@ -53,7 +53,7 @@ This spec defines user flows, permissions, data model changes, sync strategy, ed
 - No event titles or details shown in MVP to preserve privacy.
 
 ### 1.4 Create Event w/ Optional Google Invite (Phase 2)
-1. User creates Couple Moments event.
+1. User creates Duet event.
 2. Toggle: **“Also add to Google Calendar”** (default off initially).
 3. If enabled:
    - Event created in selected target calendar.
@@ -264,3 +264,4 @@ This spec defines user flows, permissions, data model changes, sync strategy, ed
 - % of connected users who successfully sync availability.
 - Reduction in “double-booked” events after integration.
 - Event creation to Google export adoption rate.
+

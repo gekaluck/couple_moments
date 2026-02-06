@@ -1,4 +1,4 @@
-# Deployment Guide - Couple Moments
+# Deployment Guide - Duet
 
 ## Current State
 - Database: PostgreSQL (Prisma + `@prisma/adapter-pg` + `pg`)

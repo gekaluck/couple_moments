@@ -71,8 +71,8 @@ export default function InviteCard({ spaceId, inviteCode }: InviteCardProps) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join my Couple Space",
-          text: "I'm inviting you to join our Couple Moments space!",
+          title: "Join my space on Duet",
+          text: "I'm inviting you to join our Duet space!",
           url: inviteUrl,
         });
       } catch {
@@ -104,7 +104,7 @@ export default function InviteCard({ spaceId, inviteCode }: InviteCardProps) {
             Invite your partner
           </h3>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Share this link with your partner so they can join your couple space.
+            Share this link with your partner so they can join your space.
           </p>
         </div>
       </div>

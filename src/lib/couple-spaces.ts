@@ -100,7 +100,7 @@ export async function joinCoupleSpaceByInvite(
   }
 
   if (space.memberships.length >= MAX_MEMBERS_PER_SPACE) {
-    return { space: null, error: "This Couple Space is already full." };
+    return { space: null, error: "This space is already full." };
   }
 
   await prisma.membership.create({

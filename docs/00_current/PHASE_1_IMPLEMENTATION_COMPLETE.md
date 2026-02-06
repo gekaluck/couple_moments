@@ -1,7 +1,7 @@
 # Google Calendar Integration - Phase 1 Implementation
 
 ## Overview
-Phase 1 of Google Calendar integration has been successfully implemented. This phase provides **inbound availability only** - syncing busy times from Google Calendar to block those times in Couple Moments.
+Phase 1 of Google Calendar integration has been successfully implemented. This phase provides **inbound availability only** - syncing busy times from Google Calendar to block those times in Duet.
 
 ## What Was Implemented
 
@@ -128,7 +128,7 @@ TOKEN_ENCRYPTION_KEY=your-base64-encoded-32-byte-key
 ## What's NOT Included (Future Phases)
 
 ### Phase 2: Outbound Event Creation
-- Create Google Calendar events from Couple Moments
+- Create Google Calendar events from Duet
 - Send Google Calendar invites
 - Sync event updates
 
@@ -177,3 +177,4 @@ TOKEN_ENCRYPTION_KEY=your-base64-encoded-32-byte-key
 4. **Monitor for errors** in sync state
 5. **Consider implementing** background sync job for Phase 1.5
 6. **Plan Phase 2** for event creation and Google invites
+

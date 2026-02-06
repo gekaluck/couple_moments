@@ -12,7 +12,7 @@ type OnboardingStep = {
 
 const steps: OnboardingStep[] = [
   {
-    title: "Welcome to Couple Moments",
+    title: "Welcome to Duet",
     description: "Plan dates, save memories, and keep ideas together with your partner. Let's take a quick tour!",
     icon: <Heart className="h-8 w-8" />,
     color: "from-rose-500 to-pink-600",
@@ -37,7 +37,7 @@ const steps: OnboardingStep[] = [
   },
 ];
 
-const STORAGE_KEY = "cm_onboarding_completed";
+const STORAGE_KEY = "duet_onboarding_completed";
 
 type OnboardingTourProps = {
   spaceId: string;
