@@ -56,14 +56,14 @@ export default function DayCell({
 
   return (
     <div
-      className={`relative rounded-xl border text-xs transition hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${
+      className={`relative rounded-2xl border text-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${
         isCurrentMonth
           ? isWeekend
-            ? "bg-rose-50/50"
-            : "bg-white/80"
-          : "bg-[var(--surface-50)] text-[var(--surface-400)] opacity-50"
+            ? "bg-[rgba(255,245,247,0.72)]"
+            : "bg-[rgba(255,255,255,0.78)]"
+          : "bg-[var(--surface-50)] text-[var(--surface-400)] opacity-55"
       } ${isPast ? "opacity-60" : ""} ${
-        isToday ? "border-rose-400 border-2" : "border-[var(--panel-border)]"
+        isToday ? "border-[var(--action-primary)] ring-2 ring-[var(--action-primary)]/15" : "border-[var(--panel-border)]"
       }`}
     >
       <Link
@@ -74,7 +74,7 @@ export default function DayCell({
       <div className="flex items-center justify-between text-xs font-semibold text-[var(--text-muted)]">
         {date.getDate()}
         {isToday ? (
-          <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)]">
+          <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
             Today
           </span>
         ) : null}
@@ -160,7 +160,7 @@ export default function DayCell({
           return isExternal ? (
             <div
               key={block.id}
-              className="group relative rounded-lg border-2 border-dashed px-2 py-1 text-[11px]"
+              className="group relative rounded-xl border-2 border-dashed px-2 py-1 text-[11px]"
               style={{
                 borderColor: blockAccent,
                 backgroundColor: blockSoft,
@@ -173,7 +173,7 @@ export default function DayCell({
           ) : (
             <Link
               key={block.id}
-              className="rounded-lg border-2 border-dashed px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] opacity-80"
+              className="rounded-xl border-2 border-dashed px-2 py-1 text-xs opacity-85 transition hover:shadow-[var(--shadow-sm)]"
               href={buildBlockEditHref(block.id)}
               style={{
                 borderColor: blockAccent,
@@ -194,7 +194,7 @@ export default function DayCell({
           />
         ))}
         {overflowCount > 0 ? (
-          <div className="rounded-lg border border-dashed border-[var(--panel-border)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
+          <div className="rounded-xl border border-dashed border-[var(--panel-border)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
             ... +{overflowCount} more
           </div>
         ) : null}

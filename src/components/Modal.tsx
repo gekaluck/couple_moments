@@ -23,7 +23,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-[var(--surface-900)]/30 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-[var(--surface-900)]/45 backdrop-blur-md" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -37,14 +37,14 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
               leaveFrom="opacity-100 translate-y-0 scale-100"
               leaveTo="opacity-0 translate-y-3 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform rounded-3xl border border-[var(--panel-border)] bg-white p-6 text-left shadow-[var(--shadow-xl)] md:p-8">
+              <Dialog.Panel className="w-full max-w-lg transform rounded-[32px] border border-white/65 bg-[rgba(255,255,255,0.94)] p-6 text-left shadow-[var(--shadow-xl)] backdrop-blur-xl md:p-8">
                 {title ? (
                   <div className="mb-4 flex items-center justify-between">
                     <Dialog.Title className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
                       {title}
                     </Dialog.Title>
                     <button
-                      className="rounded-full border border-[var(--panel-border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+                      className="rounded-full border border-[var(--panel-border)] bg-white/80 px-3 py-1 text-xs text-[var(--text-muted)] transition hover:border-[var(--border-medium)] hover:text-[var(--text-primary)]"
                       onClick={onClose}
                       type="button"
                     >

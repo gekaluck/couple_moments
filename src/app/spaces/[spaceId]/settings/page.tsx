@@ -77,10 +77,10 @@ export default async function SettingsPage({ params }: PageProps) {
 
   return (
     <>
-      <section className="surface p-6">
+      <section className="surface p-6 md:p-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+            <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
               Space Settings
             </h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
@@ -104,13 +104,13 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="surface p-6">
+      <section className="surface p-6 md:p-8">
         <h3 className="text-base font-semibold text-[var(--text-primary)]">
           Members
         </h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {/* Current User */}
-          <div className="flex items-center gap-4 rounded-xl border border-sky-200 bg-sky-50 p-4">
+          <div className="flex items-center gap-4 rounded-2xl border border-sky-200/80 bg-sky-50/65 p-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-sm font-semibold text-white">
               {getInitials(currentUserDetails?.name, currentUserDetails?.email ?? "")}
             </div>
@@ -129,7 +129,7 @@ export default async function SettingsPage({ params }: PageProps) {
 
           {/* Partner or Empty Slot */}
           {partner ? (
-            <div className="flex items-center gap-4 rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <div className="flex items-center gap-4 rounded-2xl border border-rose-200/80 bg-rose-50/65 p-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-sm font-semibold text-white">
                 {getInitials(partner.user.name, partner.user.email)}
               </div>
@@ -146,7 +146,7 @@ export default async function SettingsPage({ params }: PageProps) {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-4">
+            <div className="flex items-center gap-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/70 p-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-400">
                 <svg
                   className="h-6 w-6"
@@ -176,18 +176,18 @@ export default async function SettingsPage({ params }: PageProps) {
         <InviteCard spaceId={space.id} inviteCode={space.inviteCode} />
       )}
 
-      <section className="surface p-6">
+      <section className="surface p-6 md:p-8">
         <h3 className="text-base font-semibold text-[var(--text-primary)]">
           Space Info
         </h3>
         <div className="mt-4 grid gap-3 text-sm">
-          <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3">
             <span className="text-[var(--text-muted)]">Space Name</span>
             <span className="font-medium text-[var(--text-primary)]">
               {space.name || "Our Space"}
             </span>
           </div>
-          <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3">
             <span className="text-[var(--text-muted)]">Created</span>
             <span className="font-medium text-[var(--text-primary)]">
               {space.createdAt.toLocaleDateString("en-US", {
@@ -197,7 +197,7 @@ export default async function SettingsPage({ params }: PageProps) {
               })}
             </span>
           </div>
-          <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3">
             <span className="text-[var(--text-muted)]">Status</span>
             <span
               className={`font-medium ${
@@ -210,7 +210,7 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="surface p-6">
+      <section className="surface p-6 md:p-8">
         <h3 className="text-base font-semibold text-[var(--text-primary)]">
           Calendar Preferences
         </h3>

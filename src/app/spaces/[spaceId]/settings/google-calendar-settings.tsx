@@ -128,7 +128,7 @@ export default function GoogleCalendarSettings() {
 
   if (loading) {
     return (
-      <section className="surface p-6">
+      <section className="surface p-6 md:p-8">
         <div className="flex items-center justify-center py-8">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600"></div>
         </div>
@@ -137,7 +137,7 @@ export default function GoogleCalendarSettings() {
   }
 
   return (
-    <section className="surface p-6">
+    <section className="surface p-6 md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-base font-semibold text-[var(--text-primary)]">
@@ -151,14 +151,14 @@ export default function GoogleCalendarSettings() {
         {data ? (
           <button
             onClick={handleDisconnect}
-            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+            className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
           >
             Disconnect
           </button>
         ) : (
           <button
             onClick={handleConnect}
-            className="pill-button button-hover text-sm font-semibold"
+            className="button-hover rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
           >
             <svg
               className="mr-2 inline h-5 w-5"
@@ -173,14 +173,14 @@ export default function GoogleCalendarSettings() {
       </div>
 
       {error && (
-        <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-4">
+        <div className="mt-4 rounded-xl bg-red-50 border border-red-200 p-4">
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       {data && (
         <>
-          <div className="mt-6 rounded-lg bg-slate-50 p-4">
+          <div className="mt-6 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-[var(--text-primary)]">
@@ -214,7 +214,7 @@ export default function GoogleCalendarSettings() {
                   <button
                     onClick={handleSync}
                     disabled={syncing}
-                    className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50"
+                    className="rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50"
                   >
                     {syncing ? 'Syncing...' : 'Sync Now'}
                   </button>
@@ -235,7 +235,7 @@ export default function GoogleCalendarSettings() {
                 {data.calendars.map((calendar) => (
                   <label
                     key={calendar.id}
-                    className="flex items-center gap-3 rounded-lg border border-[var(--panel-border)] bg-white/80 p-3 hover:bg-slate-50 cursor-pointer"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--panel-border)] bg-white/80 p-3 hover:bg-white"
                   >
                     <input
                       type="checkbox"

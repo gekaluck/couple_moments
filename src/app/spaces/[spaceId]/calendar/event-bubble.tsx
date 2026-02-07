@@ -41,10 +41,10 @@ export default function EventBubble({
 
   return (
     <Link
-      className={`group relative flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] ${
+      className={`group relative flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] ${
         isPast
-          ? "bg-slate-100/80 text-slate-500"
-          : "bg-rose-100/80 text-rose-600"
+          ? "bg-slate-100/85 text-slate-500"
+          : "bg-rose-100/80 text-rose-700"
       }`}
       href={href}
     >

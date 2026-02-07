@@ -18,8 +18,8 @@ export default function EmptyState({
   onAction,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 p-6 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[var(--shadow-sm)]">
+    <div className="flex flex-col items-center gap-4 rounded-3xl border border-[var(--panel-border)] bg-[rgba(255,255,255,0.72)] p-7 text-center shadow-[var(--shadow-soft)] backdrop-blur-sm">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/80 bg-white shadow-[var(--shadow-sm)]">
         {icon}
       </div>
       <div>
@@ -30,7 +30,7 @@ export default function EmptyState({
       </div>
       {actionLabel && onAction ? (
         <button
-          className="button-hover rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+          className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)]"
           onClick={onAction}
           type="button"
         >

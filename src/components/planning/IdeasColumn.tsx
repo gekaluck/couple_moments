@@ -75,11 +75,11 @@ export default function IdeasColumn({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200/80 bg-amber-50/90 text-amber-700 shadow-[var(--shadow-sm)]">
             <Lightbulb className="h-5 w-5" />
           </span>
           <div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            <h3 className="text-lg font-semibold tracking-[-0.015em] text-[var(--text-primary)]">
               New ideas
             </h3>
             <p className="text-xs text-[var(--text-tertiary)]">
@@ -88,7 +88,7 @@ export default function IdeasColumn({
           </div>
         </div>
         <button
-          className="button-hover rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-amber-600 hover:shadow-[var(--shadow-lg)]"
+          className="button-hover rounded-full border border-amber-300 bg-amber-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-sm)] transition hover:bg-amber-600"
           onClick={() => setIsCreateOpen(true)}
           type="button"
         >
