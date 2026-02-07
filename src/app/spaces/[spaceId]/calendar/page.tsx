@@ -659,7 +659,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   return (
     <>
       <section className="surface p-6 md:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4 md:items-center">
           <div>
             <p className="section-kicker">Calendar</p>
             <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl">
@@ -669,8 +669,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               Build a cozy rhythm for both of you, one day at a time.
             </p>
           </div>
-          <div className="flex w-full flex-wrap items-center justify-between gap-3 lg:w-auto lg:justify-end">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:justify-end">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <CalendarAddControls
                 onCreateEvent={handleCreate}
                 onCreateBlock={handleCreateBlock}
@@ -678,7 +678,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                 prefillData={prefillData}
                 hasGoogleCalendar={hasGoogleCalendar}
               />
-              <div className="flex items-center rounded-full border border-[var(--panel-border)] bg-white/90 p-1 shadow-[var(--shadow-sm)]">
+              <div className="flex min-w-fit items-center rounded-full border border-[var(--panel-border)] bg-white/90 p-1 shadow-[var(--shadow-sm)]">
                 <Link
                   className="rounded-full px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-50)] hover:text-[var(--text-primary)]"
                   href={buildCalendarHref(monthParam(prevMonth))}
@@ -699,11 +699,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                 </Link>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <Link
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-2 text-xs text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:border-[var(--border-medium)]"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-2 text-xs text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:border-[var(--border-medium)]"
                 href={densityToggleHref}
                 title={densityToggleLabel}
+                aria-label={densityToggleLabel}
               >
                 <svg
                   aria-hidden="true"
@@ -719,15 +720,16 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                   <circle cx="11" cy="17" r="1.5" />
                 </svg>
                 <span className="font-medium">{densityToggleLabel}</span>
-                <span className="text-[10px] text-[var(--text-tertiary)]">
+                <span className="hidden text-[10px] text-[var(--text-tertiary)] md:inline">
                   {densityToggleHelper}
                 </span>
               </Link>
               <a
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-2 text-xs font-medium text-[var(--text-muted)] shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:border-[var(--border-medium)] hover:text-[var(--text-primary)]"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-2 text-xs font-medium text-[var(--text-muted)] shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:border-[var(--border-medium)] hover:text-[var(--text-primary)]"
                 href={`/api/spaces/${space.id}/calendar.ics`}
                 download
                 title="Export to calendar app"
+                aria-label="Export calendar as ICS"
               >
                 <svg
                   aria-hidden="true"
