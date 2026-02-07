@@ -53,6 +53,7 @@ type IdeaCardProps = {
   comments: IdeaComment[];
   currentUserId: string;
   mapsApiKey?: string;
+  hasGoogleCalendar?: boolean;
   onSchedule: (formData: FormData) => Promise<void>;
   onAddComment: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
@@ -65,6 +66,7 @@ export default function IdeaCard({
   comments,
   currentUserId,
   mapsApiKey,
+  hasGoogleCalendar = false,
   onSchedule,
   onAddComment,
   onDelete,
@@ -377,6 +379,26 @@ export default function IdeaCard({
               name="time"
               type="time"
             />
+            {hasGoogleCalendar && (
+              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                <input
+                  type="checkbox"
+                  name="addToGoogleCalendar"
+                  value="true"
+                  defaultChecked
+                  className="h-4 w-4 rounded border-[var(--panel-border)] text-rose-500 focus:ring-rose-500"
+                />
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <path d="M19.5 3.75H4.5C3.67 3.75 3 4.42 3 5.25V18.75C3 19.58 3.67 20.25 4.5 20.25H19.5C20.33 20.25 21 19.58 21 18.75V5.25C21 4.42 20.33 3.75 19.5 3.75Z" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M3 9.75H21" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M8.25 6V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M15.75 6V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  Add to Google Calendar
+                </span>
+              </label>
+            )}
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 variant="ghost"

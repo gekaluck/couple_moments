@@ -31,6 +31,7 @@ export function generateAuthUrl(state: string): string {
     access_type: 'offline',
     scope: [
       'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar.events',
       'https://www.googleapis.com/auth/userinfo.email',
     ],
     state,

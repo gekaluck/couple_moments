@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { createEventForSpace, listEventsForSpace } from "@/lib/events";
+import { createGoogleCalendarEvent } from "@/lib/integrations/google/events";
 import { parseJsonOrForm } from "@/lib/request";
 import { getSessionUserId } from "@/lib/session";
 import { normalizeTags } from "@/lib/tags";
@@ -73,6 +74,7 @@ export async function POST(request: Request, { params }: PageProps) {
     dateTimeEnd: z.string().trim().optional().nullable(),
     tags: z.union([z.string(), z.array(z.string())]).optional().nullable(),
     linkedIdeaId: z.string().trim().optional().nullable(),
+    addToGoogleCalendar: z.union([z.boolean(), z.string()]).optional(),
   });
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -112,5 +114,23 @@ export async function POST(request: Request, { params }: PageProps) {
     linkedIdeaId: parsed.data.linkedIdeaId?.trim() || null,
   });
 
-  return NextResponse.json({ event }, { status: 201 });
+  // Sync to Google Calendar if requested
+  const addToGoogle = parsed.data.addToGoogleCalendar === true || parsed.data.addToGoogleCalendar === "true";
+  let googleCalendarSynced = false;
+
+  if (addToGoogle) {
+    const syncResult = await createGoogleCalendarEvent(userId, {
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      dateTimeStart: event.dateTimeStart,
+      dateTimeEnd: event.dateTimeEnd,
+      timeIsSet: event.timeIsSet,
+      placeName: event.placeName,
+      placeAddress: event.placeAddress,
+    });
+    googleCalendarSynced = syncResult.success;
+  }
+
+  return NextResponse.json({ event, googleCalendarSynced }, { status: 201 });
 }
