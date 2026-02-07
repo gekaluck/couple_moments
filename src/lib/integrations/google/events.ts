@@ -13,6 +13,16 @@ type DuetEvent = {
   placeAddress: string | null;
 };
 
+function toIsoDate(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+function toExclusiveEndDate(event: DuetEvent): string {
+  const lastDay = event.dateTimeEnd ? new Date(event.dateTimeEnd) : new Date(event.dateTimeStart);
+  lastDay.setDate(lastDay.getDate() + 1);
+  return toIsoDate(lastDay);
+}
+
 /**
  * Check if user has Google Calendar connected with events scope
  */
@@ -88,7 +98,6 @@ export async function createGoogleCalendarEvent(
 
     // Build Google Calendar event
     const endTime = event.dateTimeEnd || new Date(event.dateTimeStart.getTime() + 2 * 60 * 60 * 1000); // Default 2 hours
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const googleEvent: calendar_v3.Schema$Event = {
       summary: event.title,
@@ -102,19 +111,17 @@ export async function createGoogleCalendarEvent(
       // Timed event
       googleEvent.start = {
         dateTime: event.dateTimeStart.toISOString(),
-        timeZone,
       };
       googleEvent.end = {
         dateTime: endTime.toISOString(),
-        timeZone,
       };
     } else {
       // All-day event
       googleEvent.start = {
-        date: event.dateTimeStart.toISOString().split('T')[0],
+        date: toIsoDate(event.dateTimeStart),
       };
       googleEvent.end = {
-        date: endTime.toISOString().split('T')[0],
+        date: toExclusiveEndDate(event),
       };
     }
 
@@ -178,7 +185,6 @@ export async function updateGoogleCalendarEvent(
 
     // Build updated event
     const endTime = event.dateTimeEnd || new Date(event.dateTimeStart.getTime() + 2 * 60 * 60 * 1000);
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const googleEvent: calendar_v3.Schema$Event = {
       summary: event.title,
@@ -191,18 +197,16 @@ export async function updateGoogleCalendarEvent(
     if (event.timeIsSet) {
       googleEvent.start = {
         dateTime: event.dateTimeStart.toISOString(),
-        timeZone,
       };
       googleEvent.end = {
         dateTime: endTime.toISOString(),
-        timeZone,
       };
     } else {
       googleEvent.start = {
-        date: event.dateTimeStart.toISOString().split('T')[0],
+        date: toIsoDate(event.dateTimeStart),
       };
       googleEvent.end = {
-        date: endTime.toISOString().split('T')[0],
+        date: toExclusiveEndDate(event),
       };
     }
 
