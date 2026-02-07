@@ -754,23 +754,29 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
         ) : (
           <>
-            <div className="mt-5 flex flex-wrap items-center gap-4 text-xs text-[var(--text-tertiary)]">
-              <div className="inline-flex items-center gap-2">
+            <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
+              <span className="inline-flex items-center gap-2 rounded-full border border-rose-200/80 bg-rose-50/80 px-3 py-1 text-rose-700">
                 <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
-                Upcoming
-              </div>
-              <div className="inline-flex items-center gap-2">
+                Upcoming plans
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 text-slate-600">
                 <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
                 Memory
-              </div>
-              <div className="inline-flex items-center gap-2">
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/80 px-3 py-1 text-amber-700">
                 <span className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-amber-400" />
                 Unavailable
-              </div>
+              </span>
+              <span className="ml-auto rounded-full border border-[var(--panel-border)] bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                {events.length} plans this month
+              </span>
             </div>
             <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               {dayLabels.map((day) => (
-                <div key={day} className="px-2 py-1">
+                <div
+                  key={day}
+                  className="rounded-lg border border-white/80 bg-white/55 px-2 py-1.5 text-center"
+                >
                   {day}
                 </div>
               ))}
