@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type FocusEventHandler, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -95,6 +95,14 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
     createItemRefs.current[clampedIndex]?.focus();
   };
 
+  const handleCreateBlur: FocusEventHandler<HTMLDivElement> = (event) => {
+    const nextFocused = event.relatedTarget;
+    if (nextFocused instanceof Node && event.currentTarget.contains(nextFocused)) {
+      return;
+    }
+    setIsCreateOpen(false);
+  };
+
   return (
     <nav className="site-nav sticky top-4 z-50 px-4">
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-3 rounded-[28px] border border-[var(--panel-border)] bg-[rgba(255,255,255,0.82)] px-4 py-3 shadow-[var(--shadow-soft)] backdrop-blur-xl md:flex-row md:items-center md:justify-between">
@@ -131,7 +139,7 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
             );
           })}
           <span className="mx-1 hidden h-6 w-px bg-[var(--border-medium)] md:block" />
-          <div className="relative" ref={createMenuRef}>
+          <div className="relative" ref={createMenuRef} onBlur={handleCreateBlur}>
             <button
               ref={createButtonRef}
               className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
@@ -140,6 +148,7 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
                   : "border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] hover:border-[var(--border-medium)] hover:bg-white"
               }`}
               type="button"
+              aria-label="Create new item"
               aria-expanded={isCreateOpen}
               aria-haspopup="menu"
               aria-controls="create-nav-menu"
