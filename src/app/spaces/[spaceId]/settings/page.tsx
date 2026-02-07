@@ -106,69 +106,92 @@ export default async function SettingsPage({ params }: PageProps) {
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
-          <section className="surface p-6 md:p-8">
-            <h3 className="text-base font-semibold text-[var(--text-primary)]">
-              Members
-            </h3>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              This space works best when both of you are connected.
-            </p>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div className="flex items-center gap-4 rounded-2xl border border-sky-200/80 bg-sky-50/65 p-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-sm font-semibold text-white">
-                  {getInitials(currentUserDetails?.name, currentUserDetails?.email ?? "")}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-[var(--text-primary)]">
-                    {currentUserDetails?.name || "You"}
-                  </p>
-                  <p className="truncate text-xs text-[var(--text-muted)]">
-                    {currentUserDetails?.email}
-                  </p>
-                  <span className="mt-1 inline-block rounded-full bg-sky-200 px-2 py-0.5 text-[10px] font-medium text-sky-700">
-                    You
-                  </span>
+          <section className="surface border border-sky-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(236,248,255,0.78))] p-6 md:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="section-kicker">People</p>
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">
+                  Members
+                </h3>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
+                  This space works best when both of you are connected.
+                </p>
+              </div>
+              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                {members.length}/2 linked
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="relative overflow-hidden rounded-2xl border border-sky-200/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-[linear-gradient(120deg,rgba(125,211,252,0.24),rgba(99,102,241,0.18))]"
+                />
+                <div className="relative flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-sm font-semibold text-white">
+                    {getInitials(currentUserDetails?.name, currentUserDetails?.email ?? "")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                      {currentUserDetails?.name || "You"}
+                    </p>
+                    <p className="truncate text-xs text-[var(--text-muted)]">
+                      {currentUserDetails?.email}
+                    </p>
+                    <span className="mt-1 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-sky-700">
+                      You
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {partner ? (
-                <div className="flex items-center gap-4 rounded-2xl border border-rose-200/80 bg-rose-50/65 p-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-sm font-semibold text-white">
-                    {getInitials(partner.user.name, partner.user.email)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-[var(--text-primary)]">
-                      {partner.user.name || "Partner"}
-                    </p>
-                    <p className="truncate text-xs text-[var(--text-muted)]">
-                      {partner.user.email}
-                    </p>
-                    <span className="mt-1 inline-block rounded-full bg-rose-200 px-2 py-0.5 text-[10px] font-medium text-rose-700">
-                      Partner
-                    </span>
+                <div className="relative overflow-hidden rounded-2xl border border-rose-200/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-[linear-gradient(120deg,rgba(251,113,133,0.22),rgba(219,39,119,0.18))]"
+                  />
+                  <div className="relative flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-sm font-semibold text-white">
+                      {getInitials(partner.user.name, partner.user.email)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">
+                        {partner.user.name || "Partner"}
+                      </p>
+                      <p className="truncate text-xs text-[var(--text-muted)]">
+                        {partner.user.email}
+                      </p>
+                      <span className="mt-1 inline-block rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-700">
+                        Partner
+                      </span>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-4 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/70 p-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-400">
-                    <svg
-                      className="h-6 w-6"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    >
-                      <circle cx="12" cy="8" r="4" />
-                      <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-500">
-                      Waiting for partner
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      Share the invite link below
-                    </p>
+                <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/70 p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-500">
+                      <svg
+                        className="h-6 w-6"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      >
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-amber-800">
+                        Waiting for partner
+                      </p>
+                      <p className="text-xs text-amber-700/80">
+                        Share the invite below to activate your full space.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -179,20 +202,39 @@ export default async function SettingsPage({ params }: PageProps) {
             <InviteCard inviteCode={space.inviteCode} />
           )}
 
-          <section className="surface p-6 md:p-8">
-            <h3 className="text-base font-semibold text-[var(--text-primary)]">
-              Space Info
-            </h3>
+          <section className="surface border border-[var(--panel-border)] bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(248,249,252,0.8))] p-6 md:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="section-kicker">Space</p>
+                <h3 className="text-base font-semibold text-[var(--text-primary)]">
+                  Space Info
+                </h3>
+              </div>
+              <span
+                className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                  isSpaceComplete
+                    ? "border border-emerald-200 bg-emerald-100 text-emerald-700"
+                    : "border border-amber-200 bg-amber-100 text-amber-700"
+                }`}
+              >
+                {isSpaceComplete ? "Complete" : "In progress"}
+              </span>
+            </div>
+
             <div className="mt-4 grid gap-3 text-sm">
-              <div className="flex items-center justify-between rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3">
-                <span className="text-[var(--text-muted)]">Space Name</span>
-                <span className="font-medium text-[var(--text-primary)]">
+              <div className="rounded-xl border border-[var(--panel-border)] bg-white/80 px-4 py-3">
+                <span className="block text-xs uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                  Space name
+                </span>
+                <span className="mt-1 block font-semibold text-[var(--text-primary)]">
                   {space.name || "Our Space"}
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3">
-                <span className="text-[var(--text-muted)]">Created</span>
-                <span className="font-medium text-[var(--text-primary)]">
+              <div className="rounded-xl border border-[var(--panel-border)] bg-white/80 px-4 py-3">
+                <span className="block text-xs uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                  Created
+                </span>
+                <span className="mt-1 block font-semibold text-[var(--text-primary)]">
                   {space.createdAt.toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
@@ -200,14 +242,16 @@ export default async function SettingsPage({ params }: PageProps) {
                   })}
                 </span>
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3">
-                <span className="text-[var(--text-muted)]">Status</span>
+              <div className="rounded-xl border border-[var(--panel-border)] bg-white/80 px-4 py-3">
+                <span className="block text-xs uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                  Relationship rhythm
+                </span>
                 <span
-                  className={`font-medium ${
+                  className={`mt-1 block font-semibold ${
                     isSpaceComplete ? "text-emerald-600" : "text-amber-600"
                   }`}
                 >
-                  {isSpaceComplete ? "Complete" : "Pending partner"}
+                  {isSpaceComplete ? "Shared planning active" : "Waiting for second member"}
                 </span>
               </div>
             </div>

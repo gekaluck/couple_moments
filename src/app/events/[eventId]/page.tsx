@@ -328,70 +328,203 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="min-h-screen page-enter">
-      <header className="border-b border-[var(--panel-border)] bg-white/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-6">
+      <header className="border-b border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.9),rgba(255,240,246,0.68))] backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-start justify-between gap-4 px-6 py-7">
           <div>
-            <p className="text-xs font-medium text-[var(--text-tertiary)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
               {isFromMemories ? "Memories" : "Calendar"} / Event
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+            <h1 className="mt-2 text-3xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
               {event.title}
             </h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white ${isPast ? "bg-slate-500" : "bg-rose-500"}`}>
+                {isPast ? "Memory" : "Upcoming"}
+              </span>
+              <span className="rounded-full border border-[var(--panel-border)] bg-white/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                {formatDateInput(event.dateTimeStart)}
+                {event.timeIsSet ? ` / ${formatTimeInput(event.dateTimeStart)}` : ""}
+              </span>
+              {googleSyncStatus?.synced ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Synced
+                </span>
+              ) : null}
+            </div>
           </div>
           <Link
-            className="rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-sm transition hover:border-rose-300 hover:text-rose-600"
+            className="rounded-full border border-[var(--panel-border)] bg-white/90 px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-rose-300 hover:text-rose-600"
             href={backHref}
           >
             {isFromMemories ? "Back to memories" : "Back to calendar"}
           </Link>
         </div>
       </header>
-      <main className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
-        <section className={`surface p-6 ${isPast ? "bg-gradient-to-br from-white via-white to-slate-50/70" : "bg-gradient-to-br from-white via-white to-rose-50/70"}`}>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-muted)]">
-                  <span className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white ${isPast ? "bg-slate-500" : "bg-rose-500"}`}>
-                    {isPast ? "Memory" : "Upcoming"}
-                  </span>
-                  {googleSyncStatus?.synced && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-700">
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Google Calendar
-                    </span>
-                  )}
-                  <span>
-                    {formatDateInput(event.dateTimeStart)}
-                    {event.timeIsSet ? ` at ${formatTimeInput(event.dateTimeStart)}` : ""}
-                  </span>
-                </div>
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] font-[var(--font-display)]">
-                  {event.title}
-                </h2>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-tertiary)]">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-1 text-[var(--text-muted)]">
-                    <span
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold text-white"
-                      style={{
-                        background: creatorGradient,
-                      }}
+
+      <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-6 py-8">
+        <section className={`surface p-6 md:p-8 ${isPast ? "bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(245,248,252,0.82))]" : "bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,238,246,0.84))]"}`}>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-tertiary)]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-1 text-[var(--text-muted)]">
+              <span
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                style={{ background: creatorGradient }}
+              >
+                {creatorInitials}
+              </span>
+              Created by {creator?.name || creator?.email || "Unknown"}
+            </span>
+            {tags.length > 0 ? (
+              <span className="flex flex-wrap items-center gap-2">
+                {tags.map((tag) => (
+                  <TagBadge key={tag} label={tag} />
+                ))}
+              </span>
+            ) : null}
+          </div>
+          {event.description ? (
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[var(--text-muted)]">
+              {event.description}
+            </p>
+          ) : null}
+          {isPast ? (
+            <div className="mt-4">
+              <EventRating
+                eventId={event.id}
+                currentRating={currentUserRating?.value ?? null}
+                onRate={handleRate}
+              />
+            </div>
+          ) : null}
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+          <div className="space-y-6">
+            {hasPlace ? (
+              <section className="surface p-5 md:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+                      Place
+                    </p>
+                    <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+                      {event.placeName || "Selected place"}
+                    </p>
+                    {event.placeAddress ? (
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">
+                        {event.placeAddress}
+                      </p>
+                    ) : null}
+                    {placeWebsite ? (
+                      <a
+                        className="mt-2 inline-flex text-sm font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
+                        href={placeWebsite}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {placeWebsite}
+                      </a>
+                    ) : null}
+                  </div>
+                  {placeLink ? (
+                    <a
+                      className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                      href={placeLink}
+                      target="_blank"
+                      rel="noreferrer"
                     >
-                      {creatorInitials}
-                    </span>
-                    Created by {creator?.name || creator?.email || "Unknown"}
-                  </span>
-                  {tags.length > 0 ? (
-                    <span className="flex flex-wrap items-center gap-3">
-                      {tags.map((tag) => (
-                        <TagBadge key={tag} label={tag} />
-                      ))}
-                    </span>
+                      Open in Maps
+                    </a>
                   ) : null}
                 </div>
+
+                {staticMapUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    alt={event.placeName || "Event location"}
+                    className="mt-4 h-[220px] w-full rounded-2xl object-cover"
+                    src={staticMapUrl}
+                  />
+                ) : null}
+
+                {placePhotoUrls && placePhotoUrls.length > 0 ? (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {placePhotoUrls.slice(0, 3).map((photoUrl, index) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={`${photoUrl}-${index}`}
+                        alt={event.placeName || "Place photo"}
+                        className="h-[88px] w-full rounded-xl object-cover"
+                        src={photoUrl}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
+                {placeOpeningHours && placeOpeningHours.length > 0 ? (
+                  <div className="mt-4 rounded-xl border border-[var(--panel-border)] bg-white/70 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                      Opening hours
+                    </p>
+                    <ul className="mt-2 space-y-1 text-sm text-[var(--text-muted)]">
+                      {placeOpeningHours.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            <section className="surface p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                    Memory photos
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">
+                    Add visual moments that should appear in Memories.
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+              <details className="mt-4 rounded-xl border border-[var(--panel-border)] bg-white/70 px-3 py-2">
+                <summary className="cursor-pointer text-sm font-semibold text-rose-600 transition hover:text-rose-700">
+                  Add a photo
+                </summary>
+                <form id="photo-upload-form" className="mt-3" action={handleAddPhoto}>
+                  <input id="photo-url-input" type="hidden" name="photoUrl" />
+                  <PhotoUploader
+                    cloudName={process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
+                    uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                    formId="photo-upload-form"
+                    inputId="photo-url-input"
+                  />
+                </form>
+              </details>
+              {photos.length > 0 ? (
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {photos.map((photo) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={photo.id}
+                      alt={event.title}
+                      className="h-[170px] w-full rounded-xl object-cover"
+                      src={photo.storageUrl}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </section>
+          </div>
+
+          <aside className="space-y-6">
+            <section className="surface p-5 md:p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                Actions
+              </p>
+              <div className="mt-3 grid gap-2">
                 {isPast ? (
                   <Link href={`/spaces/${event.coupleSpaceId}/calendar?repeat=${event.id}`}>
                     <IconButton
@@ -417,118 +550,36 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   />
                 </ConfirmForm>
               </div>
-            </div>
-            {event.description ? (
-              <p className="mt-5 text-sm text-[var(--text-muted)]">
-                {event.description}
+            </section>
+
+            <section className="surface p-5 md:p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                Snapshot
               </p>
-            ) : null}
-            {isPast ? (
-              <EventRating
-                eventId={event.id}
-                currentRating={currentUserRating?.value ?? null}
-                onRate={handleRate}
-              />
-            ) : null}
-            {hasPlace ? (
-              <div className="mt-5 rounded-2xl border border-[var(--panel-border)] bg-white/80 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                      Place
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
-                      {event.placeName || "Selected place"}
-                    </p>
-                    {event.placeAddress ? (
-                      <p className="mt-1 text-sm text-[var(--text-muted)]">
-                        {event.placeAddress}
-                      </p>
-                    ) : null}
-                    {placeWebsite ? (
-                      <a
-                        className="mt-2 inline-flex text-sm font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
-                        href={placeWebsite}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {placeWebsite}
-                      </a>
-                    ) : null}
-                  </div>
-                  {placeLink ? (
-                    <a
-                      className="text-sm font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
-                      href={placeLink}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open in Maps
-                    </a>
-                  ) : null}
+              <div className="mt-3 grid gap-2 text-sm">
+                <div className="rounded-xl border border-[var(--panel-border)] bg-white/75 px-3 py-2">
+                  <span className="block text-xs text-[var(--text-tertiary)]">Type</span>
+                  <span className="font-medium text-[var(--text-primary)]">
+                    {isPast ? "Memory" : "Upcoming event"}
+                  </span>
                 </div>
-                {staticMapUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={event.placeName || "Event location"}
-                    className="mt-4 h-[200px] w-full rounded-xl object-cover"
-                    src={staticMapUrl}
-                  />
-                ) : null}
-                {placeOpeningHours && placeOpeningHours.length > 0 ? (
-                  <div className="mt-4 rounded-xl border border-[var(--panel-border)] bg-white/70 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                      Opening hours
-                    </p>
-                    <ul className="mt-2 space-y-1 text-sm text-[var(--text-muted)]">
-                      {placeOpeningHours.map((line) => (
-                        <li key={line}>{line}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-            <div className="mt-5 rounded-2xl border border-[var(--panel-border)] bg-white/80 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-                    Memory photos
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--text-muted)]">
-                    Photos appear on the Memories thumbnail.
-                  </p>
+                <div className="rounded-xl border border-[var(--panel-border)] bg-white/75 px-3 py-2">
+                  <span className="block text-xs text-[var(--text-tertiary)]">Date</span>
+                  <span className="font-medium text-[var(--text-primary)]">
+                    {formatDateInput(event.dateTimeStart)}
+                  </span>
+                </div>
+                <div className="rounded-xl border border-[var(--panel-border)] bg-white/75 px-3 py-2">
+                  <span className="block text-xs text-[var(--text-tertiary)]">Time</span>
+                  <span className="font-medium text-[var(--text-primary)]">
+                    {event.timeIsSet ? formatTimeInput(event.dateTimeStart) : "Anytime"}
+                  </span>
                 </div>
               </div>
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm font-semibold text-rose-600 transition hover:text-rose-700">
-                  Add a photo
-                </summary>
-                <form id="photo-upload-form" className="mt-3" action={handleAddPhoto}>
-                  <input id="photo-url-input" type="hidden" name="photoUrl" />
-                  <PhotoUploader
-                    cloudName={process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
-                    uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-                    formId="photo-upload-form"
-                    inputId="photo-url-input"
-                  />
-                </form>
-              </details>
-              {photos.length > 0 ? (
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {photos.map((photo) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={photo.id}
-                      alt={event.title}
-                      className="h-[160px] w-full rounded-xl object-cover"
-                      src={photo.storageUrl}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </section>
+            </section>
+          </aside>
+        </div>
+
         <EventComments
           eventId={event.id}
           initialComments={comments.map((comment) => ({
@@ -549,36 +600,36 @@ export default async function EventPage({ params, searchParams }: PageProps) {
           onSubmit={handleComment}
           onDelete={handleDeleteComment}
         />
-        <EventEditModal
-          isOpen={isEditing}
-          onCloseHref={`/events/${event.id}`}
-          onSubmit={handleUpdate}
-          onDelete={handleDelete}
-          mapsApiKey={mapsKey}
-          title={event.title}
-          dateValue={formatDateInput(event.dateTimeStart)}
-          timeValue={event.timeIsSet ? formatTimeInput(event.dateTimeStart) : ""}
-          tagsValue={tagsValue}
-          descriptionValue={event.description ?? ""}
-          placeId={event.placeId}
-          placeName={event.placeName}
-          placeAddress={event.placeAddress}
-          placeLat={event.placeLat}
-          placeLng={event.placeLng}
-          placeUrl={event.placeUrl}
-          placeWebsite={event.placeWebsite}
-          placeOpeningHours={
-            Array.isArray(event.placeOpeningHours)
-              ? (event.placeOpeningHours as string[])
-              : null
-          }
-          placePhotoUrls={
-            Array.isArray(event.placePhotoUrls)
-              ? (event.placePhotoUrls as string[])
-              : null
-          }
-        />
       </main>
+      <EventEditModal
+        isOpen={isEditing}
+        onCloseHref={`/events/${event.id}`}
+        onSubmit={handleUpdate}
+        onDelete={handleDelete}
+        mapsApiKey={mapsKey}
+        title={event.title}
+        dateValue={formatDateInput(event.dateTimeStart)}
+        timeValue={event.timeIsSet ? formatTimeInput(event.dateTimeStart) : ""}
+        tagsValue={tagsValue}
+        descriptionValue={event.description ?? ""}
+        placeId={event.placeId}
+        placeName={event.placeName}
+        placeAddress={event.placeAddress}
+        placeLat={event.placeLat}
+        placeLng={event.placeLng}
+        placeUrl={event.placeUrl}
+        placeWebsite={event.placeWebsite}
+        placeOpeningHours={
+          Array.isArray(event.placeOpeningHours)
+            ? (event.placeOpeningHours as string[])
+            : null
+        }
+        placePhotoUrls={
+          Array.isArray(event.placePhotoUrls)
+            ? (event.placePhotoUrls as string[])
+            : null
+        }
+      />
     </div>
   );
 }
