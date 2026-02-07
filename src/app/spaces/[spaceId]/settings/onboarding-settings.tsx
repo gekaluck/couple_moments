@@ -24,6 +24,7 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
 
   return (
     <section className="surface p-6 md:p-8">
+      <p className="section-kicker">Support</p>
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-200/80 bg-violet-50/90 text-violet-700">
           <HelpCircle className="h-5 w-5" />
@@ -50,7 +51,7 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
           <button
             onClick={handleRestartTour}
             disabled={isResetting}
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--action-primary-strong)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--action-primary-strong)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
           >
             <RotateCcw className={`h-3.5 w-3.5 ${isResetting ? "animate-spin" : ""}`} />
             {isResetting ? "Restarting..." : "Restart Tour"}

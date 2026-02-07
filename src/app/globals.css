@@ -249,6 +249,11 @@ h3,
   box-shadow: var(--shadow-sm);
 }
 
+.pill-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(233, 21, 113, 0.25), var(--shadow-sm);
+}
+
 .pill-button.primary {
   border-color: transparent;
   color: white;

@@ -32,7 +32,7 @@ export default function GoogleCalendarSettings() {
   const router = useRouter();
   const [data, setData] = useState<GoogleCalendarData>(null);
   const [loading, setLoading] = useState(true);
-  const [syncing, setsyncing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to load Google Calendar settings');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load Google Calendar settings');
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to disconnect');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to disconnect Google Calendar');
     }
   }
@@ -99,13 +99,13 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to toggle calendar');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to toggle calendar');
     }
   }
 
   async function handleSync() {
-    setsyncing(true);
+    setSyncing(true);
     setError(null);
 
     try {
@@ -119,10 +119,10 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to sync');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to sync availability');
     } finally {
-      setsyncing(false);
+      setSyncing(false);
     }
   }
 
@@ -140,6 +140,7 @@ export default function GoogleCalendarSettings() {
     <section className="surface p-6 md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
+          <p className="section-kicker">Integrations</p>
           <h3 className="text-base font-semibold text-[var(--text-primary)]">
             Google Calendar Integration
           </h3>
@@ -151,14 +152,14 @@ export default function GoogleCalendarSettings() {
         {data ? (
           <button
             onClick={handleDisconnect}
-            className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+            className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
           >
             Disconnect
           </button>
         ) : (
           <button
             onClick={handleConnect}
-            className="button-hover rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--text-primary)]"
+            className="button-hover rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
           >
             <svg
               className="mr-2 inline h-5 w-5"
@@ -214,7 +215,7 @@ export default function GoogleCalendarSettings() {
                   <button
                     onClick={handleSync}
                     disabled={syncing}
-                    className="rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50"
+                    className="rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                   >
                     {syncing ? 'Syncing...' : 'Sync Now'}
                   </button>
