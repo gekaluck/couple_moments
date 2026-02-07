@@ -55,6 +55,13 @@ export default function PlanCard({
             {description}
           </CardDescription>
         ) : null}
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-200/70 bg-white/80 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.08em] text-rose-700">
+          <span className="relative h-3.5 w-5">
+            <span className="absolute left-0 top-0 h-3.5 w-3.5 rounded-full bg-rose-500/85" />
+            <span className="absolute left-1.5 top-0 h-3.5 w-3.5 rounded-full bg-pink-300/85" />
+          </span>
+          Shared plan
+        </div>
         <CardFooter className="flex-col items-start gap-2 pt-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">

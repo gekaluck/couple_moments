@@ -53,6 +53,7 @@ export default function DayCell({
   const overflowCount = Math.max(events.length - maxEvents, 0);
   const dayCellBase = isCompact ? "min-h-[90px] p-1.5" : "min-h-[120px] p-2";
   const today = new Date();
+  const hasSharedPlans = events.length > 0;
 
   return (
     <div
@@ -60,7 +61,9 @@ export default function DayCell({
         isCurrentMonth
           ? isWeekend
             ? "bg-[rgba(255,245,247,0.72)]"
-            : "bg-[rgba(255,255,255,0.78)]"
+            : hasSharedPlans
+              ? "bg-[linear-gradient(170deg,rgba(255,255,255,0.84),rgba(255,243,248,0.72))]"
+              : "bg-[rgba(255,255,255,0.78)]"
           : "bg-[var(--surface-50)] text-[var(--surface-400)] opacity-55"
       } ${isPast ? "opacity-60" : ""} ${
         isToday ? "border-[var(--action-primary)] ring-2 ring-[var(--action-primary)]/15" : "border-[var(--panel-border)]"
@@ -72,7 +75,15 @@ export default function DayCell({
         href={addEventHref}
       />
       <div className="flex items-center justify-between text-xs font-semibold text-[var(--text-muted)]">
-        {date.getDate()}
+        <span className="inline-flex items-center gap-1.5">
+          {date.getDate()}
+          {hasSharedPlans ? (
+            <span className="relative inline-flex h-3.5 w-5">
+              <span className="absolute left-0 top-0 h-3.5 w-3.5 rounded-full bg-rose-400/90" />
+              <span className="absolute left-1.5 top-0 h-3.5 w-3.5 rounded-full bg-amber-300/90" />
+            </span>
+          ) : null}
+        </span>
         {isToday ? (
           <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
             Today

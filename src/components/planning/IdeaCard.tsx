@@ -150,6 +150,13 @@ export default function IdeaCard({
               ))}
             </div>
           ) : null}
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200/70 bg-white/75 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.08em] text-amber-700">
+            <span className="relative h-3.5 w-5">
+              <span className="absolute left-0 top-0 h-3.5 w-3.5 rounded-full bg-amber-500/90" />
+              <span className="absolute left-1.5 top-0 h-3.5 w-3.5 rounded-full bg-rose-400/85" />
+            </span>
+            Future date
+          </div>
           <CardFooter className="mt-3 justify-start text-xs text-[var(--text-tertiary)]">
             <span>
               Created {formatTimeAgo(idea.createdAt)} by{" "}
@@ -228,7 +235,7 @@ export default function IdeaCard({
                       <span className="font-semibold text-[var(--text-primary)]">
                         {comment.author.name || comment.author.email}
                       </span>
-                      <span className="mx-2">|</span>
+                      <span className="mx-2">/</span>
                       {formatTimeAgo(comment.createdAt)}
                     </p>
                     <p className="mt-1 text-sm text-[var(--text-primary)]">
