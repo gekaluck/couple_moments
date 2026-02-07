@@ -88,7 +88,7 @@ export default function IdeasColumn({
           </div>
         </div>
         <button
-          className="button-hover rounded-full border border-amber-300 bg-amber-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-sm)] transition hover:bg-amber-600"
+          className="button-hover rounded-full border border-amber-300 bg-amber-500 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-sm)] transition hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
           onClick={() => setIsCreateOpen(true)}
           type="button"
         >

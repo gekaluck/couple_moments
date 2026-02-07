@@ -133,7 +133,7 @@ export default function IdeaCard({
               </span>
               {idea.placeUrl || idea.placeWebsite ? (
                 <a
-                  className="font-semibold text-amber-600 transition hover:text-amber-700 hover:underline"
+                  className="font-semibold text-amber-600 transition hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   href={idea.placeWebsite || idea.placeUrl || "#"}
                   target="_blank"
                   rel="noreferrer"
@@ -168,24 +168,29 @@ export default function IdeaCard({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
-            className="inline-flex items-center gap-2 rounded-full border border-amber-200/90 bg-white/90 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80"
+            className="inline-flex items-center gap-2 rounded-full border border-amber-200/90 bg-white/90 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
             title="Schedule as event"
+            aria-label={`Schedule idea: ${idea.title}`}
             onClick={() => setIsScheduleOpen(true)}
             type="button"
           >
             <Calendar className="h-4 w-4" />
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
             title="Edit idea"
+            aria-label={`Edit idea: ${idea.title}`}
             onClick={() => setIsEditOpen(true)}
             type="button"
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button
-            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/90 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-white"
+            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/90 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
             title={`Comments (${localCount})`}
+            aria-label={`Toggle comments for ${idea.title}`}
+            aria-expanded={isCommentsOpen}
+            aria-pressed={isCommentsOpen}
             onClick={() => setIsCommentsOpen((prev) => !prev)}
             type="button"
           >
@@ -197,8 +202,9 @@ export default function IdeaCard({
             ) : null}
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50/80 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100/80"
+            className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50/80 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
             title="Delete idea"
+            aria-label={`Delete idea: ${idea.title}`}
             type="button"
             onClick={() => setIsDeleteOpen(true)}
           >
@@ -281,6 +287,7 @@ export default function IdeaCard({
               className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-200/70"
               name="content"
               placeholder="Add comment..."
+              aria-label={`Comment on ${idea.title}`}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
@@ -289,7 +296,7 @@ export default function IdeaCard({
               }}
             />
             <button
-              className="rounded-xl bg-[var(--action-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--action-primary-strong)]"
+              className="rounded-xl bg-[var(--action-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--action-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
               type="submit"
               disabled={isPending}
             >

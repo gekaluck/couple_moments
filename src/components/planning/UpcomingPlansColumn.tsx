@@ -53,7 +53,7 @@ export default function UpcomingPlansColumn({
         <div className="flex items-center gap-2">
           {todayHref ? (
             <Link
-              className="rounded-full border border-rose-200 bg-white/90 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-rose-700 transition hover:bg-rose-50"
+              className="rounded-full border border-rose-200 bg-white/90 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-rose-700 transition hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
               href={todayHref}
             >
               Today
@@ -61,7 +61,7 @@ export default function UpcomingPlansColumn({
           ) : null}
           {newEventHref ? (
             <Link
-              className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)]"
+              className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
               href={newEventHref}
             >
               New event
@@ -94,7 +94,7 @@ export default function UpcomingPlansColumn({
             <button
               type="button"
               onClick={() => setVisibleCount((prev) => prev + 5)}
-              className="rounded-2xl border border-rose-200/80 bg-rose-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-rose-700 transition hover:bg-rose-100/80 hover:shadow-sm"
+              className="rounded-2xl border border-rose-200/80 bg-rose-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-rose-700 transition hover:bg-rose-100/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
             >
               Show more ({plans.length - visibleCount} remaining)
             </button>
