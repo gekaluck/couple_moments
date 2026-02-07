@@ -6,7 +6,7 @@ import { getCurrentUserId } from '@/lib/current-user';
  * GET /api/integrations/google/calendars
  * Get list of calendars for the current user's Google account
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const userId = await getCurrentUserId();
     if (!userId) {
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
         email: externalAccount.providerAccountId,
         isRevoked: !!externalAccount.revokedAt,
       },
-      calendars: externalAccount.calendars.map((cal: any) => ({
+      calendars: externalAccount.calendars.map((cal) => ({
         id: cal.id,
         calendarId: cal.calendarId,
         summary: cal.summary,

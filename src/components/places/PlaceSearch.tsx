@@ -3,7 +3,60 @@
 import { useEffect, useRef, useState } from "react";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 
-declare const google: any;
+type GoogleLatLng = {
+  lat: () => number;
+  lng: () => number;
+};
+
+type GoogleAutocompletePlace = {
+  place_id?: string;
+  name?: string;
+  formatted_address?: string;
+  geometry?: { location?: GoogleLatLng };
+  url?: string;
+};
+
+type GooglePlaceDetails = {
+  website?: string;
+  opening_hours?: { weekday_text?: string[] };
+  photos?: Array<{
+    getUrl: (options: { maxWidth: number; maxHeight: number }) => string;
+  }>;
+  url?: string;
+  name?: string;
+};
+
+type GooglePlacesAutocomplete = {
+  addListener: (eventName: "place_changed", handler: () => void) => void;
+  getPlace: () => GoogleAutocompletePlace | undefined;
+};
+
+type GooglePlacesService = {
+  getDetails: (
+    request: { placeId: string; fields: string[] },
+    callback: (details: GooglePlaceDetails | null, status: string) => void,
+  ) => void;
+};
+
+type GoogleMapsNamespace = {
+  maps: {
+    places: {
+      Autocomplete: new (
+        input: HTMLInputElement,
+        options: { fields: string[] },
+      ) => GooglePlacesAutocomplete;
+      PlacesService: new (container: HTMLDivElement) => GooglePlacesService;
+      PlacesServiceStatus: {
+        OK: string;
+      };
+    };
+    event: {
+      clearInstanceListeners: (instance: unknown) => void;
+    };
+  };
+};
+
+declare const google: GoogleMapsNamespace;
 
 let mapsConfigured = false;
 
@@ -44,7 +97,7 @@ export default function PlaceSearch({
       return;
     }
 
-    let autocomplete: any = null;
+    let autocomplete: GooglePlacesAutocomplete | null = null;
 
     if (!mapsConfigured) {
       setOptions({ key } as Parameters<typeof setOptions>[0]);
@@ -80,7 +133,7 @@ export default function PlaceSearch({
             placeId: place.place_id,
             fields: ["website", "opening_hours", "photos", "url", "name"],
           },
-          (details: any, status: any) => {
+          (details, status) => {
             if (
               status !== google.maps.places.PlacesServiceStatus.OK ||
               !details
@@ -96,7 +149,7 @@ export default function PlaceSearch({
               photoUrls: Array.isArray(details.photos)
                 ? details.photos
                     .slice(0, 3)
-                    .map((photo: any) =>
+                    .map((photo) =>
                       photo.getUrl({ maxWidth: 800, maxHeight: 600 }),
                     )
                 : [],
