@@ -60,10 +60,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       ? "monday"
       : "sunday";
   const weekStartsOn = calendarWeekStart === "monday" ? 1 : 0;
-  const calendarTimeFormat =
-    cookieStore.get("cm_calendar_time_format")?.value === "12h"
-      ? "12h"
-      : "24h";
   const userId = await requireUserId();
   const { spaceId } = await params;
   const search = (await searchParams) ?? {};
