@@ -38,6 +38,7 @@ type IdeasColumnProps = {
   commentsByIdea: Record<string, IdeaComment[]>;
   currentUserId: string;
   mapsApiKey?: string;
+  hasGoogleCalendar?: boolean;
   onCreateIdea: (formData: FormData) => Promise<void>;
   onScheduleIdea: (formData: FormData) => Promise<void>;
   onAddComment: (formData: FormData) => Promise<void>;
@@ -52,6 +53,7 @@ export default function IdeasColumn({
   commentsByIdea,
   currentUserId,
   mapsApiKey,
+  hasGoogleCalendar = false,
   onCreateIdea,
   onScheduleIdea,
   onAddComment,
@@ -111,6 +113,7 @@ export default function IdeasColumn({
               comments={commentsByIdea[idea.id] ?? []}
               currentUserId={currentUserId}
               mapsApiKey={mapsApiKey}
+              hasGoogleCalendar={hasGoogleCalendar}
               onSchedule={onScheduleIdea}
               onAddComment={onAddComment}
               onDelete={onDeleteIdea}

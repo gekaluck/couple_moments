@@ -356,6 +356,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const rawTime = formData.get("time")?.toString() || "";
     const timeIsSet = rawTime.length > 0;
     const time = timeIsSet ? rawTime : "12:00";
+    const addToGoogleCalendar = formData.get("addToGoogleCalendar") === "true";
 
     if (!ideaId || !date) {
       redirect(`/spaces/${spaceIdForActions}/calendar`);
@@ -371,7 +372,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
-    await createEventForSpace(spaceIdForActions, currentUserId, {
+    const event = await createEventForSpace(spaceIdForActions, currentUserId, {
       title: idea.title,
       description: idea.description,
       dateTimeStart,
@@ -393,6 +394,20 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       placeLng: idea.placeLng,
       placeUrl: idea.placeUrl,
     });
+
+    // Sync to Google Calendar if requested
+    if (addToGoogleCalendar) {
+      await createGoogleCalendarEvent(currentUserId, {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        dateTimeStart: event.dateTimeStart,
+        dateTimeEnd: event.dateTimeEnd,
+        timeIsSet: event.timeIsSet,
+        placeName: event.placeName,
+        placeAddress: event.placeAddress,
+      });
+    }
 
   }
 
@@ -797,6 +812,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             commentsByIdea={ideaCommentsByIdea}
             currentUserId={userId}
             mapsApiKey={mapsApiKey}
+            hasGoogleCalendar={hasGoogleCalendar}
             onCreateIdea={handleCreateIdea}
             onScheduleIdea={handleScheduleIdea}
             onAddComment={handleIdeaComment}
