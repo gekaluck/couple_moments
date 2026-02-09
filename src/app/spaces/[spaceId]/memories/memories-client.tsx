@@ -162,8 +162,16 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             <p className="section-subtitle">
               Filter by year or tag to rediscover your favorites.
             </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+              <span className="rounded-full border border-rose-200 bg-rose-100 px-2.5 py-1 text-rose-700">
+                {memories.length} total
+              </span>
+              <span className="rounded-full border border-[var(--panel-border)] bg-white/85 px-2.5 py-1">
+                {filtered.length} visible
+              </span>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full max-w-2xl gap-2 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-2 md:grid-cols-[1fr,auto,auto]">
             <div className="relative flex h-10 items-center">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                 <svg
@@ -178,7 +186,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 </svg>
               </span>
               <input
-                className="h-10 w-48 rounded-full border border-[var(--panel-border)] bg-white/80 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
+                className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white/80 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
                 placeholder="Search memories..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -272,8 +280,12 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           return (
             <div
               key={event.id}
-              className="group surface relative flex min-h-[156px] flex-col gap-4 p-6 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg md:flex-row md:items-center"
+              className="group surface relative flex min-h-[156px] flex-col gap-4 overflow-hidden p-6 transition-all duration-200 hover:scale-[1.01] hover:shadow-lg md:flex-row md:items-center"
             >
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[linear-gradient(125deg,rgba(255,255,255,0),rgba(255,230,240,0.2),rgba(224,242,254,0.18))]"
+              />
               <Link
                 href={`/events/${event.id}?from=memories&spaceId=${encodeURIComponent(spaceId)}`}
                 className="absolute inset-0 z-0"
