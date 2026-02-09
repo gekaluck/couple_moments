@@ -1,7 +1,7 @@
 export default function SettingsLoading() {
   return (
     <>
-      <section className="surface p-6">
+      <section className="surface-muted p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="skeleton h-6 w-36" />

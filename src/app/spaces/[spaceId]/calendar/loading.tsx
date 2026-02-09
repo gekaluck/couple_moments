@@ -1,9 +1,12 @@
 export default function CalendarLoading() {
   return (
     <div className="flex flex-col gap-8">
-      <div className="surface p-6">
+      <div className="surface-muted p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="skeleton h-6 w-32" />
+          <div>
+            <div className="skeleton h-6 w-32" />
+            <div className="skeleton mt-2 h-4 w-56" />
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="skeleton h-9 w-24 rounded-full" />
             <div className="skeleton h-9 w-28 rounded-full" />
@@ -21,7 +24,7 @@ export default function CalendarLoading() {
           ))}
         </div>
       </div>
-      <div className="rounded-2xl border border-[var(--panel-border)] bg-white/80 p-6 shadow-[var(--shadow-lg)]">
+      <div className="surface p-6">
         <div className="flex items-center justify-between">
           <div className="skeleton h-6 w-40" />
           <div className="skeleton h-9 w-24 rounded-full" />
