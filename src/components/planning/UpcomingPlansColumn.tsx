@@ -20,14 +20,12 @@ type Plan = {
 type UpcomingPlansColumnProps = {
   plans: Plan[];
   commentCounts: Record<string, number>;
-  todayHref?: string;
   newEventHref?: string;
 };
 
 export default function UpcomingPlansColumn({
   plans,
   commentCounts,
-  todayHref,
   newEventHref,
 }: UpcomingPlansColumnProps) {
   const [visibleCount, setVisibleCount] = useState(5);
@@ -51,14 +49,6 @@ export default function UpcomingPlansColumn({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {todayHref ? (
-            <Link
-              className="rounded-full border border-rose-200 bg-white/90 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-rose-700 transition hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
-              href={todayHref}
-            >
-              Today
-            </Link>
-          ) : null}
           {newEventHref ? (
             <Link
               className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"

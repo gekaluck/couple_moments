@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans, Fraunces } from "next/font/google";
 import Script from "next/script";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
 });
 
@@ -39,7 +44,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} antialiased`}
+        className={`${dmSans.variable} ${fraunces.variable} antialiased`}
       >
         <ErrorBoundary>{children}</ErrorBoundary>
         <Toaster

@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { createEventComment, createEventPhoto, deleteEvent, getEventForUser, listEventComments, updateEvent, updateEventRating } from "@/lib/events";
 import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
-import { buildCreatorPalette, getCreatorInitials } from "@/lib/creator-colors";
 import { prisma } from "@/lib/prisma";
 import { normalizeTags, parseTags } from "@/lib/tags";
 import { getEventSyncStatus } from "@/lib/integrations/google/events";
@@ -13,10 +12,9 @@ import { getEventSyncStatus } from "@/lib/integrations/google/events";
 import EventComments from "./event-comments";
 import EventEditModal from "./event-edit-modal";
 import EventRating from "./event-rating";
-import IconButton from "@/components/ui/IconButton";
-import TagBadge from "@/components/ui/TagBadge";
 import ConfirmForm from "@/components/ConfirmForm";
 import PhotoUploader from "@/components/photos/PhotoUploader";
+import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 
 const PencilIcon = () => (
   <svg
@@ -281,32 +279,19 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const tags = parseTags(event.tags);
   const tagsValue = tags.join(", ");
   const isPast = isEventInPast(event);
-  const members = await prisma.membership.findMany({
-    where: { coupleSpaceId: event.coupleSpaceId },
-    select: {
-      userId: true,
-      user: { select: { name: true, email: true } },
-    },
+  const statusLabel = isPast ? "Past" : "Upcoming";
+  const creatorName = creator?.name || creator?.email || "Unknown";
+  const eventDateLabel = event.dateTimeStart.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
   });
-  const creatorPalette = buildCreatorPalette(
-    members.map((member) => ({
-      id: member.userId,
-      name: member.user.name ?? null,
-      email: member.user.email,
-    })),
-  );
-  const creatorColors = creatorPalette.get(event.createdByUserId);
-  const creatorGradient =
-    creatorColors?.accent === "var(--accent-secondary)"
-      ? "linear-gradient(135deg,#60a5fa,#6366f1)"
-      : "linear-gradient(135deg,#fb7185,#db2777)";
-  const creatorInitials = creator
-    ? getCreatorInitials({
-        id: event.createdByUserId,
-        name: creator.name ?? null,
-        email: creator.email,
+  const eventTimeLabel = event.timeIsSet
+    ? event.dateTimeStart.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
       })
-    : "??";
+    : "Anytime";
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const hasPlace = Boolean(event.placeName || event.placeAddress);
   const placeLink =
@@ -318,6 +303,10 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const placeOpeningHours = Array.isArray(event.placeOpeningHours)
     ? (event.placeOpeningHours as string[])
     : null;
+  const todayDayLabel = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const todayHours = placeOpeningHours?.find((line) =>
+    line.toLowerCase().startsWith(todayDayLabel.toLowerCase()),
+  );
   const placePhotoUrls = Array.isArray(event.placePhotoUrls)
     ? (event.placePhotoUrls as string[])
     : null;
@@ -330,80 +319,147 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     <div className="min-h-screen page-enter">
       <header className="border-b border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.9),rgba(255,240,246,0.68))] backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-start justify-between gap-4 px-6 py-7">
-          <div>
+          <div className="max-w-4xl">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
               {isFromMemories ? "Memories" : "Calendar"} / Event
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
               {event.title}
             </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white ${isPast ? "bg-slate-500" : "bg-rose-500"}`}>
-                {isPast ? "Memory" : "Upcoming"}
-              </span>
-              <span className="rounded-full border border-[var(--panel-border)] bg-white/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                {formatDateInput(event.dateTimeStart)}
-                {event.timeIsSet ? ` / ${formatTimeInput(event.dateTimeStart)}` : ""}
-              </span>
-              {googleSyncStatus?.synced ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  Synced
-                </span>
-              ) : null}
-            </div>
           </div>
-          <Link
-            className="rounded-full border border-[var(--panel-border)] bg-white/90 px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-rose-300 hover:text-rose-600"
-            href={backHref}
-          >
-            {isFromMemories ? "Back to memories" : "Back to calendar"}
-          </Link>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {isPast ? (
+              <Link
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-200 bg-white/90 text-rose-600 shadow-[var(--shadow-sm)] transition hover:border-rose-300 hover:bg-rose-50"
+                href={`/spaces/${event.coupleSpaceId}/calendar?repeat=${event.id}`}
+                title="Do this again"
+                aria-label="Do this again"
+              >
+                <RepeatIcon />
+              </Link>
+            ) : null}
+            <Link
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-slate-300 hover:bg-white"
+              href={`/events/${event.id}?edit=1`}
+              title="Edit event"
+              aria-label="Edit event"
+            >
+              <PencilIcon />
+            </Link>
+            <ConfirmForm action={handleDelete} message="Delete this event?">
+              <button
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-white/90 text-red-600 shadow-[var(--shadow-sm)] transition hover:border-red-300 hover:bg-red-50"
+                type="submit"
+                title="Delete event"
+                aria-label="Delete event"
+              >
+                <TrashIcon />
+              </button>
+            </ConfirmForm>
+            <Link
+              className="rounded-full border border-[var(--panel-border)] bg-white/90 px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-rose-300 hover:text-rose-600"
+              href={backHref}
+            >
+              {isFromMemories ? "Back to memories" : "Back to calendar"}
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-6 py-8">
-        <section className={`surface p-6 md:p-8 ${isPast ? "bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(245,248,252,0.82))]" : "bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,238,246,0.84))]"}`}>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-tertiary)]">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-1 text-[var(--text-muted)]">
-              <span
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold text-white"
-                style={{ background: creatorGradient }}
-              >
-                {creatorInitials}
-              </span>
-              Created by {creator?.name || creator?.email || "Unknown"}
-            </span>
-            {tags.length > 0 ? (
-              <span className="flex flex-wrap items-center gap-2">
-                {tags.map((tag) => (
-                  <TagBadge key={tag} label={tag} />
-                ))}
-              </span>
+        <section className="surface p-5 md:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+            Event details
+          </p>
+          <div className="mt-3 grid gap-2">
+            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                Status
+              </p>
+              <p className="text-sm text-[var(--text-primary)]">{statusLabel}</p>
+            </div>
+            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                Date
+              </p>
+              <p className="text-sm text-[var(--text-primary)]">{eventDateLabel}</p>
+            </div>
+            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                Time
+              </p>
+              <p className="text-sm text-[var(--text-primary)]">{eventTimeLabel}</p>
+            </div>
+            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                Created by
+              </p>
+              <p className="text-sm text-[var(--text-primary)]">{creatorName}</p>
+            </div>
+            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                Tags
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {tags.length > 0 ? (
+                  tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex rounded-full border border-[var(--panel-border)] bg-white/80 px-2.5 py-1 text-xs text-[var(--text-secondary)]"
+                    >
+                      {tag}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm text-[var(--text-muted)]">None</p>
+                )}
+              </div>
+            </div>
+            {isPast ? (
+              <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                  Rating
+                </p>
+                <EventRating
+                  eventId={event.id}
+                  currentRating={currentUserRating?.value ?? null}
+                  onRate={handleRate}
+                  compact
+                />
+              </div>
+            ) : null}
+            {googleSyncStatus?.synced ? (
+              <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+                  Sync
+                </p>
+                <p className="text-sm text-emerald-700">Synced with Google Calendar</p>
+              </div>
             ) : null}
           </div>
-          {event.description ? (
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[var(--text-muted)]">
-              {event.description}
-            </p>
-          ) : null}
-          {isPast ? (
-            <div className="mt-4">
-              <EventRating
-                eventId={event.id}
-                currentRating={currentUserRating?.value ?? null}
-                onRate={handleRate}
-              />
-            </div>
-          ) : null}
         </section>
 
-        <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-          <div className="space-y-6">
-            {hasPlace ? (
-              <section className="surface p-5 md:p-6">
+        {event.description ? (
+          <section className="surface p-5 md:p-6">
+            <p className="text-sm leading-relaxed text-[var(--text-muted)]">
+              {event.description}
+            </p>
+          </section>
+        ) : (
+          <section className="border-b border-dashed border-[var(--panel-border)] pb-4">
+            <Link
+              className="inline-flex items-center text-sm font-medium text-[var(--text-secondary)] underline decoration-dashed underline-offset-4 transition hover:text-[var(--action-primary)]"
+              href={`/events/${event.id}?edit=1`}
+            >
+              Add a note about this event...
+            </Link>
+          </section>
+        )}
+
+        {hasPlace ? (
+          <section className="surface p-5 md:p-6">
+            <div className="grid gap-4 md:grid-cols-[1fr_1.15fr]">
+              <div>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
@@ -417,16 +473,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                         {event.placeAddress}
                       </p>
                     ) : null}
-                    {placeWebsite ? (
-                      <a
-                        className="mt-2 inline-flex text-sm font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
-                        href={placeWebsite}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {placeWebsite}
-                      </a>
-                    ) : null}
                   </div>
                   {placeLink ? (
                     <a
@@ -439,146 +485,84 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                     </a>
                   ) : null}
                 </div>
-
-                {staticMapUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={event.placeName || "Event location"}
-                    className="mt-4 h-[220px] w-full rounded-2xl object-cover"
-                    src={staticMapUrl}
-                  />
-                ) : null}
-
-                {placePhotoUrls && placePhotoUrls.length > 0 ? (
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    {placePhotoUrls.slice(0, 3).map((photoUrl, index) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={`${photoUrl}-${index}`}
-                        alt={event.placeName || "Place photo"}
-                        className="h-[88px] w-full rounded-xl object-cover"
-                        src={photoUrl}
-                      />
-                    ))}
-                  </div>
+                {placeWebsite ? (
+                  <a
+                    className="mt-2 inline-flex text-sm font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
+                    href={placeWebsite}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {placeWebsite}
+                  </a>
                 ) : null}
 
                 {placeOpeningHours && placeOpeningHours.length > 0 ? (
-                  <div className="mt-4 rounded-xl border border-[var(--panel-border)] bg-white/70 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                      Opening hours
-                    </p>
+                  <details className="mt-4 rounded-xl border border-[var(--panel-border)] bg-white/70 p-3">
+                    <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                      {todayHours ? `Hours today: ${todayHours}` : "Opening hours"}
+                    </summary>
                     <ul className="mt-2 space-y-1 text-sm text-[var(--text-muted)]">
                       {placeOpeningHours.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
-                  </div>
+                  </details>
                 ) : null}
-              </section>
-            ) : null}
-
-            <section className="surface p-5 md:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                    Memory photos
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--text-muted)]">
-                    Add visual moments that should appear in Memories.
-                  </p>
-                </div>
               </div>
-              <details className="mt-4 rounded-xl border border-[var(--panel-border)] bg-white/70 px-3 py-2">
-                <summary className="cursor-pointer text-sm font-semibold text-rose-600 transition hover:text-rose-700">
-                  Add a photo
-                </summary>
-                <form id="photo-upload-form" className="mt-3" action={handleAddPhoto}>
-                  <input id="photo-url-input" type="hidden" name="photoUrl" />
-                  <PhotoUploader
-                    cloudName={process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
-                    uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-                    formId="photo-upload-form"
-                    inputId="photo-url-input"
+
+              <div>
+                {staticMapUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    alt={event.placeName || "Event location"}
+                    className="h-[220px] w-full rounded-2xl object-cover"
+                    src={staticMapUrl}
                   />
-                </form>
-              </details>
-              {photos.length > 0 ? (
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {photos.map((photo) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={photo.id}
-                      alt={event.title}
-                      className="h-[170px] w-full rounded-xl object-cover"
-                      src={photo.storageUrl}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </section>
+                ) : null}
+
+                {placePhotoUrls && placePhotoUrls.length > 0 ? (
+                  <PlacePhotoStrip
+                    photoUrls={placePhotoUrls.slice(0, 3)}
+                    alt={event.placeName || "Place photo"}
+                    className="mt-3"
+                  />
+                ) : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="surface p-5 md:p-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+              Photos
+            </p>
           </div>
-
-          <aside className="space-y-6">
-            <section className="surface p-5 md:p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                Actions
-              </p>
-              <div className="mt-3 grid gap-2">
-                {isPast ? (
-                  <Link href={`/spaces/${event.coupleSpaceId}/calendar?repeat=${event.id}`}>
-                    <IconButton
-                      icon={<RepeatIcon />}
-                      label="Do this again"
-                      variant="primary"
-                    />
-                  </Link>
-                ) : null}
-                <Link href={`/events/${event.id}?edit=1`}>
-                  <IconButton
-                    icon={<PencilIcon />}
-                    label="Edit event"
-                    variant="secondary"
-                  />
-                </Link>
-                <ConfirmForm action={handleDelete} message="Delete this event?">
-                  <IconButton
-                    icon={<TrashIcon />}
-                    label="Delete event"
-                    variant="danger"
-                    type="submit"
-                  />
-                </ConfirmForm>
-              </div>
-            </section>
-
-            <section className="surface p-5 md:p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-                Snapshot
-              </p>
-              <div className="mt-3 grid gap-2 text-sm">
-                <div className="rounded-xl border border-[var(--panel-border)] bg-white/75 px-3 py-2">
-                  <span className="block text-xs text-[var(--text-tertiary)]">Type</span>
-                  <span className="font-medium text-[var(--text-primary)]">
-                    {isPast ? "Memory" : "Upcoming event"}
-                  </span>
-                </div>
-                <div className="rounded-xl border border-[var(--panel-border)] bg-white/75 px-3 py-2">
-                  <span className="block text-xs text-[var(--text-tertiary)]">Date</span>
-                  <span className="font-medium text-[var(--text-primary)]">
-                    {formatDateInput(event.dateTimeStart)}
-                  </span>
-                </div>
-                <div className="rounded-xl border border-[var(--panel-border)] bg-white/75 px-3 py-2">
-                  <span className="block text-xs text-[var(--text-tertiary)]">Time</span>
-                  <span className="font-medium text-[var(--text-primary)]">
-                    {event.timeIsSet ? formatTimeInput(event.dateTimeStart) : "Anytime"}
-                  </span>
-                </div>
-              </div>
-            </section>
-          </aside>
-        </div>
+          <div className="mt-4 rounded-2xl border border-dashed border-[var(--panel-border)] bg-white/70 p-4">
+            <form id="photo-upload-form" action={handleAddPhoto}>
+              <input id="photo-url-input" type="hidden" name="photoUrl" />
+              <PhotoUploader
+                cloudName={process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
+                uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                formId="photo-upload-form"
+                inputId="photo-url-input"
+              />
+            </form>
+          </div>
+          {photos.length > 0 ? (
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {photos.map((photo) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={photo.id}
+                  alt={event.title}
+                  className="h-[170px] w-full rounded-xl object-cover"
+                  src={photo.storageUrl}
+                />
+              ))}
+            </div>
+          ) : null}
+        </section>
 
         <EventComments
           eventId={event.id}
@@ -633,3 +617,5 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     </div>
   );
 }
+
+

@@ -23,6 +23,13 @@ function formatDateTime(date: Date, timeIsSet?: boolean) {
   });
 }
 
+function getDayDiff(date: Date) {
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.round((startOfDate.getTime() - startOfToday.getTime()) / 86400000);
+}
+
 export default function PlanCard({
   id,
   title,
@@ -33,18 +40,29 @@ export default function PlanCard({
   createdBy,
   placeName,
 }: PlanCardProps) {
+  const dayDiff = getDayDiff(dateTimeStart);
+  const proximityLabel =
+    dayDiff === 0 ? "Today" : dayDiff === 1 ? "Tomorrow" : null;
+
   return (
     <Link href={`/events/${id}`} className="block">
       <Card
         variant="rose"
         hover
-        padding="md"
-        className="animate-fade-in-up border-rose-200/70 bg-[linear-gradient(140deg,rgba(255,255,255,0.95),rgba(255,237,244,0.7))]"
+        padding="sm"
+        className="group/plan card-hover animate-fade-in-up border-rose-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,238,244,0.74))]"
       >
         <CardHeader>
-          <CardTitle className="text-base text-rose-900">{title}</CardTitle>
+          <div className="min-w-0 flex-1 space-y-1">
+            {proximityLabel ? (
+              <span className="inline-flex rounded-full border border-rose-200/70 bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-700">
+                {proximityLabel}
+              </span>
+            ) : null}
+            <CardTitle className="text-lg text-[var(--text-primary)]">{title}</CardTitle>
+          </div>
           {commentCount > 0 ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white/85 px-2 py-1 text-xs text-rose-700 shadow-sm">
+            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200/70 bg-white/85 px-2 py-1 text-xs text-rose-700 shadow-sm">
               <MessageSquare className="h-3.5 w-3.5" />
               {commentCount}
             </span>
@@ -55,13 +73,6 @@ export default function PlanCard({
             {description}
           </CardDescription>
         ) : null}
-        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-200/70 bg-white/80 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.08em] text-rose-700">
-          <span className="relative h-3.5 w-5">
-            <span className="absolute left-0 top-0 h-3.5 w-3.5 rounded-full bg-rose-500/85" />
-            <span className="absolute left-1.5 top-0 h-3.5 w-3.5 rounded-full bg-pink-300/85" />
-          </span>
-          Shared plan
-        </div>
         <CardFooter className="flex-col items-start gap-2 pt-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
@@ -83,9 +94,11 @@ export default function PlanCard({
             ) : null}
           </div>
           {placeName ? (
-            <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-              <MapPin className="h-4 w-4 text-rose-500" />
-              <span className="text-[var(--text-muted)]">{placeName}</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-rose-200/70 bg-white/75 px-3 py-1 text-xs text-[var(--text-tertiary)]">
+              <MapPin className="h-3.5 w-3.5 text-rose-500" />
+              <span className="text-[var(--text-muted)]">
+                {placeName}
+              </span>
             </div>
           ) : null}
         </CardFooter>

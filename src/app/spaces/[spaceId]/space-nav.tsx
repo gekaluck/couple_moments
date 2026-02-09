@@ -14,6 +14,10 @@ type NavItem = {
 type SpaceNavProps = {
   spaceId: string;
   spaceName: string;
+  todayDateLabel: string;
+  todaySummaryText: string;
+  todaySummaryHref: string;
+  todayHasPlans?: boolean;
 };
 
 const navItems = (spaceId: string): NavItem[] => [
@@ -24,7 +28,14 @@ const navItems = (spaceId: string): NavItem[] => [
   { id: "settings", label: "Settings", href: `/spaces/${spaceId}/settings` },
 ];
 
-export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
+export default function SpaceNav({
+  spaceId,
+  spaceName,
+  todayDateLabel,
+  todaySummaryText,
+  todaySummaryHref,
+  todayHasPlans = false,
+}: SpaceNavProps) {
   const pathname = usePathname();
   const items = navItems(spaceId);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -34,10 +45,6 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-${`${today.getDate()}`.padStart(2, "0")}`;
   const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
-  const todayLabel = today.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
   const createItems = [
     {
       id: "event",
@@ -130,9 +137,20 @@ export default function SpaceNav({ spaceId, spaceName }: SpaceNavProps) {
                 <span className="rounded-full border border-rose-200/80 bg-rose-50/80 px-2 py-0.5 text-rose-700">
                   Cozy space
                 </span>
-                <span className="rounded-full border border-[var(--panel-border)] bg-white/80 px-2 py-0.5">
-                  {todayLabel}
-                </span>
+                <Link
+                  href={todaySummaryHref}
+                  className="inline-flex max-w-[280px] items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 px-2 py-0.5 normal-case tracking-normal text-[11px] transition hover:border-rose-300"
+                >
+                  <span className="text-[var(--text-muted)]">{todayDateLabel}</span>
+                  <span className="text-[var(--text-tertiary)]">·</span>
+                  <span
+                    className={`truncate ${
+                      todayHasPlans ? "text-[var(--action-primary)]" : "text-[var(--text-secondary)]"
+                    }`}
+                  >
+                    {todaySummaryText}
+                  </span>
+                </Link>
               </div>
             </div>
           </div>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import TagBadge from "@/components/ui/TagBadge";
 import EmptyState from "@/components/ui/EmptyState";
 
 const CalendarIcon = () => (
@@ -37,41 +36,6 @@ const TagIcon = () => (
   </svg>
 );
 
-const RepeatIcon = () => (
-  <svg
-    aria-hidden="true"
-    className="h-4 w-4"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <path
-      d="M17 1l4 4-4 4"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M3 11V9a4 4 0 0 1 4-4h14"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M7 23l-4-4 4-4"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M21 13v2a4 4 0 0 1-4 4H3"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 type Memory = {
   id: string;
   title: string;
@@ -79,12 +43,100 @@ type Memory = {
   dateTimeStart: string;
   tags: string[];
   coverUrl: string | null;
+  fallbackCoverUrl: string | null;
 };
 
 type MemoriesClientProps = {
   memories: Memory[];
   spaceId: string;
 };
+
+type MemoryCoverProps = {
+  coverUrl: string | null;
+  fallbackCoverUrl: string | null;
+  title: string;
+  gradient: string;
+};
+
+function MemoryCover({ coverUrl, fallbackCoverUrl, title, gradient }: MemoryCoverProps) {
+  const [resolvedCoverUrl, setResolvedCoverUrl] = useState<string | null>(null);
+  const candidates = useMemo(
+    () =>
+      [coverUrl, fallbackCoverUrl]
+        .map((url) => url?.trim() ?? "")
+        .filter(
+          (url, index, list) =>
+            /^https?:\/\//i.test(url) && list.indexOf(url) === index,
+        ),
+    [coverUrl, fallbackCoverUrl],
+  );
+  const activeCoverUrl =
+    resolvedCoverUrl && candidates.includes(resolvedCoverUrl)
+      ? resolvedCoverUrl
+      : null;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (candidates.length === 0) {
+      return;
+    }
+
+    const probe = (index: number) => {
+      if (index >= candidates.length) {
+        if (!cancelled) {
+          setResolvedCoverUrl(null);
+        }
+        return;
+      }
+
+      const image = new Image();
+      image.onload = () => {
+        if (!cancelled) {
+          setResolvedCoverUrl(candidates[index]);
+        }
+      };
+      image.onerror = () => probe(index + 1);
+      image.src = candidates[index];
+    };
+
+    probe(0);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [candidates]);
+
+  return (
+    <div
+      className="relative flex h-[120px] w-[120px] min-h-[120px] min-w-[120px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br text-4xl font-semibold text-white shadow-sm"
+    >
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
+      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.6) 0, rgba(255,255,255,0) 60%)" }} />
+      {activeCoverUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          alt={title}
+          className="relative z-10 h-full w-full object-cover"
+          src={activeCoverUrl}
+          onError={() => setResolvedCoverUrl(null)}
+        />
+      ) : (
+        <svg
+          aria-hidden="true"
+          className="relative z-10 h-9 w-9 text-white/90"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+        >
+          <path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1Z" />
+          <circle cx="12" cy="13" r="3.2" />
+        </svg>
+      )}
+    </div>
+  );
+}
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -102,15 +154,15 @@ const TAG_GRADIENTS: Record<string, string> = {
   anniversary: "from-rose-500 to-pink-600",
   cozy: "from-orange-400 to-amber-500",
   home: "from-orange-400 to-amber-500",
-  weekend: "from-purple-400 to-indigo-500",
+  weekend: "from-slate-500 to-slate-600",
   outdoor: "from-emerald-500 to-teal-600",
   hiking: "from-emerald-500 to-teal-600",
   nature: "from-emerald-500 to-teal-600",
   dinner: "from-amber-500 to-orange-500",
   food: "from-amber-500 to-orange-500",
   restaurant: "from-amber-500 to-orange-500",
-  movie: "from-violet-500 to-purple-600",
-  concert: "from-violet-500 to-purple-600",
+  movie: "from-amber-500 to-rose-500",
+  concert: "from-amber-500 to-rose-500",
   travel: "from-sky-500 to-blue-600",
   trip: "from-sky-500 to-blue-600",
   vacation: "from-sky-500 to-blue-600",
@@ -149,30 +201,26 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
       return matchesYear && matchesTag && matchesSearch;
     })
     .sort((a, b) => new Date(b.dateTimeStart).getTime() - new Date(a.dateTimeStart).getTime());
+  const hasActiveFilters = year !== "all" || tag !== "all" || search.trim() !== "";
+  const memoriesCountLabel = hasActiveFilters
+    ? `Showing ${filtered.length} of ${memories.length} memories`
+    : `${memories.length} memories`;
 
   return (
     <div className="page-enter-stagger">
       <section className="surface-muted p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
           <div>
             <p className="section-kicker">Memories</p>
             <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
               Revisit your highlights
             </h2>
-            <p className="section-subtitle">
-              Filter by year or tag to rediscover your favorites.
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-              <span className="rounded-full border border-rose-200 bg-rose-100 px-2.5 py-1 text-rose-700">
-                {memories.length} total
-              </span>
-              <span className="rounded-full border border-[var(--panel-border)] bg-white/85 px-2.5 py-1">
-                {filtered.length} visible
-              </span>
-            </div>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{memoriesCountLabel}</p>
           </div>
-          <div className="grid w-full max-w-2xl gap-2 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-2 md:grid-cols-[1fr,auto,auto]">
-            <div className="relative flex h-10 items-center">
+        </div>
+        <div className="mt-4 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex h-10 min-w-[260px] flex-1 items-center">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                 <svg
                   aria-hidden="true"
@@ -186,7 +234,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 </svg>
               </span>
               <input
-                className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white/80 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
+                className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
                 placeholder="Search memories..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -197,7 +245,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 <CalendarIcon />
               </span>
               <select
-                className="h-10 rounded-full border border-[var(--panel-border)] bg-white/80 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
+                className="h-10 rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
                 onChange={(event) => setYear(event.target.value)}
                 value={year}
               >
@@ -214,7 +262,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 <TagIcon />
               </span>
               <select
-                className="h-10 rounded-full border border-[var(--panel-border)] bg-white/80 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
+                className="h-10 rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
                 onChange={(event) => setTag(event.target.value)}
                 value={tag}
               >
@@ -227,36 +275,36 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               </select>
             </div>
           </div>
-        </div>
-        {tags.length > 0 ? (
-          <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-            <button
-              className={`rounded-full border px-3 py-1 transition ${
-                tag === "all"
-                  ? "border-rose-300 bg-rose-100 text-rose-700"
-                  : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
-              }`}
-              onClick={() => setTag("all")}
-              type="button"
-            >
-              All
-            </button>
-            {tags.map((value) => (
+          {tags.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--panel-border)] pt-3">
               <button
-                key={value}
-                className={`rounded-full border px-3 py-1 transition ${
-                  tag === value
+                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  tag === "all"
                     ? "border-rose-300 bg-rose-100 text-rose-700"
                     : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
                 }`}
-                onClick={() => setTag(value)}
+                onClick={() => setTag("all")}
                 type="button"
               >
-                {value}
+                All
               </button>
-            ))}
-          </div>
-        ) : null}
+              {tags.map((value) => (
+                <button
+                  key={value}
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                    tag === value
+                      ? "border-rose-300 bg-rose-100 text-rose-700"
+                      : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
+                  }`}
+                  onClick={() => setTag(value)}
+                  type="button"
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </section>
       {filtered.length === 0 ? (
         <div className="surface p-6">
@@ -290,39 +338,18 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 href={`/events/${event.id}?from=memories&spaceId=${encodeURIComponent(spaceId)}`}
                 className="absolute inset-0 z-0"
               />
-              <div
-                className="relative flex h-[120px] w-[120px] min-h-[120px] min-w-[120px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br text-4xl font-semibold text-white shadow-sm"
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.6) 0, rgba(255,255,255,0) 60%)" }} />
-                {event.coverUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={event.title}
-                    className="relative z-10 h-full w-full object-cover"
-                    src={event.coverUrl}
-                  />
-                ) : (
-                  <span className="relative z-10">
-                    {event.title.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
+              <MemoryCover
+                coverUrl={event.coverUrl}
+                fallbackCoverUrl={event.fallbackCoverUrl}
+                title={event.title}
+                gradient={gradient}
+              />
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
                     {event.title}
                   </h2>
                   <div className="flex items-center gap-2">
-                    <Link
-                      href={`/spaces/${spaceId}/calendar?repeat=${event.id}`}
-                      className="relative z-10 inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm opacity-0 transition-opacity group-hover:opacity-100 hover:bg-rose-600 md:opacity-100"
-                      title="Do this again"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <RepeatIcon />
-                      <span className="hidden sm:inline">Repeat</span>
-                    </Link>
                     <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] shadow-sm">
                       {formatDate(event.dateTimeStart)}
                     </span>
@@ -336,7 +363,13 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 {event.tags.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {event.tags.map((value) => (
-                      <TagBadge key={value} label={value} />
+                      <span
+                        key={value}
+                        className="inline-flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)]"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
+                        {value}
+                      </span>
                     ))}
                   </div>
                 ) : null}

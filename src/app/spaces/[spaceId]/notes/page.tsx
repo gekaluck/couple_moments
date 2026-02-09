@@ -6,7 +6,6 @@ import { requireUserId } from "@/lib/current-user";
 import { formatTimestamp, getInitials } from "@/lib/formatters";
 
 import ConfirmForm from "@/components/ConfirmForm";
-import IconButton from "@/components/ui/IconButton";
 import EmptyState from "@/components/ui/EmptyState";
 import MutationToast from "@/components/ui/MutationToast";
 import {
@@ -61,27 +60,8 @@ function getAvatarGradient(userId: string) {
   return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
 }
 
-function getNoteAccent(kind: string) {
-  if (kind === "EVENT_COMMENT") {
-    return {
-      container:
-        "border-l-4 border-l-rose-400 bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,238,245,0.75))]",
-      badge: "border border-rose-200 bg-rose-100 text-rose-700",
-    };
-  }
-  if (kind === "IDEA_COMMENT") {
-    return {
-      container:
-        "border-l-4 border-l-amber-400 bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,247,230,0.78))]",
-      badge: "border border-amber-200 bg-amber-100 text-amber-700",
-    };
-  }
-  return {
-    container:
-      "border-l-4 border-l-violet-400 bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(243,238,255,0.78))]",
-    badge: "border border-violet-200 bg-violet-100 text-violet-700",
-  };
-}
+const NOTE_BADGE_CLASS =
+  "rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -172,11 +152,8 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
             <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
               Notes center
             </h2>
-            <p className="section-subtitle">
-              Capture thoughts, event context, and shared reminders.
-            </p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-              <span className="rounded-full border border-violet-200 bg-violet-100 px-2.5 py-1 text-violet-700">
+              <span className="rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2.5 py-1 text-[var(--text-secondary)]">
                 {totalCount} notes
               </span>
               <span className="rounded-full border border-[var(--panel-border)] bg-white/85 px-2.5 py-1">
@@ -185,9 +162,10 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
             </div>
           </div>
           <form
-            className="grid w-full max-w-xl gap-2 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-2 md:grid-cols-[minmax(160px,auto),1fr,auto]"
+            className="grid w-full max-w-xl gap-2 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-2 md:grid-cols-[minmax(160px,auto),1fr]"
             method="get"
           >
+            <input type="hidden" name="page" value="1" />
             <div className="relative flex h-10 min-w-[150px] items-center">
               <select
                 className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white px-4 text-sm font-medium leading-none text-[var(--text-primary)] shadow-sm outline-none transition focus:border-[var(--accent)]"
@@ -210,18 +188,15 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                 defaultValue={query}
               />
             </div>
-            <button
-              className="h-10 shrink-0 rounded-full bg-violet-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-600 hover:shadow-md"
-              type="submit"
-            >
+            <button type="submit" className="sr-only">
               Search
             </button>
           </form>
         </div>
-        <form className="mt-6 flex flex-col gap-3 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3" action={handleCreate}>
-          <div className="rounded-2xl bg-[var(--panel-border)] p-px transition focus-within:bg-violet-500">
+        <form className="mt-4 flex flex-col gap-3 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3" action={handleCreate}>
+          <div className="rounded-2xl bg-[var(--panel-border)] p-px transition focus-within:bg-[var(--action-primary)]">
             <textarea
-              className="min-h-[160px] w-full rounded-[15px] bg-white/90 px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
+              className="min-h-[44px] w-full rounded-[15px] bg-white/90 px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-[min-height] duration-200 focus:min-h-[132px]"
               name="content"
               placeholder="Write a note..."
               required
@@ -229,7 +204,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
           </div>
           <div className="flex justify-end">
             <button
-              className="rounded-full bg-violet-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-600 hover:shadow-md"
+              className="rounded-full bg-[var(--action-primary)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--action-primary-strong)] hover:shadow-md"
               type="submit"
             >
               Add note
@@ -258,12 +233,11 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
               : note.kind === "IDEA_COMMENT"
                 ? "Idea comment"
                 : "Note";
-          const noteTone = getNoteAccent(note.kind);
 
           return (
             <article
               key={note.id}
-              className={`surface p-4 ${noteTone.container}`}
+              className="group surface border border-[var(--panel-border)] bg-white p-4"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-1 gap-3">
@@ -283,9 +257,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                       <span>/</span>
                       <span>{formatTimestamp(note.createdAt)}</span>
                       <span>/</span>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${noteTone.badge}`}
-                      >
+                      <span className={NOTE_BADGE_CLASS}>
                         {metadataLabel}
                       </span>
                     </p>
@@ -309,12 +281,14 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                 </div>
                 <ConfirmForm action={handleDelete} message="Delete this note?">
                   <input type="hidden" name="noteId" value={note.id} />
-                  <IconButton
-                    icon={<TrashIcon />}
-                    label="Delete note"
-                    variant="danger"
+                  <button
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white text-[var(--text-muted)] opacity-55 transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
                     type="submit"
-                  />
+                    aria-label="Delete note"
+                    title="Delete note"
+                  >
+                    <TrashIcon />
+                  </button>
                 </ConfirmForm>
               </div>
             </article>

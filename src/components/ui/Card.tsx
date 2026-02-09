@@ -11,13 +11,13 @@ type CardProps = {
 };
 
 const variantStyles = {
-  default: "border-[var(--panel-border)] bg-white/78",
-  rose: "border-rose-200/80 bg-rose-50/55",
-  amber: "border-amber-200/80 bg-amber-50/55",
-  emerald: "border-emerald-200/80 bg-emerald-50/55",
-  sky: "border-sky-200/80 bg-sky-50/55",
-  violet: "border-violet-200/80 bg-violet-50/55",
-  slate: "border-slate-200/80 bg-slate-50/75",
+  default: "border-[var(--panel-border)] bg-[var(--color-surface-card)]",
+  rose: "border-[var(--panel-border)] bg-[var(--color-surface-card)]",
+  amber: "border-[var(--panel-border)] bg-[var(--color-secondary-soft)]",
+  emerald: "border-[var(--panel-border)] bg-[var(--surface-50)]",
+  sky: "border-[var(--panel-border)] bg-[var(--surface-50)]",
+  violet: "border-[var(--panel-border)] bg-[var(--surface-50)]",
+  slate: "border-[var(--panel-border)] bg-[var(--surface-50)]",
 };
 
 const paddingStyles = {
@@ -36,7 +36,7 @@ export default function Card({
   onClick,
   ...rest
 }: CardProps) {
-  const baseStyles = "rounded-3xl border shadow-[var(--shadow-soft)] backdrop-blur-sm transition-all duration-200";
+  const baseStyles = "rounded-xl border shadow-[var(--shadow-sm)] transition-all duration-200";
   const hoverStyles = hover
     ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] hover:border-opacity-95"
     : "";

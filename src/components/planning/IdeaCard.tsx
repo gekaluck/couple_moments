@@ -109,8 +109,8 @@ export default function IdeaCard({
     <Card
       id={`idea-${idea.id}`}
       variant="amber"
-      padding="md"
-      className={`card-hover animate-fade-in-up border-amber-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,248,231,0.72))] ${hasOpenModal ? "relative z-50" : ""}`}
+      padding="sm"
+      className={`group/idea card-hover animate-fade-in-up border-amber-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,248,231,0.72))] ${hasOpenModal ? "relative z-50" : ""}`}
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0 flex-1">
@@ -143,13 +143,6 @@ export default function IdeaCard({
               ))}
             </div>
           ) : null}
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200/70 bg-white/75 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.08em] text-amber-700">
-            <span className="relative h-3.5 w-5">
-              <span className="absolute left-0 top-0 h-3.5 w-3.5 rounded-full bg-amber-500/90" />
-              <span className="absolute left-1.5 top-0 h-3.5 w-3.5 rounded-full bg-rose-400/85" />
-            </span>
-            Future date
-          </div>
           <CardFooter className="mt-3 justify-start text-xs text-[var(--text-tertiary)]">
             <span>
               Created {formatTimeAgo(idea.createdAt)} by{" "}
@@ -159,9 +152,9 @@ export default function IdeaCard({
             </span>
           </CardFooter>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <button
-            className="inline-flex items-center gap-2 rounded-full border border-amber-200/90 bg-white/90 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+            className="inline-flex items-center gap-2 rounded-full border border-amber-200/90 bg-white/90 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Schedule as event"
             aria-label={`Schedule idea: ${idea.title}`}
             onClick={() => setIsScheduleOpen(true)}
@@ -170,7 +163,7 @@ export default function IdeaCard({
             <Calendar className="h-4 w-4" />
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Edit idea"
             aria-label={`Edit idea: ${idea.title}`}
             onClick={() => setIsEditOpen(true)}
@@ -195,7 +188,7 @@ export default function IdeaCard({
             ) : null}
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50/80 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+            className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50/80 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Delete idea"
             aria-label={`Delete idea: ${idea.title}`}
             type="button"
@@ -369,14 +362,14 @@ export default function IdeaCard({
             />
             <input type="hidden" name="placeUrl" value={idea.placeUrl ?? ""} />
             <input
-              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
               name="date"
               type="date"
               min={todayStr}
               required
             />
             <input
-              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
               name="time"
               type="time"
             />
@@ -449,7 +442,7 @@ export default function IdeaCard({
               Title
             </label>
             <input
-              className="w-full rounded-xl border border-[var(--panel-border)] bg-white/85 px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+              className="w-full rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
               name="title"
               defaultValue={idea.title}
               placeholder="Idea title"
@@ -461,7 +454,7 @@ export default function IdeaCard({
               Description
             </label>
             <textarea
-              className="min-h-[100px] w-full rounded-xl border border-[var(--panel-border)] bg-white/85 px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+              className="min-h-[100px] w-full rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
               name="description"
               defaultValue={idea.description ?? ""}
               placeholder="Notes, links, or vibe"
@@ -478,6 +471,7 @@ export default function IdeaCard({
               Place
             </label>
             <PlaceSearch
+              label={null}
               placeholder="Search a place"
               apiKey={mapsApiKey}
               initialValue={idea.placeName ?? undefined}

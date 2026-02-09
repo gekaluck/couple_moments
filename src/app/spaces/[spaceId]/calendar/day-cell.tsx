@@ -56,18 +56,21 @@ export default function DayCell({
   creatorPalette,
   buildBlockEditHref,
 }: DayCellProps) {
-  const maxEvents = isCompact ? 2 : 3;
-  const maxBlocks = isCompact ? 1 : 2;
+  const maxItems = isCompact ? 2 : 3;
+  const maxEvents = maxItems;
+  const maxBlocks = Math.max(maxItems - Math.min(events.length, maxItems), 0);
   const visibleEvents = events.slice(0, maxEvents);
-  const overflowCount = Math.max(events.length - maxEvents, 0);
   const visibleBlocks = blocks.slice(0, maxBlocks);
-  const overflowBlocks = Math.max(blocks.length - maxBlocks, 0);
+  const overflowItems = Math.max(
+    events.length + blocks.length - (visibleEvents.length + visibleBlocks.length),
+    0,
+  );
   const dayCellBase = isCompact ? "min-h-[104px] p-2" : "min-h-[136px] p-2.5";
   const today = new Date();
   const hasEvents = events.length > 0;
   const hasBlocks = blocks.length > 0;
   const inMonthTone = isToday
-    ? "border-[var(--action-primary)] bg-[linear-gradient(175deg,rgba(255,255,255,0.96),rgba(255,236,244,0.82))] ring-2 ring-[var(--action-primary)]/15"
+    ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.96),rgba(255,236,244,0.82))]"
     : isWeekend
       ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.88),rgba(250,248,255,0.78))]"
       : hasEvents
@@ -78,6 +81,10 @@ export default function DayCell({
     : isCurrentMonth
       ? "bg-white/90 text-[var(--text-primary)]"
       : "bg-white/60 text-[var(--text-tertiary)]";
+  const occupancyDots = [
+    hasEvents ? "plan" : null,
+    hasBlocks ? "busy" : null,
+  ].filter((value): value is "plan" | "busy" => value !== null);
 
   return (
     <div
@@ -95,21 +102,18 @@ export default function DayCell({
           <span className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${datePillClass}`}>
             {date.getDate()}
           </span>
-          {isToday ? (
-            <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--accent-strong)]">
-              Today
-            </span>
-          ) : null}
         </div>
-        <div className="flex flex-col items-end gap-1">
-          {hasEvents ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200/80 bg-rose-50/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-rose-700">
-              Plans {events.length}
-            </span>
-          ) : null}
-          {hasBlocks ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200/80 bg-amber-50/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-amber-700">
-              Busy {blocks.length}
+        <div className="flex min-h-6 items-center">
+          {occupancyDots.length > 0 ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/85 px-1.5 py-1">
+              {occupancyDots.map((type, index) => (
+                <span
+                  key={`${type}-${index}`}
+                  className={`h-2 w-2 rounded-full ${
+                    type === "plan" ? "bg-rose-400" : "bg-amber-400"
+                  }`}
+                />
+              ))}
             </span>
           ) : null}
         </div>
@@ -129,72 +133,70 @@ export default function DayCell({
             isPast={event.dateTimeStart < today}
           />
         ))}
-        {overflowCount > 0 ? (
-          <div className="rounded-lg border border-dashed border-rose-200 bg-white/75 px-2 py-1 text-[10px] font-medium text-rose-700">
-            +{overflowCount} more plans
-          </div>
-        ) : null}
-
         {visibleBlocks.map((block) => {
           const isExternal = block.source === "GOOGLE";
           const createdByUserId = block.createdByUserId || "external";
-          const blockAccent =
-            creatorPalette.get(createdByUserId)?.accent ??
-            (isExternal ? "#64748b" : "var(--accent-secondary)");
-          const blockSoft =
-            creatorPalette.get(createdByUserId)?.accentSoft ??
-            (isExternal ? "#f1f5f9" : "#fef3c7");
-          const blockText =
-            creatorPalette.get(createdByUserId)?.accentText ??
-            (isExternal ? "#475569" : "#b45309");
+          const blockAccent = isExternal
+            ? "var(--color-secondary)"
+            : (creatorPalette.get(createdByUserId)?.accent ?? "var(--accent-secondary)");
+          const blockSoft = isExternal
+            ? "var(--color-secondary-soft)"
+            : (creatorPalette.get(createdByUserId)?.accentSoft ?? "#fef3c7");
+          const blockText = isExternal
+            ? "var(--text-secondary)"
+            : (creatorPalette.get(createdByUserId)?.accentText ?? "#8b6131");
 
-          const timeLabel = isExternal && block.startAt && block.endAt
-            ? `${formatTimeLabel(new Date(block.startAt))}-${formatTimeLabel(new Date(block.endAt))}`
-            : null;
+          const currentDay = new Date(date);
+          currentDay.setHours(0, 0, 0, 0);
+          const blockStartDay = block.startAt ? new Date(block.startAt) : null;
+          const blockEndDay = block.endAt ? new Date(block.endAt) : null;
+          if (blockStartDay) {
+            blockStartDay.setHours(0, 0, 0, 0);
+          }
+          if (blockEndDay) {
+            blockEndDay.setHours(0, 0, 0, 0);
+          }
+          const isMultiDay = Boolean(
+            blockStartDay && blockEndDay && blockStartDay < blockEndDay,
+          );
+          const isStartDay = Boolean(
+            blockStartDay && blockStartDay.getTime() === currentDay.getTime(),
+          );
+          const isContinuation = isMultiDay && !isStartDay;
+          const useThinBar = (isExternal && isMultiDay) || isContinuation;
+
+          const timeLabel =
+            isExternal && block.startAt && block.endAt
+              ? `${formatTimeLabel(new Date(block.startAt))}-${formatTimeLabel(new Date(block.endAt))}`
+              : null;
 
           const tooltipText = isExternal && block.startAt && block.endAt
             ? `Busy: ${formatTimeLabel(new Date(block.startAt))} - ${formatTimeLabel(new Date(block.endAt))}`
             : block.title;
-
-          const initials = isExternal ? "G" : getCreatorInitials({
+          const creatorInitials = getCreatorInitials({
             id: createdByUserId,
             name: block.createdBy?.name ?? null,
             email: block.createdBy?.email ?? "??",
           });
 
-          const blockContent = (
-            <div className="flex items-center justify-between gap-2">
-              <span className="flex min-w-0 items-center gap-1 truncate">
-                {isExternal ? (
-                  <span className="truncate text-[10px] font-semibold uppercase tracking-[0.06em]">
-                    {timeLabel}
-                  </span>
-                ) : (
-                  <>
-                    <svg
-                      aria-hidden="true"
-                      className="h-3 w-3 flex-shrink-0 opacity-80"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <circle cx="12" cy="12" r="9" strokeWidth="1.5" />
-                      <path
-                        d="M12 7.5v5l3 2"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <span className="truncate text-[10px] font-medium">{block.title}</span>
-                  </>
-                )}
+          const blockContent = useThinBar ? (
+            <div className="flex min-w-0 items-center gap-1.5">
+              <div className="h-1.5 flex-1 rounded-full" style={{ backgroundColor: blockAccent }} />
+              <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                {creatorInitials}
               </span>
+            </div>
+          ) : (
+            <div className="flex min-w-0 items-center gap-1.5">
               <span
-                className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white"
+                className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: blockAccent }}
-              >
-                {initials}
+              />
+              <span className="truncate text-[10px] font-medium">
+                {isExternal ? timeLabel ?? "Busy" : block.title}
+              </span>
+              <span className="ml-auto text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                {creatorInitials}
               </span>
             </div>
           );
@@ -202,9 +204,8 @@ export default function DayCell({
           return isExternal ? (
             <div
               key={block.id}
-              className="group relative rounded-lg border border-dashed px-2 py-1"
+              className={`relative rounded-lg px-2 py-1 ${isContinuation ? "pt-1.5" : ""}`}
               style={{
-                borderColor: blockAccent,
                 backgroundColor: blockSoft,
                 color: blockText,
               }}
@@ -215,10 +216,9 @@ export default function DayCell({
           ) : (
             <Link
               key={block.id}
-              className="rounded-lg border border-dashed px-2 py-1 transition hover:shadow-[var(--shadow-sm)]"
+              className={`rounded-lg px-2 py-1 transition hover:shadow-[var(--shadow-sm)] ${isContinuation ? "pt-1.5" : ""}`}
               href={buildBlockEditHref(block.id)}
               style={{
-                borderColor: blockAccent,
                 backgroundColor: blockSoft,
                 color: blockText,
               }}
@@ -228,9 +228,9 @@ export default function DayCell({
           );
         })}
 
-        {overflowBlocks > 0 ? (
-          <div className="rounded-lg border border-dashed border-amber-200 bg-white/75 px-2 py-1 text-[10px] font-medium text-amber-700">
-            +{overflowBlocks} more busy slots
+        {overflowItems > 0 ? (
+          <div className="rounded-lg border border-[var(--panel-border)] bg-white/75 px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
+            +{overflowItems} more
           </div>
         ) : null}
       </div>

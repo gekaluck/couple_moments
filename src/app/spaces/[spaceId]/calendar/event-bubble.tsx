@@ -56,11 +56,6 @@ export default function EventBubble({
       <span ref={textRef} className="truncate text-[11px] font-medium leading-tight">
         {title}
       </span>
-      {!isPast ? (
-        <span className="ml-auto hidden rounded-full border border-rose-200/80 bg-white/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-rose-600 group-hover/event:inline-flex">
-          Plan
-        </span>
-      ) : null}
       {isOverflow ? (
         <span
           role="tooltip"

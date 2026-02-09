@@ -38,11 +38,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
               leaveFrom="opacity-100 translate-y-0 scale-100"
               leaveTo="opacity-0 translate-y-4 scale-95"
             >
-              <Dialog.Panel className="relative w-full max-w-lg transform overflow-hidden rounded-[32px] border border-white/70 bg-[rgba(255,255,255,0.93)] p-6 text-left shadow-[var(--shadow-xl)] backdrop-blur-xl md:p-8">
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[linear-gradient(120deg,rgba(251,207,232,0.32),rgba(186,230,253,0.28),rgba(254,243,199,0.26))]"
-                />
+              <Dialog.Panel className="relative w-full max-w-lg transform overflow-hidden rounded-[24px] border border-[var(--panel-border)] bg-white p-6 text-left shadow-[var(--shadow-xl)] md:p-8">
                 {title ? (
                   <div className="relative mb-4 flex items-center justify-between">
                     <Dialog.Title className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)] md:text-xl">
