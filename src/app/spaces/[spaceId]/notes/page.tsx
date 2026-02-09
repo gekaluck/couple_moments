@@ -63,12 +63,24 @@ function getAvatarGradient(userId: string) {
 
 function getNoteAccent(kind: string) {
   if (kind === "EVENT_COMMENT") {
-    return "border-l-rose-400";
+    return {
+      container:
+        "border-l-4 border-l-rose-400 bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,238,245,0.75))]",
+      badge: "border border-rose-200 bg-rose-100 text-rose-700",
+    };
   }
   if (kind === "IDEA_COMMENT") {
-    return "border-l-amber-400";
+    return {
+      container:
+        "border-l-4 border-l-amber-400 bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,247,230,0.78))]",
+      badge: "border border-amber-200 bg-amber-100 text-amber-700",
+    };
   }
-  return "border-l-violet-400";
+  return {
+    container:
+      "border-l-4 border-l-violet-400 bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(243,238,255,0.78))]",
+    badge: "border border-violet-200 bg-violet-100 text-violet-700",
+  };
 }
 
 type PageProps = {
@@ -154,18 +166,26 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
         }}
       />
       <section className="surface-muted p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="section-kicker">Notes</p>
             <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
               Notes center
             </h2>
             <p className="section-subtitle">
-              Capture quick thoughts, links, and reminders.
+              Capture thoughts, event context, and shared reminders.
             </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+              <span className="rounded-full border border-violet-200 bg-violet-100 px-2.5 py-1 text-violet-700">
+                {totalCount} notes
+              </span>
+              <span className="rounded-full border border-[var(--panel-border)] bg-white/85 px-2.5 py-1">
+                Page {page} / {totalPages}
+              </span>
+            </div>
           </div>
           <form
-            className="flex w-full max-w-xl flex-wrap items-center gap-2 md:flex-nowrap"
+            className="grid w-full max-w-xl gap-2 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-2 md:grid-cols-[minmax(160px,auto),1fr,auto]"
             method="get"
           >
             <div className="relative flex h-10 min-w-[150px] items-center">
@@ -198,7 +218,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
             </button>
           </form>
         </div>
-        <form className="mt-6 flex flex-col gap-3" action={handleCreate}>
+        <form className="mt-6 flex flex-col gap-3 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3" action={handleCreate}>
           <div className="rounded-2xl bg-[var(--panel-border)] p-px transition focus-within:bg-violet-500">
             <textarea
               className="min-h-[160px] w-full rounded-[15px] bg-white/90 px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
@@ -238,11 +258,12 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
               : note.kind === "IDEA_COMMENT"
                 ? "Idea comment"
                 : "Note";
+          const noteTone = getNoteAccent(note.kind);
 
           return (
             <article
               key={note.id}
-              className={`surface border-l-4 p-4 ${getNoteAccent(note.kind)}`}
+              className={`surface p-4 ${noteTone.container}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-1 gap-3">
@@ -255,14 +276,18 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                     <p className="text-sm text-[var(--text-primary)]">
                       {note.body}
                     </p>
-                    <p className="mt-2 text-xs text-[var(--text-tertiary)]">
+                    <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
                       <span className="font-semibold text-[var(--text-primary)]">
                         {note.author.name || note.author.email}
                       </span>
-                      <span className="mx-2">-</span>
+                      <span>/</span>
                       <span>{formatTimestamp(note.createdAt)}</span>
-                      <span className="mx-2">-</span>
-                      <span>{metadataLabel}</span>
+                      <span>/</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${noteTone.badge}`}
+                      >
+                        {metadataLabel}
+                      </span>
                     </p>
                     {note.parentType === "EVENT" && note.parentId ? (
                       <Link
