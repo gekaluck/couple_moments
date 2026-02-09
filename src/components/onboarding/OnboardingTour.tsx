@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, ChevronRight, ChevronLeft, Calendar, Lightbulb, Camera, Heart } from "lucide-react";
 
 type OnboardingStep = {
@@ -47,6 +47,29 @@ export default function OnboardingTour({ spaceId }: OnboardingTourProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
+  const handleComplete = useCallback(() => {
+    localStorage.setItem(`${STORAGE_KEY}_${spaceId}`, "true");
+    setIsOpen(false);
+  }, [spaceId]);
+
+  const handlePrev = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  }, [currentStep]);
+
+  const handleNext = useCallback(() => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      handleComplete();
+    }
+  }, [currentStep, handleComplete]);
+
+  const handleSkip = useCallback(() => {
+    handleComplete();
+  }, [handleComplete]);
+
   useEffect(() => {
     // Check if user has completed onboarding
     const completed = localStorage.getItem(`${STORAGE_KEY}_${spaceId}`);
@@ -57,28 +80,24 @@ export default function OnboardingTour({ spaceId }: OnboardingTourProps) {
     }
   }, [spaceId]);
 
-  const handleComplete = () => {
-    localStorage.setItem(`${STORAGE_KEY}_${spaceId}`, "true");
-    setIsOpen(false);
-  };
-
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleComplete();
+  useEffect(() => {
+    if (!isOpen) {
+      return;
     }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleSkip = () => {
-    handleComplete();
-  };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        handleSkip();
+      }
+      if (event.key === "ArrowRight") {
+        handleNext();
+      }
+      if (event.key === "ArrowLeft") {
+        handlePrev();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [handleNext, handlePrev, handleSkip, isOpen]);
 
   if (!isOpen) return null;
 
@@ -86,10 +105,9 @@ export default function OnboardingTour({ spaceId }: OnboardingTourProps) {
   const isLastStep = currentStep === steps.length - 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in-up">
-      <div className="relative mx-4 w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
-        {/* Header gradient */}
-        <div className={`bg-gradient-to-r ${step.color} px-6 py-8 text-white`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(30,41,59,0.32),rgba(2,6,23,0.62))] backdrop-blur-sm animate-fade-in-up">
+      <div className="relative mx-4 w-full max-w-md overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
+        <div className={`bg-gradient-to-r ${step.color} px-6 pb-8 pt-7 text-white`}>
           <button
             onClick={handleSkip}
             className="absolute right-4 top-4 rounded-full p-1 text-white/80 transition hover:bg-white/20 hover:text-white"
@@ -97,8 +115,13 @@ export default function OnboardingTour({ spaceId }: OnboardingTourProps) {
           >
             <X className="h-5 w-5" />
           </button>
-          <div className="flex items-center justify-center">
-            <div className="rounded-2xl bg-white/20 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="rounded-full border border-white/35 bg-white/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]">
+              Step {currentStep + 1}/{steps.length}
+            </span>
+          </div>
+          <div className="mt-4 flex items-center justify-center">
+            <div className="rounded-2xl border border-white/35 bg-white/20 p-4">
               {step.icon}
             </div>
           </div>
@@ -113,15 +136,21 @@ export default function OnboardingTour({ spaceId }: OnboardingTourProps) {
             {step.description}
           </p>
 
-          {/* Progress dots */}
-          <div className="mt-6 flex justify-center gap-2">
+          <div className="mt-5 h-1.5 rounded-full bg-slate-100">
+            <div
+              className={`h-1.5 rounded-full bg-gradient-to-r ${step.color} transition-all duration-300`}
+              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+            />
+          </div>
+
+          <div className="mt-4 flex justify-center gap-2">
             {steps.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentStep(index)}
                 className={`h-2 rounded-full transition-all ${
                   index === currentStep
-                    ? "w-6 bg-rose-500"
+                    ? "w-6 bg-[var(--action-primary)]"
                     : "w-2 bg-slate-200 hover:bg-slate-300"
                 }`}
                 aria-label={`Go to step ${index + 1}`}
@@ -134,14 +163,14 @@ export default function OnboardingTour({ spaceId }: OnboardingTourProps) {
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition hover:text-[var(--text-primary)] disabled:opacity-30 disabled:hover:text-[var(--text-muted)]"
+              className="flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition hover:bg-slate-100 hover:text-[var(--text-primary)] disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--text-muted)]"
             >
               <ChevronLeft className="h-4 w-4" />
               Back
             </button>
             <button
               onClick={handleNext}
-              className={`flex items-center gap-1 rounded-full bg-gradient-to-r ${step.color} px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg btn-press`}
+              className={`flex items-center gap-1 rounded-full bg-gradient-to-r ${step.color} px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg btn-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40`}
             >
               {isLastStep ? "Get Started" : "Next"}
               {!isLastStep && <ChevronRight className="h-4 w-4" />}
