@@ -16,6 +16,14 @@ type PlanCardProps = {
   placeName?: string | null;
 };
 
+function getDayDiff(date: Date) {
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffMs = startOfDate.getTime() - startOfToday.getTime();
+  return Math.round(diffMs / (24 * 60 * 60 * 1000));
+}
+
 export default function PlanCard({
   id,
   title,

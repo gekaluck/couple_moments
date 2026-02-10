@@ -179,9 +179,7 @@ export default function IdeaCard({
           >
             <MessageSquare className="h-4 w-4" />
             {commentCount > 0 ? (
-            {commentCount > 0 ? (
               <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-                {commentCount}
                 {commentCount}
               </span>
             ) : null}
@@ -202,12 +200,10 @@ export default function IdeaCard({
         <div className="mt-4 animate-slide-down rounded-2xl border border-white/70 bg-white/75 p-4 shadow-[var(--shadow-sm)] backdrop-blur-sm">
           <div className="flex flex-col">
             {comments.length === 0 ? (
-            {comments.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)]">
                 No comments yet.
               </p>
             ) : null}
-            {comments.map((comment) => {
             {comments.map((comment) => {
               const isCurrentUser = comment.author.id === currentUserId;
               const avatarGradient = isCurrentUser

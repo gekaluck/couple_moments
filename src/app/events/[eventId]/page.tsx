@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { createEventComment, createEventPhoto, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
 import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
-import { buildCreatorPalette, getCreatorInitials } from "@/lib/creator-colors";
 import { normalizeTags, parseTags } from "@/lib/tags";
 import { parseJsonStringArray } from "@/lib/parsers";
 
@@ -125,7 +124,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   if (!currentUser) {
     redirect("/login");
   }
-  const { currentUserRating, photos, comments, creator, googleSyncStatus, members } =
+  const { currentUserRating, photos, comments, creator, googleSyncStatus } =
     await loadEventDetailData({
       eventId,
       userId,
@@ -248,25 +247,29 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const tags = parseTags(event.tags);
   const tagsValue = tags.join(", ");
   const isPast = isEventInPast(event);
-  const creatorPalette = buildCreatorPalette(
-    members.map((member) => ({
-      id: member.userId,
-      name: member.user.name ?? null,
-      email: member.user.email,
-    })),
-  );
-  const creatorColors = creatorPalette.get(event.createdByUserId);
-  const creatorGradient =
-    creatorColors?.accent === "var(--accent-secondary)"
-      ? "linear-gradient(135deg,#60a5fa,#6366f1)"
-      : "linear-gradient(135deg,#fb7185,#db2777)";
-  const creatorInitials = creator
-    ? getCreatorInitials({
-        id: event.createdByUserId,
-        name: creator.name ?? null,
-        email: creator.email,
+  const creatorName = creator?.name || creator?.email || "Unknown";
+  const eventDateLabel = event.dateTimeStart.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const startTimeLabel = event.dateTimeStart.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const endTimeLabel = event.dateTimeEnd
+    ? event.dateTimeEnd.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
       })
+    : null;
+  const eventTimeLabel = event.timeIsSet
+    ? endTimeLabel && endTimeLabel !== startTimeLabel
+      ? `${startTimeLabel} - ${endTimeLabel}`
+      : startTimeLabel
     : "Anytime";
+  const statusLabel = isPast ? "Past memory" : "Upcoming";
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const hasPlace = Boolean(event.placeName || event.placeAddress);
   const placeLink =
@@ -278,6 +281,14 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const placeOpeningHours = Array.isArray(event.placeOpeningHours)
     ? (event.placeOpeningHours as string[])
     : null;
+  const placePhotoUrls = Array.isArray(event.placePhotoUrls)
+    ? (event.placePhotoUrls as string[])
+    : null;
+  const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const todayHours =
+    placeOpeningHours?.find((line) =>
+      line.toLowerCase().startsWith(todayName.toLowerCase()),
+    ) ?? null;
   const staticMapUrl =
     mapsKey && event.placeLat && event.placeLng
       ? `https://maps.googleapis.com/maps/api/staticmap?center=${event.placeLat},${event.placeLng}&zoom=14&size=700x320&markers=color:0xdb2777%7C${event.placeLat},${event.placeLng}&key=${mapsKey}`

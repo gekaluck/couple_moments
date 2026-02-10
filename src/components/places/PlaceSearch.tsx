@@ -125,7 +125,6 @@ export default function PlaceSearch({
             fields: ["website", "opening_hours", "photos", "url", "name"],
           },
           (details, status) => {
-          (details, status) => {
             if (
               status !== googleMaps.maps.places.PlacesServiceStatus.OK ||
               !details
@@ -141,7 +140,6 @@ export default function PlaceSearch({
               photoUrls: Array.isArray(details.photos)
                 ? details.photos
                     .slice(0, 3)
-                    .map((photo) =>
                     .map((photo) =>
                       photo.getUrl({ maxWidth: 800, maxHeight: 600 }),
                     )

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -60,8 +59,6 @@ export default function CalendarAddControls({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isAutoOpeningEvent = Boolean(initialEventDate || prefillData);
-  const activePanel = isAutoOpeningEvent ? "event" : openPanel;
   const activeEventDate = initialEventDate ?? eventDate;
 
   const clearModalParams = () => {
