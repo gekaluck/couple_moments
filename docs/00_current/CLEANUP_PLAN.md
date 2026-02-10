@@ -2,7 +2,16 @@
 
 Created: 2026-02-10
 Updated: 2026-02-10
-Status: In progress on branch `chore-unified-repo-cleanup` (Phase 0-3 complete, Phase 4 in progress)
+Status: In progress on branch `chore-unified-repo-cleanup` (Phase 0-4 complete, Phase 5 in progress)
+
+## Execution Progress
+
+- [x] Phase 0 - baseline cleanup commit
+- [x] Phase 1 - dead file/CSS sweep
+- [x] Phase 2 - docs alignment
+- [x] Phase 3 - API auth/validation helper consolidation
+- [x] Phase 4 - parser/formatter dedupe and page data-loader decomposition
+- [ ] Phase 5 - schema/dependency governance finalization
 
 ---
 
@@ -17,7 +26,7 @@ It is organized as execution phases with explicit scope, acceptance criteria, an
 
 ---
 
-## 2) Current repo state (already changed, not yet committed)
+## 2) Historical baseline snapshot (from initial audit)
 
 The working tree already contains these cleanup edits:
 
@@ -199,6 +208,12 @@ Tasks:
 Acceptance criteria:
 - Explicit schema decision documented
 - No clearly-unused runtime dependencies left
+
+Progress notes (2026-02-10):
+- `Notification` kept and explicitly marked as planned in `prisma/schema.prisma`.
+- Manual dependency scan completed; no high-confidence runtime dependency removals identified.
+- `npx depcheck` could not run in this environment due offline package-cache constraints.
+- `scripts/seed-demo.ts` remains documented and still aligned with current schema/flows.
 
 ---
 

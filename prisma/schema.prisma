@@ -267,6 +267,7 @@ enum ChangeType {
   DELETE
 }
 
+/// Planned feature model. Kept intentionally for future reminder/notification flows.
 model Notification {
   id          String             @id @default(cuid())
   createdAt   DateTime           @default(now())

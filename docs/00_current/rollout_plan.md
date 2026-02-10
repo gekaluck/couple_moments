@@ -84,7 +84,7 @@ Phase status:
 - [x] Phase 1: dead code and CSS sweep
 - [x] Phase 2: docs source-of-truth alignment
 - [x] Phase 3: API auth/validation helper consolidation
-- [ ] Phase 4: page decomposition and data-loader refactor
+- [x] Phase 4: page decomposition and data-loader refactor
 - [ ] Phase 5: schema/dependency governance
 
 ---
