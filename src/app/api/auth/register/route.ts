@@ -12,28 +12,81 @@ import {
   SESSION_TTL_MS,
 } from "@/lib/session";
 
+type RegisterErrorCode =
+  | "duplicate-email"
+  | "invalid-input"
+  | "ip-unavailable"
+  | "rate-limited";
+
+function getRegisterErrorMessage(errorCode: RegisterErrorCode) {
+  if (errorCode === "duplicate-email") {
+    return "An account with that email already exists.";
+  }
+  if (errorCode === "invalid-input") {
+    return "Email and password are required.";
+  }
+  if (errorCode === "ip-unavailable") {
+    return "Unable to determine client IP.";
+  }
+  return "Too many signup attempts. Try again shortly.";
+}
+
+function isFormSubmission(request: Request) {
+  const contentType = request.headers.get("content-type") ?? "";
+  return (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  );
+}
+
+function buildRegisterErrorResponse(
+  request: Request,
+  errorCode: RegisterErrorCode,
+  status: number,
+  options?: { email?: string; retryAfterSeconds?: number },
+) {
+  if (isFormSubmission(request)) {
+    const redirectUrl = new URL("/register", request.url);
+    redirectUrl.searchParams.set("error", errorCode);
+    if (options?.email) {
+      redirectUrl.searchParams.set("email", options.email);
+    }
+    if (options?.retryAfterSeconds) {
+      redirectUrl.searchParams.set(
+        "retryAfter",
+        options.retryAfterSeconds.toString(),
+      );
+    }
+    return NextResponse.redirect(redirectUrl, { status: 303 });
+  }
+
+  return NextResponse.json(
+    { error: getRegisterErrorMessage(errorCode) },
+    {
+      status,
+      headers: options?.retryAfterSeconds
+        ? { "Retry-After": options.retryAfterSeconds.toString() }
+        : undefined,
+    },
+  );
+}
+
 export async function POST(request: Request) {
   const ip = getClientIp(request);
   if (!ip) {
-    return NextResponse.json(
-      { error: "Unable to determine client IP." },
-      { status: 400 },
-    );
+    return buildRegisterErrorResponse(request, "ip-unavailable", 400);
   }
   const rateLimit = checkRateLimit(`auth:register:${ip}`, 5, 60_000);
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: "Too many signup attempts. Try again shortly." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": rateLimit.retryAfterSeconds.toString(),
-        },
-      },
-    );
+    return buildRegisterErrorResponse(request, "rate-limited", 429, {
+      retryAfterSeconds: rateLimit.retryAfterSeconds,
+    });
   }
 
   const body = await parseJsonOrForm<Record<string, unknown>>(request);
+  const rawEmail =
+    typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+
   const schema = z.object({
     email: z.string().trim().email(),
     password: z.string().trim().min(1),
@@ -45,6 +98,11 @@ export async function POST(request: Request) {
       parsed.error,
       "Email and password are required.",
     );
+    if (isFormSubmission(request)) {
+      return buildRegisterErrorResponse(request, "invalid-input", 400, {
+        email: rawEmail,
+      });
+    }
     return NextResponse.json(
       { error: errorMessage },
       { status: 400 },
@@ -60,10 +118,9 @@ export async function POST(request: Request) {
   });
 
   if (existingUser) {
-    return NextResponse.json(
-      { error: "An account with that email already exists." },
-      { status: 409 },
-    );
+    return buildRegisterErrorResponse(request, "duplicate-email", 409, {
+      email,
+    });
   }
 
   const passwordHash = await hashPassword(password);

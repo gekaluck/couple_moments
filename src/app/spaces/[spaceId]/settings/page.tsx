@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 
 import {
   getCoupleSpaceForUser,
+  leaveCoupleSpace,
   listSpaceMembers,
+  removePartnerMembership,
   updateMembershipAppearance,
 } from "@/lib/couple-spaces";
 import {
@@ -19,6 +22,7 @@ import {
 import { requireUserId } from "@/lib/current-user";
 
 import InviteCard from "./invite-card";
+import MembershipActions from "./membership-actions";
 import OnboardingSettings from "./onboarding-settings";
 import GoogleCalendarSettings from "./google-calendar-settings";
 
@@ -64,6 +68,9 @@ export default async function SettingsPage({ params }: PageProps) {
   const selectedColor =
     sanitizeMemberColor(currentMember?.color ?? null) ?? currentVisual?.accent.key ?? "amber";
   const isSpaceComplete = members.length >= 2;
+  const creatorUserId = members[0]?.userId ?? null;
+  const isCreator = creatorUserId === userId;
+  const canLeave = members.length > 1;
 
   async function handleCalendarWeekStart(formData: FormData) {
     "use server";
@@ -111,6 +118,55 @@ export default async function SettingsPage({ params }: PageProps) {
     });
 
     redirect(`/spaces/${spaceIdForActions}/settings`);
+  }
+
+  async function handleRemovePartner() {
+    "use server";
+    const currentUserId = await requireUserId();
+    const currentMembers = await listSpaceMembers(spaceIdForActions);
+    const currentPartner = currentMembers.find((member) => member.userId !== currentUserId);
+    if (!currentPartner) {
+      return { ok: false, message: "No partner to remove." };
+    }
+
+    try {
+      await removePartnerMembership({
+        coupleSpaceId: spaceIdForActions,
+        actorUserId: currentUserId,
+        targetUserId: currentPartner.userId,
+      });
+      revalidatePath(`/spaces/${spaceIdForActions}/settings`);
+      revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
+      return { ok: true, message: "Partner removed." };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : "Failed to remove partner.",
+      };
+    }
+  }
+
+  async function handleLeaveSpace() {
+    "use server";
+    const currentUserId = await requireUserId();
+
+    try {
+      await leaveCoupleSpace({
+        coupleSpaceId: spaceIdForActions,
+        userId: currentUserId,
+      });
+      revalidatePath(`/spaces/${spaceIdForActions}/settings`);
+      return {
+        ok: true,
+        message: "You left the space.",
+        redirectTo: "/spaces/onboarding",
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : "Failed to leave space.",
+      };
+    }
   }
 
   return (
@@ -469,6 +525,14 @@ export default async function SettingsPage({ params }: PageProps) {
           </section>
 
           <GoogleCalendarSettings />
+          <MembershipActions
+            isCreator={isCreator}
+            canLeave={canLeave}
+            hasPartner={Boolean(partner)}
+            partnerLabel={partnerVisual?.displayName ?? partner?.user.name ?? "your partner"}
+            onRemovePartner={handleRemovePartner}
+            onLeaveSpace={handleLeaveSpace}
+          />
           <OnboardingSettings spaceId={space.id} />
         </div>
       </div>

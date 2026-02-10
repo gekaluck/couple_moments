@@ -4,6 +4,7 @@ import { useOptimistic, useRef, useState, useTransition } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   CREATOR_ACCENTS,
   CreatorVisualMap,
@@ -47,6 +48,7 @@ export default function EventComments({
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [pendingDeleteComment, setPendingDeleteComment] = useState<Comment | null>(null);
   const [optimisticComments, updateOptimisticComments] = useOptimistic(
     initialComments,
     (
@@ -92,22 +94,18 @@ export default function EventComments({
     });
   }
 
-  function handleDelete(comment: Comment) {
-    if (!confirm("Delete this comment?")) {
-      return;
-    }
+  async function handleDelete(comment: Comment) {
     const formData = new FormData();
     formData.set("commentId", comment.id);
-    startTransition(async () => {
-      updateOptimisticComments({ type: "remove", commentId: comment.id });
-      try {
-        await onDelete(formData);
-        toast.success("Comment deleted");
-      } catch {
-        updateOptimisticComments({ type: "add", comment });
-        toast.error("Failed to delete comment");
-      }
-    });
+    updateOptimisticComments({ type: "remove", commentId: comment.id });
+    try {
+      await onDelete(formData);
+      setPendingDeleteComment(null);
+      toast.success("Comment deleted");
+    } catch {
+      updateOptimisticComments({ type: "add", comment });
+      toast.error("Failed to delete comment");
+    }
   }
 
   return (
@@ -198,7 +196,7 @@ export default function EventComments({
                       <button
                         className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--panel-border)] text-[var(--text-muted)] opacity-70 transition hover:border-rose-200 hover:text-rose-600 hover:opacity-100"
                         type="button"
-                        onClick={() => handleDelete(comment)}
+                        onClick={() => setPendingDeleteComment(comment)}
                         aria-label="Delete comment"
                         title="Delete comment"
                       >
@@ -215,6 +213,19 @@ export default function EventComments({
           );
         })}
       </div>
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteComment)}
+        onClose={() => setPendingDeleteComment(null)}
+        onConfirm={async () => {
+          if (pendingDeleteComment) {
+            await handleDelete(pendingDeleteComment);
+          }
+        }}
+        title="Delete comment?"
+        message="This comment will be permanently removed."
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </section>
   );
 }

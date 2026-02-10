@@ -1,8 +1,9 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   CREATOR_ACCENTS,
   CreatorVisualMap,
@@ -58,6 +59,7 @@ export default function IdeaComments({
     },
   );
   const [isPending, startTransition] = useTransition();
+  const [pendingDeleteComment, setPendingDeleteComment] = useState<Comment | null>(null);
 
   async function handleSubmit(formData: FormData) {
     const content = formData.get("content")?.toString().trim() ?? "";
@@ -87,22 +89,18 @@ export default function IdeaComments({
     });
   }
 
-  function handleDelete(comment: Comment) {
-    if (!confirm("Delete this comment?")) {
-      return;
-    }
+  async function handleDelete(comment: Comment) {
     const formData = new FormData();
     formData.set("commentId", comment.id);
-    startTransition(async () => {
-      updateOptimisticComments({ type: "remove", commentId: comment.id });
-      try {
-        await onDelete(formData);
-        toast.success("Comment deleted");
-      } catch {
-        updateOptimisticComments({ type: "add", comment });
-        toast.error("Failed to delete comment");
-      }
-    });
+    updateOptimisticComments({ type: "remove", commentId: comment.id });
+    try {
+      await onDelete(formData);
+      setPendingDeleteComment(null);
+      toast.success("Comment deleted");
+    } catch {
+      updateOptimisticComments({ type: "add", comment });
+      toast.error("Failed to delete comment");
+    }
   }
 
   return (
@@ -173,7 +171,7 @@ export default function IdeaComments({
                       <button
                         className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-500 transition hover:text-rose-600"
                         type="button"
-                        onClick={() => handleDelete(comment)}
+                        onClick={() => setPendingDeleteComment(comment)}
                       >
                         Delete
                       </button>
@@ -185,6 +183,19 @@ export default function IdeaComments({
           );
         })}
       </div>
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteComment)}
+        onClose={() => setPendingDeleteComment(null)}
+        onConfirm={async () => {
+          if (pendingDeleteComment) {
+            await handleDelete(pendingDeleteComment);
+          }
+        }}
+        title="Delete comment?"
+        message="This comment will be permanently removed."
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </section>
   );
 }

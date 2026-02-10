@@ -541,6 +541,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               initialEventDate={initialEventDate}
               prefillData={prefillData}
               hasGoogleCalendar={hasGoogleCalendar}
+              mapsApiKey={mapsApiKey}
             />
             <Link
               className="pill-button button-hover"

@@ -44,7 +44,18 @@ export async function listActivityForSpace(spaceId: string): Promise<ActivityEnt
   const eventTitleById = new Map(events.map((event) => [event.id, event.title]));
   const ideaTitleById = new Map(ideas.map((idea) => [idea.id, idea.title]));
 
-  const filteredLogs = changeLogs;
+  // Notes (including comment notes) are rendered from the Note table entries below.
+  // Exclude overlapping changelog entries so one user action maps to one feed card.
+  const filteredLogs = changeLogs.filter((entry) => {
+    if (entry.entityType === "NOTE") {
+      return false;
+    }
+    return !(
+      entry.changeType === "UPDATE" &&
+      (entry.summary === "Comment added to event." ||
+        entry.summary === "Comment added to idea.")
+    );
+  });
 
   const logEntries: ActivityEntry[] = filteredLogs.map((entry) => {
     const entityTitle =

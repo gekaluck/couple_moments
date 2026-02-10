@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import Modal from "@/components/Modal";
+import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
 
 type PrefillData = {
   title: string;
@@ -37,6 +38,7 @@ type CalendarAddControlsProps = {
   initialEventDate?: string | null;
   prefillData?: PrefillData | null;
   hasGoogleCalendar?: boolean;
+  mapsApiKey?: string;
 };
 
 function getTodayDateString() {
@@ -53,6 +55,7 @@ export default function CalendarAddControls({
   initialEventDate,
   prefillData,
   hasGoogleCalendar = false,
+  mapsApiKey,
 }: CalendarAddControlsProps) {
   const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(() =>
     initialEventDate || prefillData ? "event" : null,
@@ -66,10 +69,21 @@ export default function CalendarAddControls({
     blockDate?: string;
   }>({});
   const [isPending, startTransition] = useTransition();
+  const [place, setPlace] = useState<PlaceSelection | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeEventDate = initialEventDate ?? eventDate;
+  const activePlaceId = place?.placeId ?? prefillData?.placeId ?? "";
+  const activePlaceName = place?.name ?? prefillData?.placeName ?? "";
+  const activePlaceAddress = place?.address ?? prefillData?.placeAddress ?? "";
+  const activePlaceWebsite = place?.website ?? prefillData?.placeWebsite ?? "";
+  const activePlaceOpeningHours =
+    place?.openingHours ?? prefillData?.placeOpeningHours ?? null;
+  const activePlacePhotoUrls = place?.photoUrls ?? prefillData?.placePhotoUrls ?? null;
+  const activePlaceLat = place?.lat ?? prefillData?.placeLat ?? null;
+  const activePlaceLng = place?.lng ?? prefillData?.placeLng ?? null;
+  const activePlaceUrl = place?.url ?? prefillData?.placeUrl ?? "";
 
   const clearModalParams = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -211,6 +225,38 @@ export default function CalendarAddControls({
             placeholder="tags (comma separated)"
             defaultValue={prefillData?.tags ?? ""}
           />
+          <PlaceSearch
+            label="Place"
+            placeholder="Search a place"
+            apiKey={mapsApiKey}
+            initialValue={activePlaceName}
+            onSelect={(selection) => setPlace(selection)}
+          />
+          <input type="hidden" name="placeId" value={activePlaceId} />
+          <input type="hidden" name="placeName" value={activePlaceName} />
+          <input type="hidden" name="placeAddress" value={activePlaceAddress} />
+          <input type="hidden" name="placeWebsite" value={activePlaceWebsite} />
+          <input
+            type="hidden"
+            name="placeOpeningHours"
+            value={activePlaceOpeningHours ? JSON.stringify(activePlaceOpeningHours) : ""}
+          />
+          <input
+            type="hidden"
+            name="placePhotoUrls"
+            value={activePlacePhotoUrls ? JSON.stringify(activePlacePhotoUrls) : ""}
+          />
+          <input
+            type="hidden"
+            name="placeLat"
+            value={activePlaceLat === null ? "" : activePlaceLat.toString()}
+          />
+          <input
+            type="hidden"
+            name="placeLng"
+            value={activePlaceLng === null ? "" : activePlaceLng.toString()}
+          />
+          <input type="hidden" name="placeUrl" value={activePlaceUrl} />
           <textarea
             className="min-h-[100px] rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
             name="description"
@@ -237,30 +283,12 @@ export default function CalendarAddControls({
               </span>
             </label>
           )}
-          {/* Hidden fields for place data when repeating */}
-          {prefillData?.placeId && (
-            <>
-              <input type="hidden" name="placeId" value={prefillData.placeId} />
-              <input type="hidden" name="placeName" value={prefillData.placeName ?? ""} />
-              <input type="hidden" name="placeAddress" value={prefillData.placeAddress ?? ""} />
-              {prefillData.placeLat && <input type="hidden" name="placeLat" value={prefillData.placeLat} />}
-              {prefillData.placeLng && <input type="hidden" name="placeLng" value={prefillData.placeLng} />}
-              {prefillData.placeUrl && <input type="hidden" name="placeUrl" value={prefillData.placeUrl} />}
-              {prefillData.placeWebsite && <input type="hidden" name="placeWebsite" value={prefillData.placeWebsite} />}
-              {prefillData.placeOpeningHours && (
-                <input type="hidden" name="placeOpeningHours" value={JSON.stringify(prefillData.placeOpeningHours)} />
-              )}
-              {prefillData.placePhotoUrls && (
-                <input type="hidden" name="placePhotoUrls" value={JSON.stringify(prefillData.placePhotoUrls)} />
-              )}
-            </>
-          )}
-          {prefillData?.placeName && (
+          {activePlaceName ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-              <span className="font-semibold">Place:</span> {prefillData.placeName}
-              {prefillData.placeAddress && <span className="text-emerald-600"> - {prefillData.placeAddress}</span>}
+              <span className="font-semibold">Place:</span> {activePlaceName}
+              {activePlaceAddress ? <span className="text-emerald-600"> - {activePlaceAddress}</span> : null}
             </div>
-          )}
+          ) : null}
           <div className="flex flex-wrap justify-end gap-2">
             <button
               className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"

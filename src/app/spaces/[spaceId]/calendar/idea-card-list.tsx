@@ -67,7 +67,7 @@ export default function IdeaCardList({
                 {commentCounts[idea.id] ? (
                   <Link
                     className="pill-button"
-                    href={`/spaces/${spaceId}/ideas/${idea.id}#idea-comments`}
+                    href={`/spaces/${spaceId}/calendar#idea-${idea.id}`}
                   >
                     Comments ({commentCounts[idea.id]})
                   </Link>

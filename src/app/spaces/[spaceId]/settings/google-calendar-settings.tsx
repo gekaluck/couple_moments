@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, Link2, Link2Off, RefreshCw } from 'lucide-react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type Calendar = {
   id: string;
@@ -35,6 +36,7 @@ export default function GoogleCalendarSettings() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDisconnectOpen, setIsDisconnectOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -65,10 +67,6 @@ export default function GoogleCalendarSettings() {
   }
 
   async function handleDisconnect() {
-    if (!confirm('Are you sure you want to disconnect Google Calendar?')) {
-      return;
-    }
-
     try {
       const res = await fetch('/api/integrations/google/disconnect', {
         method: 'DELETE',
@@ -76,13 +74,17 @@ export default function GoogleCalendarSettings() {
 
       if (res.ok) {
         setData(null);
+        setIsDisconnectOpen(false);
         router.refresh();
       } else {
         const json = await res.json();
-        setError(json.error || 'Failed to disconnect');
+        const message = json.error || 'Failed to disconnect';
+        setError(message);
+        throw new Error(message);
       }
     } catch {
       setError('Failed to disconnect Google Calendar');
+      throw new Error('Failed to disconnect Google Calendar');
     }
   }
 
@@ -278,11 +280,20 @@ export default function GoogleCalendarSettings() {
           )}
 
           <button
-            onClick={handleDisconnect}
+            onClick={() => setIsDisconnectOpen(true)}
             className="mt-5 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
           >
             Disconnect Google Calendar
           </button>
+          <ConfirmDialog
+            isOpen={isDisconnectOpen}
+            onClose={() => setIsDisconnectOpen(false)}
+            onConfirm={handleDisconnect}
+            title="Disconnect Google Calendar?"
+            message="Duet will stop syncing availability from your Google calendars until you reconnect."
+            confirmLabel="Disconnect"
+            variant="danger"
+          />
         </>
       )}
     </section>
