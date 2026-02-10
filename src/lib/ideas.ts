@@ -52,6 +52,9 @@ export async function getIdeaForUser(ideaId: string, userId: string) {
         },
       },
     },
+    include: {
+      createdBy: true,
+    },
   });
 }
 

@@ -595,6 +595,24 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
         </div>
 
+        {/* Calendar legend */}
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-[11px] text-[var(--text-muted)]">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-rose-400" />
+            <span>Events</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-amber-400" />
+            <span>Busy</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--action-primary)] text-[8px] font-bold text-white">
+              •
+            </span>
+            <span>Today</span>
+          </div>
+        </div>
+
         {/* Check for empty state */}
         {events.length === 0 && blocks.manual.length === 0 && blocks.external.length === 0 ? (
           <div className="mt-8">
