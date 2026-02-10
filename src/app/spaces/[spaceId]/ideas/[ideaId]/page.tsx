@@ -2,7 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
+import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
+import {
+  buildCreatorVisuals,
+  CREATOR_ACCENTS,
+  getAvatarGradient,
+} from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
 import { createEventForSpace } from "@/lib/events";
 import { createIdeaComment, getIdeaForUser, listIdeaComments } from "@/lib/ideas";
@@ -37,6 +42,17 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   }
 
   const comments = await listIdeaComments(idea.id);
+  const members = await listSpaceMembers(space.id);
+  const memberVisuals = buildCreatorVisuals(
+    members.map((member) => ({
+      id: member.userId,
+      name: member.user.name,
+      email: member.user.email,
+      alias: member.alias,
+      initials: member.initials,
+      color: member.color,
+    })),
+  );
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
     select: { name: true, email: true },
@@ -103,7 +119,9 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   }
 
   const tags = parseTags(idea.tags);
-  const creatorName = idea.createdBy?.name || idea.createdBy?.email || "Unknown";
+  const creatorVisual = memberVisuals[idea.createdByUserId];
+  const creatorName =
+    creatorVisual?.displayName || idea.createdBy?.name || idea.createdBy?.email || "Unknown";
 
   return (
     <div className="flex flex-col gap-6">
@@ -124,9 +142,21 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         <h1 className="mt-2 text-3xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
           {idea.title}
         </h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Created {formatDate(idea.createdAt)} by {creatorName}
-        </p>
+        <div className="mt-2 flex items-center gap-3 text-sm text-[var(--text-muted)]">
+          <span
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+            style={{
+              backgroundImage: creatorVisual
+                ? getAvatarGradient(creatorVisual.accent)
+                : getAvatarGradient(CREATOR_ACCENTS.amber),
+            }}
+          >
+            {creatorVisual?.initials ?? "ME"}
+          </span>
+          <span>
+            Created {formatDate(idea.createdAt)} by {creatorName}
+          </span>
+        </div>
       </header>
 
       {/* Idea Details */}
@@ -261,6 +291,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
           name: currentUser.name,
           email: currentUser.email,
         }}
+        memberVisuals={memberVisuals}
         onSubmit={handleIdeaComment}
         onDelete={handleDeleteComment}
       />

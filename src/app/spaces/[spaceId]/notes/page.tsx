@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
+import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
+import {
+  buildCreatorVisuals,
+  CREATOR_ACCENTS,
+  getAvatarGradient,
+} from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
 import { formatTimestamp, getInitials } from "@/lib/formatters";
 
@@ -47,19 +52,6 @@ const TrashIcon = () => (
   </svg>
 );
 
-const AVATAR_GRADIENTS = [
-  "from-rose-500 to-pink-600",
-  "from-sky-500 to-indigo-600",
-];
-
-function getAvatarGradient(userId: string) {
-  let hash = 0;
-  for (let index = 0; index < userId.length; index += 1) {
-    hash = (hash * 31 + userId.charCodeAt(index)) % 997;
-  }
-  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
-}
-
 const NOTE_BADGE_CLASS =
   "rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]";
 
@@ -81,6 +73,17 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
   if (!space) {
     redirect("/spaces/onboarding");
   }
+  const members = await listSpaceMembers(space.id);
+  const memberVisuals = buildCreatorVisuals(
+    members.map((member) => ({
+      id: member.userId,
+      name: member.user.name,
+      email: member.user.email,
+      alias: member.alias,
+      initials: member.initials,
+      color: member.color,
+    })),
+  );
   // Store space ID for use in server actions (avoids TypeScript narrowing issues)
   const spaceIdForActions = space.id;
 
@@ -227,6 +230,14 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
           </div>
         ) : null}
         {pageNotes.map((note) => {
+          const authorVisual = memberVisuals[note.authorUserId];
+          const authorName =
+            authorVisual?.displayName || note.author.name || note.author.email;
+          const avatarGradient = authorVisual
+            ? getAvatarGradient(authorVisual.accent)
+            : getAvatarGradient(CREATOR_ACCENTS.rose);
+          const authorInitials =
+            authorVisual?.initials || getInitials(note.author.name, note.author.email);
           const metadataLabel =
             note.kind === "EVENT_COMMENT"
               ? "Event comment"
@@ -242,9 +253,10 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-1 gap-3">
                   <div
-                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white ${getAvatarGradient(note.authorUserId)}`}
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+                    style={{ backgroundImage: avatarGradient }}
                   >
-                    {getInitials(note.author.name, note.author.email)}
+                    {authorInitials}
                   </div>
                   <div>
                     <p className="text-sm text-[var(--text-primary)]">
@@ -252,7 +264,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                     </p>
                     <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
                       <span className="font-semibold text-[var(--text-primary)]">
-                        {note.author.name || note.author.email}
+                        {authorName}
                       </span>
                       <span>/</span>
                       <span>{formatTimestamp(note.createdAt)}</span>
@@ -272,7 +284,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                     {note.parentType === "IDEA" && note.parentId ? (
                       <Link
                         className="mt-2 inline-flex text-xs text-[var(--accent-strong)] transition hover:text-[var(--accent)] hover:underline"
-                        href={`/spaces/${space.id}/ideas/${note.parentId}#idea-comments`}
+                        href={`/spaces/${space.id}/calendar#idea-${note.parentId}`}
                       >
                         Linked idea comment
                       </Link>

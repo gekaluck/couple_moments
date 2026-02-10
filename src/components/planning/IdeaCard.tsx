@@ -13,6 +13,11 @@ import Button from "@/components/ui/Button";
 import Card, { CardDescription, CardFooter, CardTitle } from "@/components/ui/Card";
 
 import { formatTimeAgo, getInitials } from "@/lib/formatters";
+import {
+  CREATOR_ACCENTS,
+  CreatorVisualMap,
+  getAvatarGradient,
+} from "@/lib/creator-colors";
 
 function getTodayDateString() {
   const today = new Date();
@@ -29,6 +34,7 @@ type Idea = {
   tags: string[];
   createdAt: Date;
   createdBy: { name: string | null; email: string };
+  createdByUserId: string;
   placeId?: string | null;
   placeName?: string | null;
   placeAddress?: string | null;
@@ -52,6 +58,7 @@ type IdeaCardProps = {
   commentCount: number;
   comments: IdeaComment[];
   currentUserId: string;
+  memberVisuals: CreatorVisualMap;
   mapsApiKey?: string;
   hasGoogleCalendar?: boolean;
   onSchedule: (formData: FormData) => Promise<
@@ -75,6 +82,7 @@ export default function IdeaCard({
   commentCount,
   comments,
   currentUserId,
+  memberVisuals,
   mapsApiKey,
   hasGoogleCalendar = false,
   onSchedule,
@@ -157,7 +165,9 @@ export default function IdeaCard({
             <span>
               Created {formatTimeAgo(idea.createdAt)} by{" "}
               <span className="font-semibold text-[var(--text-primary)]">
-                {idea.createdBy.name || idea.createdBy.email}
+                {memberVisuals[idea.createdByUserId]?.displayName ||
+                  idea.createdBy.name ||
+                  idea.createdBy.email}
               </span>
             </span>
           </CardFooter>
@@ -215,24 +225,32 @@ export default function IdeaCard({
               </p>
             ) : null}
             {comments.map((comment) => {
-              const isCurrentUser = comment.author.id === currentUserId;
-              const avatarGradient = isCurrentUser
-                ? "from-sky-500 to-indigo-600"
-                : "from-rose-500 to-pink-600";
+              const authorVisual = memberVisuals[comment.author.id];
+              const avatarGradient = authorVisual
+                ? getAvatarGradient(authorVisual.accent)
+                : comment.author.id === currentUserId
+                  ? getAvatarGradient(CREATOR_ACCENTS.indigo)
+                  : getAvatarGradient(CREATOR_ACCENTS.rose);
+              const authorName =
+                authorVisual?.displayName || comment.author.name || comment.author.email;
+              const authorInitials =
+                authorVisual?.initials ||
+                getInitials(comment.author.name, comment.author.email);
               return (
                 <div
                   key={comment.id}
                   className="flex items-start gap-3 border-b border-gray-200/70 py-2 last:border-b-0"
                 >
                   <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white ${avatarGradient}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white"
+                    style={{ backgroundImage: avatarGradient }}
                   >
-                    {getInitials(comment.author.name, comment.author.email)}
+                    {authorInitials}
                   </div>
                   <div className="flex-1">
                     <p className="text-xs text-[var(--text-tertiary)]">
                       <span className="font-semibold text-[var(--text-primary)]">
-                        {comment.author.name || comment.author.email}
+                        {authorName}
                       </span>
                       <span className="mx-2">/</span>
                       {formatTimeAgo(comment.createdAt)}

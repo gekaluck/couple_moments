@@ -4,6 +4,7 @@ import { z } from "zod";
 import { notFound, parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { createIdeaForSpace, listIdeasForSpace } from "@/lib/ideas";
+import { parseStringArrayInput } from "@/lib/parsers";
 import { parseJsonOrForm } from "@/lib/request";
 import { normalizeTags } from "@/lib/tags";
 
@@ -55,6 +56,15 @@ export async function POST(request: Request, { params }: PageProps) {
     title: z.string().trim().min(1),
     description: z.string().trim().optional().nullable(),
     tags: z.union([z.string(), z.array(z.string())]).optional().nullable(),
+    placeId: z.string().trim().optional().nullable(),
+    placeName: z.string().trim().optional().nullable(),
+    placeAddress: z.string().trim().optional().nullable(),
+    placeLat: z.union([z.string(), z.number()]).optional().nullable(),
+    placeLng: z.union([z.string(), z.number()]).optional().nullable(),
+    placeUrl: z.string().trim().optional().nullable(),
+    placeWebsite: z.string().trim().optional().nullable(),
+    placeOpeningHours: z.union([z.string(), z.array(z.string())]).optional().nullable(),
+    placePhotoUrls: z.union([z.string(), z.array(z.string())]).optional().nullable(),
   });
   const parsed = parseOrBadRequest(schema, body, "Title is required.");
   if (!parsed.data) {
@@ -62,10 +72,30 @@ export async function POST(request: Request, { params }: PageProps) {
   }
 
   const title = parsed.data.title;
+  const placeLatRaw =
+    typeof parsed.data.placeLat === "number"
+      ? parsed.data.placeLat
+      : parseFloat(parsed.data.placeLat ?? "");
+  const placeLngRaw =
+    typeof parsed.data.placeLng === "number"
+      ? parsed.data.placeLng
+      : parseFloat(parsed.data.placeLng ?? "");
+  const placeOpeningHours = parseStringArrayInput(parsed.data.placeOpeningHours);
+  const placePhotoUrls = parseStringArrayInput(parsed.data.placePhotoUrls);
+
   const idea = await createIdeaForSpace(spaceId, userId, {
     title,
     description: parsed.data.description?.trim() || null,
     tags: normalizeTags(parsed.data.tags),
+    placeId: parsed.data.placeId?.trim() || null,
+    placeName: parsed.data.placeName?.trim() || null,
+    placeAddress: parsed.data.placeAddress?.trim() || null,
+    placeLat: Number.isNaN(placeLatRaw) ? null : placeLatRaw,
+    placeLng: Number.isNaN(placeLngRaw) ? null : placeLngRaw,
+    placeUrl: parsed.data.placeUrl?.trim() || null,
+    placeWebsite: parsed.data.placeWebsite?.trim() || null,
+    placeOpeningHours,
+    placePhotoUrls,
   });
 
   return NextResponse.json({ idea }, { status: 201 });

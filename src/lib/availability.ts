@@ -85,8 +85,19 @@ export async function updateAvailabilityBlock(
     endAt: Date;
   },
 ) {
+  const existing = await prisma.availabilityBlock.findFirst({
+    where: {
+      id: blockId,
+      createdByUserId: userId,
+    },
+    select: { id: true },
+  });
+  if (!existing) {
+    throw new Error("Not authorized");
+  }
+
   return prisma.availabilityBlock.update({
-    where: { id: blockId, createdByUserId: userId },
+    where: { id: blockId },
     data: {
       title: input.title.trim(),
       note: input.note?.trim() || null,

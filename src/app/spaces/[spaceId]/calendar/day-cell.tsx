@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import EventBubble from "./event-bubble";
-import { CreatorAccent, getCreatorInitials } from "@/lib/creator-colors";
+import { CreatorAccent, CreatorVisualMap, getCreatorInitials } from "@/lib/creator-colors";
 
 type EventSummary = {
   id: string;
@@ -30,7 +30,9 @@ type DayCellProps = {
   blocks: BlockSummary[];
   nowLabel: string;
   addEventHref: string;
+  currentUserId: string;
   creatorPalette: Map<string, CreatorAccent>;
+  memberVisuals: CreatorVisualMap;
   buildBlockEditHref: (blockId: string) => string;
 };
 
@@ -53,7 +55,9 @@ export default function DayCell({
   blocks,
   nowLabel,
   addEventHref,
+  currentUserId,
   creatorPalette,
+  memberVisuals,
   buildBlockEditHref,
 }: DayCellProps) {
   const maxItems = isCompact ? 2 : 3;
@@ -136,15 +140,10 @@ export default function DayCell({
         {visibleBlocks.map((block) => {
           const isExternal = block.source === "GOOGLE";
           const createdByUserId = block.createdByUserId || "external";
-          const blockAccent = isExternal
-            ? "var(--color-secondary)"
-            : (creatorPalette.get(createdByUserId)?.accent ?? "var(--accent-secondary)");
-          const blockSoft = isExternal
-            ? "var(--color-secondary-soft)"
-            : (creatorPalette.get(createdByUserId)?.accentSoft ?? "#fef3c7");
-          const blockText = isExternal
-            ? "var(--text-secondary)"
-            : (creatorPalette.get(createdByUserId)?.accentText ?? "#8b6131");
+          const creatorAccent = creatorPalette.get(createdByUserId);
+          const blockAccent = creatorAccent?.accent ?? "var(--color-secondary)";
+          const blockSoft = creatorAccent?.accentSoft ?? "var(--color-secondary-soft)";
+          const blockText = creatorAccent?.accentText ?? "var(--text-secondary)";
 
           const currentDay = new Date(date);
           currentDay.setHours(0, 0, 0, 0);
@@ -173,11 +172,13 @@ export default function DayCell({
           const tooltipText = isExternal && block.startAt && block.endAt
             ? `Busy: ${formatTimeLabel(new Date(block.startAt))} - ${formatTimeLabel(new Date(block.endAt))}`
             : block.title;
-          const creatorInitials = getCreatorInitials({
-            id: createdByUserId,
-            name: block.createdBy?.name ?? null,
-            email: block.createdBy?.email ?? "??",
-          });
+          const creatorInitials =
+            memberVisuals[createdByUserId]?.initials ??
+            getCreatorInitials({
+              id: createdByUserId,
+              name: block.createdBy?.name ?? null,
+              email: block.createdBy?.email ?? "??",
+            });
 
           const blockContent = useThinBar ? (
             <div className="flex min-w-0 items-center gap-1.5">
@@ -214,17 +215,31 @@ export default function DayCell({
               {blockContent}
             </div>
           ) : (
-            <Link
-              key={block.id}
-              className={`rounded-lg px-2 py-1 transition hover:shadow-[var(--shadow-sm)] ${isContinuation ? "pt-1.5" : ""}`}
-              href={buildBlockEditHref(block.id)}
-              style={{
-                backgroundColor: blockSoft,
-                color: blockText,
-              }}
-            >
-              {blockContent}
-            </Link>
+            createdByUserId === currentUserId ? (
+              <Link
+                key={block.id}
+                className={`rounded-lg px-2 py-1 transition hover:shadow-[var(--shadow-sm)] ${isContinuation ? "pt-1.5" : ""}`}
+                href={buildBlockEditHref(block.id)}
+                style={{
+                  backgroundColor: blockSoft,
+                  color: blockText,
+                }}
+              >
+                {blockContent}
+              </Link>
+            ) : (
+              <div
+                key={block.id}
+                className={`rounded-lg px-2 py-1 opacity-90 ${isContinuation ? "pt-1.5" : ""}`}
+                style={{
+                  backgroundColor: blockSoft,
+                  color: blockText,
+                }}
+                title={`${tooltipText} (view only)`}
+              >
+                {blockContent}
+              </div>
+            )
           );
         })}
 

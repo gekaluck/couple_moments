@@ -1,10 +1,22 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
-import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
+import {
+  getCoupleSpaceForUser,
+  listSpaceMembers,
+  updateMembershipAppearance,
+} from "@/lib/couple-spaces";
+import {
+  buildCreatorVisuals,
+  CREATOR_ACCENTS,
+  CREATOR_COLOR_OPTIONS,
+  getCreatorAccentByKey,
+  getAvatarGradient,
+  sanitizeMemberAlias,
+  sanitizeMemberColor,
+  sanitizeMemberInitials,
+} from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
-import { getInitials } from "@/lib/formatters";
-import { prisma } from "@/lib/prisma";
 
 import InviteCard from "./invite-card";
 import OnboardingSettings from "./onboarding-settings";
@@ -35,14 +47,23 @@ export default async function SettingsPage({ params }: PageProps) {
   const spaceIdForActions = space.id;
 
   const members = await listSpaceMembers(space.id);
+  const memberVisuals = buildCreatorVisuals(
+    members.map((member) => ({
+      id: member.userId,
+      name: member.user.name,
+      email: member.user.email,
+      alias: member.alias,
+      initials: member.initials,
+      color: member.color,
+    })),
+  );
+  const currentMember = members.find((member) => member.userId === userId) ?? null;
   const partner = members.find((m) => m.userId !== userId);
+  const currentVisual = memberVisuals[userId];
+  const partnerVisual = partner ? memberVisuals[partner.userId] : null;
+  const selectedColor =
+    sanitizeMemberColor(currentMember?.color ?? null) ?? currentVisual?.accent.key ?? "amber";
   const isSpaceComplete = members.length >= 2;
-
-  // Get full user details
-  const currentUserDetails = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { name: true, email: true },
-  });
 
   async function handleCalendarWeekStart(formData: FormData) {
     "use server";
@@ -71,6 +92,24 @@ export default async function SettingsPage({ params }: PageProps) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 365,
     });
+    redirect(`/spaces/${spaceIdForActions}/settings`);
+  }
+
+  async function handleProfileAppearance(formData: FormData) {
+    "use server";
+    const currentUserId = await requireUserId();
+    const alias = sanitizeMemberAlias(formData.get("alias")?.toString() ?? null);
+    const initials = sanitizeMemberInitials(formData.get("initials")?.toString() ?? null);
+    const color = sanitizeMemberColor(formData.get("color")?.toString() ?? null);
+
+    await updateMembershipAppearance({
+      coupleSpaceId: spaceIdForActions,
+      userId: currentUserId,
+      alias,
+      initials,
+      color,
+    });
+
     redirect(`/spaces/${spaceIdForActions}/settings`);
   }
 
@@ -129,15 +168,22 @@ export default async function SettingsPage({ params }: PageProps) {
                   className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-[linear-gradient(120deg,rgba(125,211,252,0.24),rgba(99,102,241,0.18))]"
                 />
                 <div className="relative flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-sm font-semibold text-white">
-                    {getInitials(currentUserDetails?.name, currentUserDetails?.email ?? "")}
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold text-white"
+                    style={{
+                      backgroundImage: currentVisual
+                        ? getAvatarGradient(currentVisual.accent)
+                        : getAvatarGradient(CREATOR_ACCENTS.amber),
+                    }}
+                  >
+                    {currentVisual?.initials ?? "ME"}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-[var(--text-primary)]">
-                      {currentUserDetails?.name || "You"}
+                      {currentVisual?.displayName || "You"}
                     </p>
                     <p className="truncate text-xs text-[var(--text-muted)]">
-                      {currentUserDetails?.email}
+                      {currentMember?.user.email}
                     </p>
                     <span className="mt-1 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-sky-700">
                       You
@@ -152,13 +198,20 @@ export default async function SettingsPage({ params }: PageProps) {
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-[linear-gradient(120deg,rgba(251,113,133,0.22),rgba(219,39,119,0.18))]"
                   />
-                  <div className="relative flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-sm font-semibold text-white">
-                      {getInitials(partner.user.name, partner.user.email)}
+                <div className="relative flex items-center gap-4">
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold text-white"
+                      style={{
+                        backgroundImage: partnerVisual
+                          ? getAvatarGradient(partnerVisual.accent)
+                          : getAvatarGradient(CREATOR_ACCENTS.rose),
+                      }}
+                    >
+                      {partnerVisual?.initials ?? "PA"}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-[var(--text-primary)]">
-                        {partner.user.name || "Partner"}
+                        {partnerVisual?.displayName || "Partner"}
                       </p>
                       <p className="truncate text-xs text-[var(--text-muted)]">
                         {partner.user.email}
@@ -259,6 +312,85 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
 
         <div className="space-y-6">
+          <section className="surface p-6 md:p-8">
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">
+              Your Profile Style
+            </h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Set how your name, initials, and color appear across comments and unavailable blocks.
+            </p>
+
+            <form action={handleProfileAppearance} className="mt-5 space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Alias
+                  </span>
+                  <input
+                    type="text"
+                    name="alias"
+                    maxLength={32}
+                    defaultValue={currentMember?.alias ?? ""}
+                    placeholder={currentMember?.user.name ?? "Your display name"}
+                    className="w-full rounded-xl border border-[var(--panel-border)] bg-white/80 px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--action-primary)]"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Initials
+                  </span>
+                  <input
+                    type="text"
+                    name="initials"
+                    maxLength={2}
+                    defaultValue={currentMember?.initials ?? ""}
+                    placeholder={currentVisual?.initials ?? "ME"}
+                    className="w-full rounded-xl border border-[var(--panel-border)] bg-white/80 px-3 py-2 text-sm uppercase tracking-[0.08em] text-[var(--text-primary)] outline-none transition focus:border-[var(--action-primary)]"
+                  />
+                </label>
+              </div>
+
+              <fieldset>
+                <legend className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                  Accent Color
+                </legend>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {CREATOR_COLOR_OPTIONS.map((option) => {
+                    const accent = getCreatorAccentByKey(option.key);
+                    if (!accent) {
+                      return null;
+                    }
+                    return (
+                      <label
+                        key={option.key}
+                        className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--panel-border)] bg-white/80 px-3 py-2 text-sm transition hover:border-slate-300"
+                      >
+                        <input
+                          type="radio"
+                          name="color"
+                          value={option.key}
+                          defaultChecked={selectedColor === option.key}
+                          className="h-4 w-4 accent-[var(--action-primary)]"
+                        />
+                        <span
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: accent.accent }}
+                        />
+                        <span className="text-[var(--text-primary)]">{option.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
+              <div className="flex justify-end">
+                <button type="submit" className="pill-button button-hover text-xs font-semibold">
+                  Save Profile Style
+                </button>
+              </div>
+            </form>
+          </section>
+
           <section className="surface p-6 md:p-8">
             <h3 className="text-base font-semibold text-[var(--text-primary)]">
               Calendar Preferences
