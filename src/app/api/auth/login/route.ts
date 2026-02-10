@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { formatZodFieldErrors } from "@/lib/api-utils";
 import { verifyPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -39,9 +40,10 @@ export async function POST(request: Request) {
   });
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    const issues = parsed.error.flatten().fieldErrors;
-    const errorMessage =
-      Object.values(issues).flat().join(" ") || "Email and password are required.";
+    const errorMessage = formatZodFieldErrors(
+      parsed.error,
+      "Email and password are required.",
+    );
     return NextResponse.json(
       { error: errorMessage },
       { status: 400 },

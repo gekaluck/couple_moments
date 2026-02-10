@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getCurrentUserId } from '@/lib/current-user';
+import { NextResponse } from "next/server";
+
+import { internalServerError, notFound, requireApiUserId } from "@/lib/api-utils";
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/integrations/google/calendars
@@ -8,20 +9,18 @@ import { getCurrentUserId } from '@/lib/current-user';
  */
 export async function GET() {
   try {
-    const userId = await getCurrentUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const auth = await requireApiUserId();
+    if (!auth.ok) {
+      return auth.response;
     }
+    const userId = auth.userId;
     
     // Get external account
     const externalAccount = await prisma.externalAccount.findUnique({
       where: {
         userId_provider: {
           userId: userId,
-          provider: 'GOOGLE',
+          provider: "GOOGLE",
         },
       },
       include: {
@@ -31,10 +30,7 @@ export async function GET() {
     });
     
     if (!externalAccount) {
-      return NextResponse.json(
-        { error: 'Google Calendar not connected' },
-        { status: 404 }
-      );
+      return notFound("Google Calendar not connected");
     }
     
     return NextResponse.json({
@@ -58,10 +54,7 @@ export async function GET() {
       } : null,
     });
   } catch (error) {
-    console.error('Error fetching calendars:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch calendars' },
-      { status: 500 }
-    );
+    console.error("Error fetching calendars:", error);
+    return internalServerError("Failed to fetch calendars");
   }
 }

@@ -2,62 +2,62 @@
 
 ## Commands
 ```bash
-npm run dev            # Start dev server (localhost:3000)
-npm run build          # Production build
-npx prisma studio      # Database browser
-npx prisma migrate dev # Run migrations
-npx prisma generate    # Regenerate client
-npx tsx scripts/seed-demo.ts <spaceId> --reset # Seed demo data
+npm run dev              # Start dev server (localhost:3000)
+npm run build            # Production build (includes prisma generate)
+npm run lint             # ESLint
+npx tsc --noEmit         # Type check
+npm run db:migrate       # prisma migrate dev
+npm run db:push          # prisma db push
+npm run db:studio        # Prisma Studio
+npx tsx scripts/seed-demo.ts <spaceId> --reset  # Seed demo data
 ```
 
-## How To Run / Test / Migrate / Seed
-- Run locally: `npm run dev`
-- Production build check: `npm run build`
-- Migrations (dev): `npx prisma migrate dev`
-- Schema sync (dev): `npx prisma db push`
-- Seed demo data: `npx tsx scripts/seed-demo.ts <spaceId> --reset`
-- Manual test checklist: `docs/00_current/rollout_plan.md`
+## How to run / test / migrate / seed
+- Local run: `npm run dev`
+- Build check: `npm run build`
+- Lint check: `npm run lint`
+- Type check: `npx tsc --noEmit`
+- Migrations (dev): `npm run db:migrate`
+- Seed data: `npx tsx scripts/seed-demo.ts <spaceId> --reset`
 
-## Repo Map
-```
+## Repo map
+```text
 src/
-  app/                    # Pages (App Router)
-    api/                  # Auth endpoints only
-    spaces/[spaceId]/     # Main app pages
-      calendar/           # Primary hub (events + planning)
-      memories/           # Past events timeline
-      notes/              # Notes center
-      activity/           # Change log
-    events/[eventId]/     # Event detail
-    login/, register/     # Auth pages
-  components/             # Reusable components
-  lib/                    # Server utilities (CRUD, auth, helpers)
-  generated/prisma/       # Generated Prisma client
+  app/                             # App Router routes and layouts
+    api/                           # Auth, spaces/events/ideas, integrations, ICS export
+    spaces/[spaceId]/              # Main product surfaces
+      calendar/                    # Primary hub (events, ideas, busy blocks)
+      memories/                    # Past events and memory timeline
+      notes/                       # Shared notes
+      activity/                    # Change log / activity feed
+      settings/                    # Space settings + Google calendar settings
+      planning/                    # Legacy route redirects to calendar
+    events/[eventId]/              # Event detail (comments, ratings, photos)
+    login/, register/              # Auth pages
+  components/                      # UI and feature components
+  lib/                             # Domain logic, auth/session, integrations, helpers
+prisma/                            # Schema and migrations
+scripts/                           # Utility scripts
+docs/00_current/                   # Active docs
+docs/90_archive/                   # Historical docs
 ```
 
 ## Conventions
-- Prefer server actions for mutations ("use server").
-- Modals are opened via URL params (e.g., `?new=YYYY-MM-DD`).
-- Tag helpers normalize/parse JSON-string tags.
+- Prefer server actions for page-scoped mutations.
+- Keep shared domain logic in `src/lib/*`.
+- Modal state is URL-driven where applicable (for deep-linkable flows).
+- Tags are stored as JSON strings and parsed with shared helpers.
+- Keep docs concise and update them when behavior or scope changes.
 
-## Coding Patterns (Operational)
-- Keep server actions close to the page using them.
-- Use helpers in `lib/` for DB access.
-- Keep UI components small and reusable.
-
-## Do / Don't
-- Do keep docs concise and factual.
-- Do record decisions in `docs/00_current/DECISIONS.md` or `/docs/20_adrs/`.
-- Do update `docs/00_current/rollout_plan.md` when milestone scope changes.
-- Don't invent architecture or product details not documented.
-- Don't add large, unrelated changes without a clear rationale.
-
-## When To Update Docs
-- Update ARCHITECTURE.md only when boundaries, data flow, or integrations change.
-- Update CONTEXT.md when commands, structure, or conventions change.
-- Update rollout_plan.md when execution scope or status changes.
+## Do / do not
+- Do keep changes focused and reviewable.
+- Do update `rollout_plan.md` when milestone status changes.
+- Do update `ARCHITECTURE.md` for boundary/integration changes.
+- Do not ship large unrelated refactors in feature-only commits.
 
 ## Links
-- docs/00_current/ARCHITECTURE.md
-- docs/00_current/DECISIONS.md
-- docs/00_current/rollout_plan.md
+- `docs/00_current/READ_THIS_FIRST.md`
+- `docs/00_current/ARCHITECTURE.md`
+- `docs/00_current/DECISIONS.md`
+- `docs/00_current/rollout_plan.md`
+- `docs/00_current/CLEANUP_PLAN.md`

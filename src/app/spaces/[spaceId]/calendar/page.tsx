@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
+import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import {
   dateKey,
@@ -12,27 +12,28 @@ import {
 } from "@/lib/calendar";
 import {
   createAvailabilityBlock,
-  listAvailabilityBlocks,
   updateAvailabilityBlock,
 } from "@/lib/availability";
 import {
   createEventForSpace,
-  getEventForUser,
-  listEventCommentsForEvents,
-  listEventsForSpace,
 } from "@/lib/events";
 import {
   createIdeaComment,
   createIdeaForSpace,
   deleteIdea,
-  listIdeaCommentsForIdeas,
-  listIdeasForSpace,
   updateIdea,
 } from "@/lib/ideas";
 import { normalizeTags, parseTags } from "@/lib/tags";
-import { buildCreatorPalette } from "@/lib/creator-colors";
-import { hasGoogleCalendarWithEventsScope, createGoogleCalendarEvent } from "@/lib/integrations/google/events";
+import { createGoogleCalendarEvent } from "@/lib/integrations/google/events";
+import { parseJsonStringArray } from "@/lib/parsers";
 import CalendarAddControls from "./add-controls";
+import {
+  buildBlocksByDay,
+  buildEventCommentCounts,
+  buildEventsByDay,
+  buildIdeaCommentAggregates,
+  loadCalendarPageData,
+} from "./page-data";
 import PlanningSection from "@/components/planning/PlanningSection";
 import IdeasColumn from "@/components/planning/IdeasColumn";
 import UpcomingPlansColumn from "@/components/planning/UpcomingPlansColumn";
@@ -82,72 +83,29 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   // Store space ID for use in server actions (avoids TypeScript narrowing issues)
   const spaceIdForActions = space.id;
 
-  // Fetch event to repeat if repeat param is present
-  const repeatEvent = repeatEventId
-    ? await getEventForUser(repeatEventId, userId)
-    : null;
-  const prefillData = repeatEvent
-    ? {
-      title: repeatEvent.title,
-      description: repeatEvent.description ?? "",
-      tags: parseTags(repeatEvent.tags).join(", "),
-      placeId: repeatEvent.placeId,
-      placeName: repeatEvent.placeName,
-      placeAddress: repeatEvent.placeAddress,
-      placeLat: repeatEvent.placeLat,
-      placeLng: repeatEvent.placeLng,
-      placeUrl: repeatEvent.placeUrl,
-      placeWebsite: repeatEvent.placeWebsite,
-      placeOpeningHours: Array.isArray(repeatEvent.placeOpeningHours)
-        ? (repeatEvent.placeOpeningHours as string[])
-        : null,
-      placePhotoUrls: Array.isArray(repeatEvent.placePhotoUrls)
-        ? (repeatEvent.placePhotoUrls as string[])
-        : null,
-    }
-    : null;
-
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-  const events = await listEventsForSpace({
-    spaceId: space.id,
-    from: monthStart,
-    to: monthEnd,
-  });
-  const members = await listSpaceMembers(space.id);
-  const hasGoogleCalendar = await hasGoogleCalendarWithEventsScope(userId);
-  const creatorPalette = buildCreatorPalette(
-    members.map((member) => ({
-      id: member.userId,
-      name: member.user.name ?? null,
-      email: member.user.email,
-    })),
-  );
-  const blocks = await listAvailabilityBlocks({
-    spaceId: space.id,
-    from: monthStart,
-    to: monthEnd,
-  });
-  const ideas = await listIdeasForSpace({ spaceId: space.id, status: "NEW" });
-  // Use actual current date for upcoming plans, not the selected calendar month
   const actualToday = new Date();
-  const upcomingEvents = await listEventsForSpace({
+  const {
+    events,
+    blocks,
+    ideas,
+    upcomingEvents,
+    ideaComments,
+    eventComments,
+    hasGoogleCalendar,
+    creatorPalette,
+    prefillData,
+  } = await loadCalendarPageData({
     spaceId: space.id,
-    from: actualToday,
-    timeframe: "upcoming",
+    userId,
+    monthStart,
+    monthEnd,
+    repeatEventId,
+    actualToday,
   });
-  const ideaComments = await listIdeaCommentsForIdeas(ideas.map((idea) => idea.id));
-  const eventComments = await listEventCommentsForEvents(
-    upcomingEvents.map((event) => event.id),
-  );
 
-  const eventsByDay = new Map<string, typeof events>();
-  for (const event of events) {
-    const key = dateKey(event.dateTimeStart);
-    const list = eventsByDay.get(key) ?? [];
-    list.push(event);
-    eventsByDay.set(key, list);
-  }
+  const eventsByDay = buildEventsByDay(events);
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -164,24 +122,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
     const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const parseJsonArray = (value?: string | null) => {
-      if (!value) {
-        return null;
-      }
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.map((item) => `${item}`);
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    };
-    const placeOpeningHours = parseJsonArray(
+    const placeOpeningHours = parseJsonStringArray(
       formData.get("placeOpeningHours")?.toString() ?? null,
     );
-    const placePhotoUrls = parseJsonArray(
+    const placePhotoUrls = parseJsonStringArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
     const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
@@ -299,24 +243,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
     const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const parseJsonArray = (value?: string | null) => {
-      if (!value) {
-        return null;
-      }
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.map((item) => `${item}`);
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    };
-    const placeOpeningHours = parseJsonArray(
+    const placeOpeningHours = parseJsonStringArray(
       formData.get("placeOpeningHours")?.toString() ?? null,
     );
-    const placePhotoUrls = parseJsonArray(
+    const placePhotoUrls = parseJsonStringArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
     const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
@@ -442,24 +372,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
     const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const parseJsonArray = (value?: string | null) => {
-      if (!value) {
-        return null;
-      }
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.map((item) => `${item}`);
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    };
-    const placeOpeningHours = parseJsonArray(
+    const placeOpeningHours = parseJsonStringArray(
       formData.get("placeOpeningHours")?.toString() ?? null,
     );
-    const placePhotoUrls = parseJsonArray(
+    const placePhotoUrls = parseJsonStringArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
     const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
@@ -514,100 +430,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     }
     return `/spaces/${space.id}/calendar?${params.toString()}`;
   };
-  const blocksByDay = new Map<string, Array<{ id: string; startAt: Date; endAt: Date; title: string; createdBy: { name: string | null; email: string }; createdByUserId?: string; source?: string }>>();
-  
-  // Add manual blocks
-  for (const block of blocks.manual) {
-    const cursor = new Date(block.startAt);
-    cursor.setHours(0, 0, 0, 0);
-    const end = new Date(block.endAt);
-    end.setHours(0, 0, 0, 0);
-    while (cursor <= end) {
-      const key = dateKey(cursor);
-      const list = blocksByDay.get(key) ?? [];
-      list.push({
-        id: block.id,
-        startAt: block.startAt,
-        endAt: block.endAt,
-        title: block.title,
-        createdBy: { name: block.createdBy.name, email: block.createdBy.email },
-        createdByUserId: block.createdByUserId,
-      });
-      blocksByDay.set(key, list);
-      cursor.setDate(cursor.getDate() + 1);
-    }
-  }
-  
-  // Add external blocks
-  for (const block of blocks.external) {
-    const cursor = new Date(block.startAt);
-    cursor.setHours(0, 0, 0, 0);
-    const end = new Date(block.endAt);
-    end.setHours(0, 0, 0, 0);
-    while (cursor <= end) {
-      const key = dateKey(cursor);
-      const list = blocksByDay.get(key) ?? [];
-      list.push({
-        id: block.id,
-        startAt: block.startAt,
-        endAt: block.endAt,
-        title: "Busy",
-        createdBy: { name: block.user.name, email: block.user.email },
-        createdByUserId: block.userId,
-        source: block.source,
-      });
-      blocksByDay.set(key, list);
-      cursor.setDate(cursor.getDate() + 1);
-    }
-  }
 
-  const ideaCommentCounts = ideaComments.reduce<Record<string, number>>(
-    (acc, comment) => {
-      if (!comment.parentId) {
-        return acc;
-      }
-      acc[comment.parentId] = (acc[comment.parentId] ?? 0) + 1;
-      return acc;
-    },
-    {},
+  const blocksByDay = buildBlocksByDay(blocks);
+  const { ideaCommentCounts, ideaCommentsByIdea } = buildIdeaCommentAggregates(
+    ideaComments,
   );
-  const ideaCommentsByIdea = ideaComments.reduce<
-    Record<
-      string,
-      Array<{
-        id: string;
-        body: string;
-        createdAt: string;
-        author: { id: string; name: string | null; email: string };
-      }>
-    >
-  >((acc, comment) => {
-    if (!comment.parentId) {
-      return acc;
-    }
-    acc[comment.parentId] = acc[comment.parentId] ?? [];
-    acc[comment.parentId].push({
-      id: comment.id,
-      body: comment.body,
-      createdAt: comment.createdAt.toISOString(),
-      author: {
-        id: comment.author.id,
-        name: comment.author.name,
-        email: comment.author.email,
-      },
-    });
-    return acc;
-  }, {});
-  const eventCommentCounts = eventComments.reduce<Record<string, number>>(
-    (acc, comment) => {
-      if (!comment.parentId) {
-        return acc;
-      }
-      acc[comment.parentId] = (acc[comment.parentId] ?? 0) + 1;
-      return acc;
-    },
-    {},
-  );
+  const eventCommentCounts = buildEventCommentCounts(eventComments);
   const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const ideasForPlanning = ideas.map((idea) => ({
@@ -656,76 +484,72 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               {formatMonthTitle(now)}
             </h2>
             <p className="section-subtitle">
-              Build a cozy rhythm for both of you, one day at a time.
+              Tap any day to add something special or block time.
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[var(--color-primary)]" />
-                Plans
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" />
-                Busy
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[var(--text-muted)]" />
-                Memories
-              </span>
-            </div>
           </div>
-          <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:justify-end">
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-              <CalendarAddControls
-                onCreateEvent={handleCreate}
-                onCreateBlock={handleCreateBlock}
-                initialEventDate={initialEventDate}
-                prefillData={prefillData}
-                hasGoogleCalendar={hasGoogleCalendar}
-              />
-              <div className="flex min-w-fit items-center rounded-full border border-[var(--panel-border)] bg-white/90 p-1 shadow-[var(--shadow-sm)]">
-                <Link
-                  className="rounded-full px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-50)] hover:text-[var(--text-primary)]"
-                  href={buildCalendarHref(monthParam(prevMonth))}
-                >
-                  Prev
-                </Link>
-                <Link
-                  className="rounded-full px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-50)]"
-                  href={buildCalendarHref(monthParam(today))}
-                >
-                  Today
-                </Link>
-                <Link
-                  className="rounded-full px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-50)] hover:text-[var(--text-primary)]"
-                  href={buildCalendarHref(monthParam(nextMonth))}
-                >
-                  Next
-                </Link>
-              </div>
-            </div>
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-              <a
-                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-2 text-xs font-medium text-[var(--text-muted)] shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:border-[var(--border-medium)] hover:text-[var(--text-primary)]"
-                href={`/api/spaces/${space.id}/calendar.ics`}
-                download
-                title="Export to calendar app"
-                aria-label="Export calendar as ICS"
+          <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
+            <CalendarAddControls
+              key={`add-controls-${initialEventDate ?? "none"}-${repeatEventId ?? "none"}-${openAction || "none"}`}
+              onCreateEvent={handleCreate}
+              onCreateBlock={handleCreateBlock}
+              initialEventDate={initialEventDate}
+              prefillData={prefillData}
+              hasGoogleCalendar={hasGoogleCalendar}
+            />
+            <Link
+              className="pill-button button-hover"
+              href={buildCalendarHref(monthParam(prevMonth))}
+            >
+              Prev
+            </Link>
+            <Link
+              className="pill-button button-hover"
+              href={buildCalendarHref(monthParam(today))}
+            >
+              Today
+            </Link>
+            <Link
+              className="pill-button button-hover"
+              href={buildCalendarHref(monthParam(nextMonth))}
+            >
+              Next
+            </Link>
+            <div className="flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+              <Link
+                className={`rounded-full px-3 py-1 transition ${isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
+                  }`}
+                href={buildCalendarHref(monthParam(now), { density: "compact" })}
               >
-                <svg
-                  aria-hidden="true"
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M7 10l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                Export
-              </a>
+                Compact
+              </Link>
+              <Link
+                className={`rounded-full px-3 py-1 transition ${!isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
+                  }`}
+                href={buildCalendarHref(monthParam(now), { density: "comfortable" })}
+              >
+                Comfortable
+              </Link>
             </div>
+            <a
+              className="pill-button button-hover inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent-strong)]"
+              href={`/api/spaces/${space.id}/calendar.ics`}
+              download
+              title="Export to calendar app"
+            >
+              <svg
+                aria-hidden="true"
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 10l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Export
+            </a>
           </div>
         </div>
 
@@ -787,6 +611,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       <PlanningSection>
         <div className="flex flex-col gap-8">
           <IdeasColumn
+            key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
             ideas={ideasForPlanning}
             commentCounts={ideaCommentCounts}
             commentsByIdea={ideaCommentsByIdea}

@@ -62,3 +62,14 @@ export function formatTimeAgo(value: Date | string): string {
     day: "numeric",
   });
 }
+
+/**
+ * Format event date/time for planning and list surfaces.
+ */
+export function formatEventDateTime(date: Date, timeIsSet = true): string {
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(timeIsSet ? { hour: "numeric", minute: "2-digit" } : {}),
+  });
+}

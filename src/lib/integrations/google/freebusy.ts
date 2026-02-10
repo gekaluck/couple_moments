@@ -2,6 +2,10 @@ import { google } from 'googleapis';
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedClient } from './calendar';
 
+type FreeBusyCalendarData = {
+  busy?: Array<{ start?: string | null; end?: string | null }>;
+};
+
 /**
  * Fetch freebusy information for selected calendars
  * @param externalAccountId The external account ID
@@ -49,7 +53,8 @@ export async function fetchFreeBusy(
   
   // Parse busy blocks from response
   if (data.calendars) {
-    for (const [calendarId, calData] of Object.entries(data.calendars)) {
+    const calendars = data.calendars as Record<string, FreeBusyCalendarData>;
+    for (const [calendarId, calData] of Object.entries(calendars)) {
       if (calData.busy) {
         for (const busy of calData.busy) {
           if (busy.start && busy.end) {

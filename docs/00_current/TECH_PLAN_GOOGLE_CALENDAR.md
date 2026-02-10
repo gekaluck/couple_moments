@@ -1,178 +1,81 @@
 # Technical Plan: Google Calendar Integration
 
-**Created:** 2026-02-05
-**Status:** Draft
-**Source:** docs/00_current/GOOGLE_CALENDAR_INTEGRATION_SPEC.md
+Created: 2026-02-05
+Updated: 2026-02-10
+Status: Phase 1 and Phase 2 complete; Phase 3 backlog
+Source: `docs/90_archive/GOOGLE_CALENDAR_INTEGRATION_SPEC.md`
 
 ---
 
-## Scope
-Phase 1 (MVP): inbound availability only (busy blocks).
-Phase 2: outbound event creation + Google invite emails.
-Phase 3 (optional): bidirectional sync.
+## Scope summary
+- Phase 1 (implemented): inbound availability sync from Google calendars
+- Phase 2 (implemented): outbound event creation to Google Calendar
+- Phase 3 (backlog): bidirectional sync lifecycle and webhook/cron automation
 
 ---
 
-## Dependencies
-- Google Cloud project + OAuth consent screen
-- OAuth client (web application)
-- Environment variables:
-  - `GOOGLE_CLIENT_ID`
-  - `GOOGLE_CLIENT_SECRET`
-  - `GOOGLE_REDIRECT_URI`
-  - `TOKEN_ENCRYPTION_KEY` (for encrypting refresh/access tokens)
+## Implemented architecture
 
----
-
-## Data Model (Prisma)
-
-Add new models (from spec):
-
-- `ExternalAccount`
-- `ExternalCalendar`
-- `ExternalAvailabilityBlock` (or reuse AvailabilityBlock with source fields)
-- `ExternalEventLink` (Phase 2+)
-- `ExternalSyncState`
-
-Migration steps:
-1. Add models to `prisma/schema.prisma`.
-2. Run `npx prisma migrate dev -n add_google_calendar_models`.
-3. Generate client.
-
----
-
-## Phase 1 Implementation (Inbound Availability)
-
-### 1) OAuth connect flow
-**Routes:**
+### OAuth and account linkage
+Routes:
 - `GET /api/integrations/google/start`
 - `GET /api/integrations/google/callback`
+- `DELETE /api/integrations/google/disconnect`
 
-**Flow:**
-1. Start route builds OAuth URL with `calendar.readonly` scope and `access_type=offline`.
-2. Callback route exchanges code for tokens.
-3. Store tokens in `ExternalAccount` (encrypted).
-4. Redirect back to Settings with success banner.
+Behavior:
+- OAuth flow stores account and token metadata
+- Tokens are encrypted before persistence
+- Settings supports connect/disconnect and calendar selection
 
-**Security:**
-- Validate `state` param (store nonce in signed cookie).
-- Encrypt tokens before persisting.
+### Calendar discovery and selection
+Routes:
+- `GET /api/integrations/google/calendars`
+- `POST /api/integrations/google/calendars/toggle`
 
-### 2) Calendar discovery
-**Service:** `src/lib/integrations/google/calendar.ts`
-- `listGoogleCalendars(externalAccountId)`
-- Store in `ExternalCalendar` with `selected` default (primary = true).
+Behavior:
+- Fetch and persist available calendars
+- Toggle selected calendars for busy sync inclusion
 
-### 3) Availability sync
-**Service:** `src/lib/integrations/google/freebusy.ts`
-- Use `freebusy` endpoint with selected calendar IDs.
-- Window: rolling 60-90 days (confirm) or per view window.
-- Store blocks in `ExternalAvailabilityBlock` with `source = GOOGLE`.
+### Inbound availability sync (Phase 1)
+Route:
+- `POST /api/integrations/google/sync`
 
-**Sync triggers:**
-- After connect
-- After calendar selection update
-- Manual "Sync now" action
-- Scheduled job (cron)
+Behavior:
+- Sync selected calendar busy windows
+- Persist external availability blocks for rendering in calendar UI
 
-### 4) Settings UI
-**Page:** add section in settings page
-- Connect/Disconnect buttons
-- Calendar list with toggles
-- Last sync time + error state
-- "Sync now" button
-
-### 5) Availability view
-- Render external busy blocks distinct from manual `AvailabilityBlock`.
-- Toggle to show/hide external availability (per user or global).
+### Outbound event sync (Phase 2)
+Behavior:
+- Event creation supports "Add to Google Calendar"
+- Idea-to-event scheduling supports same toggle
+- Linked external event metadata is persisted (`ExternalEventLink`)
+- Event detail surfaces sync status when link exists
 
 ---
 
-## Phase 2 Implementation (Outbound Events)
-
-### 1) Incremental OAuth
-- Request `calendar.events` scope when user enables outbound sync.
-- If user already connected, re-run OAuth consent flow.
-
-### 2) Event creation hook
-- When creating a Duet event, allow optional toggle:
-  - `addToGoogleCalendar = true`
-- Create Google event via `events.insert`.
-- Store `ExternalEventLink` with `externalEventId`, `etag`.
-
-### 3) Event detail status
-- Show "Synced" badge when link exists.
-- Allow "Remove from Google" (optional).
+## Environment variables
+Required for Google integration:
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI`
+- `TOKEN_ENCRYPTION_KEY`
 
 ---
 
-## Phase 3 Implementation (Bidirectional Sync)
+## Remaining backlog (Phase 3+)
 
-### 1) Webhooks
-- Register watch channel per selected calendar.
-- Store channel + resource IDs in `ExternalSyncState`.
-- On notification, use `syncToken` to fetch updates.
-
-### 2) Conflict resolution
-- Compare `updated` timestamps.
-- Default rule: most recent wins; log conflicts.
+- [ ] Periodic sync trigger (cron/job)
+- [ ] Update/delete propagation when Duet events change
+- [ ] Webhook-based incremental sync strategy
+- [ ] Conflict handling policy and retry/backoff hardening
+- [ ] Provider abstraction for non-Google calendars
 
 ---
 
-## Background Jobs
+## Validation checklist
 
-- Add scheduled job entry (platform-specific cron):
-  - `scripts/google-sync.ts` (polling per account)
-- Job steps:
-  1. Refresh access token (if expired)
-  2. Pull calendar list (optional daily)
-  3. Run freebusy sync for selected calendars
-  4. Update `ExternalSyncState.lastSyncedAt`
-
----
-
-## Error Handling
-- Token refresh failure: mark account `revokedAt`, surface reconnect CTA.
-- Partial calendar failures: keep others, log error state on account.
-- API 429/5xx: retry with backoff; stop after N retries.
-
----
-
-## Testing Plan
-
-### Unit
-- URL validation for OAuth state, token storage encryption.
-- Freebusy response parsing.
-
-### Integration
-- Connect flow end-to-end (OAuth mock).
-- Calendar list selection -> sync.
-
-### Manual
-- Connect, select calendar, see busy blocks.
-- Disable a calendar, blocks removed.
-- Revoke access in Google -> app shows reconnect.
-
----
-
-## Rollout Milestones
-
-### M3-A (Phase 1 MVP)
-- OAuth connect + calendar selection
-- Freebusy sync + external availability rendering
-- Settings UI + manual sync
-
-### M3-B (Phase 2)
-- Incremental auth
-- Event creation to Google + status badge
-
-### M3-C (Phase 3)
-- Webhook sync + conflict handling
-
----
-
-## Open Questions
-- Availability sync window (default 60 or 90 days?)
-- Where to show external availability toggles (global vs per user)?
-- Should external blocks be stored separately or merged into AvailabilityBlock with `source`?
-
+- [ ] Connect Google account from settings
+- [ ] Select/deselect calendars and confirm busy block updates
+- [ ] Create event with Google toggle and verify external event created
+- [ ] Schedule idea with Google toggle and verify external event created
+- [ ] Disconnect account and verify sync paths are disabled

@@ -172,11 +172,8 @@ export default function IdeaCard({
             <Pencil className="h-4 w-4" />
           </button>
           <button
-            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/90 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
+            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)]"
             title={`Comments (${commentCount})`}
-            aria-label={`Toggle comments for ${idea.title}`}
-            aria-expanded={isCommentsOpen}
-            aria-pressed={isCommentsOpen}
             onClick={() => setIsCommentsOpen((prev) => !prev)}
             type="button"
           >
@@ -249,10 +246,10 @@ export default function IdeaCard({
               if (!content) {
                 return;
               }
+              event.currentTarget.reset();
               startTransition(async () => {
                 try {
                   await onAddComment(formData);
-                  form.reset();
                   router.refresh();
                   toast.success("Comment added");
                 } catch {

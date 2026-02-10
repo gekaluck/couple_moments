@@ -198,9 +198,9 @@ export default async function SettingsPage({ params }: PageProps) {
             </div>
           </section>
 
-          {!isSpaceComplete && (
-            <InviteCard inviteCode={space.inviteCode} />
-          )}
+      {!isSpaceComplete && (
+        <InviteCard inviteCode={space.inviteCode} />
+      )}
 
           <section className="surface border border-[var(--panel-border)] bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(248,249,252,0.8))] p-6 md:p-8">
             <div className="flex flex-wrap items-start justify-between gap-3">

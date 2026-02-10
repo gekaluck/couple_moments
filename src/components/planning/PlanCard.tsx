@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CalendarClock, MapPin, MessageSquare } from "lucide-react";
 import Card, { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
+import { formatEventDateTime } from "@/lib/formatters";
 
 type PlanCardProps = {
   id: string;
@@ -15,19 +16,12 @@ type PlanCardProps = {
   placeName?: string | null;
 };
 
-function formatDateTime(date: Date, timeIsSet?: boolean) {
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    ...(timeIsSet ? { hour: "numeric", minute: "2-digit" } : {}),
-  });
-}
-
 function getDayDiff(date: Date) {
   const today = new Date();
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  return Math.round((startOfDate.getTime() - startOfToday.getTime()) / 86400000);
+  const diffMs = startOfDate.getTime() - startOfToday.getTime();
+  return Math.round(diffMs / (24 * 60 * 60 * 1000));
 }
 
 export default function PlanCard({
@@ -77,7 +71,7 @@ export default function PlanCard({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
               <CalendarClock className="h-4 w-4 text-rose-500" />
-              {formatDateTime(dateTimeStart, timeIsSet)}
+              {formatEventDateTime(dateTimeStart, timeIsSet)}
               {!timeIsSet ? (
                 <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
                   Anytime

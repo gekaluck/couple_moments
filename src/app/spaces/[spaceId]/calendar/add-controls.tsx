@@ -44,8 +44,10 @@ export default function CalendarAddControls({
   prefillData,
   hasGoogleCalendar = false,
 }: CalendarAddControlsProps) {
-  const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(null);
-  const [eventDate, setEventDate] = useState<string | undefined>(undefined);
+  const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(() =>
+    initialEventDate || prefillData ? "event" : null,
+  );
+  const [eventDate, setEventDate] = useState<string | undefined>(() => initialEventDate ?? undefined);
   const todayStr = getTodayDateString();
   const [errors, setErrors] = useState<{
     eventTitle?: string;
@@ -57,8 +59,6 @@ export default function CalendarAddControls({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isAutoOpeningEvent = Boolean(initialEventDate || prefillData);
-  const activePanel = isAutoOpeningEvent ? "event" : openPanel;
   const activeEventDate = initialEventDate ?? eventDate;
 
   const clearModalParams = () => {
@@ -66,6 +66,11 @@ export default function CalendarAddControls({
     ["new", "repeat", "action", "editBlock"].forEach((key) => params.delete(key));
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const closePanel = () => {
+    setOpenPanel(null);
+    setErrors({});
   };
 
   const modalTitle = prefillData ? "Do this again" : "New event";
@@ -78,6 +83,7 @@ export default function CalendarAddControls({
           aria-label="Create a new event"
           onClick={() => {
             setEventDate(undefined);
+            setErrors({});
             setOpenPanel("event");
             setErrors({});
           }}
@@ -89,11 +95,10 @@ export default function CalendarAddControls({
           + Event
         </button>
         <button
-          className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3.5 py-2 text-xs font-medium text-white shadow-[var(--shadow-sm)] transition duration-200 hover:-translate-y-0.5 hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-          aria-label="Block unavailable time"
+          className="button-hover inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
           onClick={() => {
-            setOpenPanel("block");
             setErrors({});
+            setOpenPanel("block");
           }}
           type="button"
         >
@@ -105,14 +110,8 @@ export default function CalendarAddControls({
         </button>
       </div>
       <Modal
-        isOpen={activePanel === "event"}
-        onClose={() => {
-          setOpenPanel(null);
-          setErrors({});
-          if (isAutoOpeningEvent) {
-            clearModalParams();
-          }
-        }}
+        isOpen={openPanel === "event"}
+        onClose={closePanel}
         title={modalTitle}
       >
         <form
@@ -138,7 +137,7 @@ export default function CalendarAddControls({
               try {
                 await onCreateEvent(formData);
                 toast.success(prefillData ? "Event created!" : "Event saved!");
-                setOpenPanel(null);
+                closePanel();
                 clearModalParams();
                 router.refresh();
               } catch {
@@ -246,14 +245,8 @@ export default function CalendarAddControls({
           )}
           <div className="flex flex-wrap justify-end gap-2">
             <button
-              className="button-hover rounded-full border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:bg-white hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
-              onClick={() => {
-                setOpenPanel(null);
-                setErrors({});
-                if (isAutoOpeningEvent) {
-                  clearModalParams();
-                }
-              }}
+              className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+              onClick={closePanel}
               type="button"
             >
               Cancel
@@ -270,10 +263,7 @@ export default function CalendarAddControls({
       </Modal>
       <Modal
         isOpen={openPanel === "block"}
-        onClose={() => {
-          setOpenPanel(null);
-          setErrors({});
-        }}
+        onClose={closePanel}
         title="Block out unavailable time"
       >
         <form
@@ -300,7 +290,7 @@ export default function CalendarAddControls({
               try {
                 await onCreateBlock(formData);
                 toast.success("Availability blocked!");
-                setOpenPanel(null);
+                closePanel();
                 clearModalParams();
                 router.refresh();
               } catch {
@@ -352,11 +342,8 @@ export default function CalendarAddControls({
           />
           <div className="flex flex-wrap justify-end gap-2">
             <button
-              className="button-hover rounded-full border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:bg-white hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
-              onClick={() => {
-                setOpenPanel(null);
-                setErrors({});
-              }}
+              className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+              onClick={closePanel}
               type="button"
             >
               Cancel

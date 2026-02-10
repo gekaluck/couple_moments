@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { badRequest, notFound, parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { createEventForSpace, listEventsForSpace } from "@/lib/events";
 import { createGoogleCalendarEvent } from "@/lib/integrations/google/events";
 import { parseJsonOrForm } from "@/lib/request";
-import { getSessionUserId } from "@/lib/session";
 import { normalizeTags } from "@/lib/tags";
 
 type PageProps = {
@@ -24,15 +24,16 @@ function parseDate(value: string | null | undefined) {
 }
 
 export async function GET(request: Request, { params }: PageProps) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const { spaceId } = await params;
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return notFound();
   }
 
   const { searchParams } = new URL(request.url);
@@ -55,15 +56,16 @@ export async function GET(request: Request, { params }: PageProps) {
 }
 
 export async function POST(request: Request, { params }: PageProps) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const { spaceId } = await params;
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return notFound();
   }
 
   const body = await parseJsonOrForm<Record<string, unknown>>(request);
@@ -76,12 +78,9 @@ export async function POST(request: Request, { params }: PageProps) {
     linkedIdeaId: z.string().trim().optional().nullable(),
     addToGoogleCalendar: z.union([z.boolean(), z.string()]).optional(),
   });
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Title and dateTimeStart are required." },
-      { status: 400 },
-    );
+  const parsed = parseOrBadRequest(schema, body, "Title and dateTimeStart are required.");
+  if (!parsed.data) {
+    return parsed.response;
   }
 
   const title = parsed.data.title;
@@ -92,17 +91,11 @@ export async function POST(request: Request, { params }: PageProps) {
       : null;
 
   if (!dateTimeStart) {
-    return NextResponse.json(
-      { error: "dateTimeStart must be a valid ISO date." },
-      { status: 400 },
-    );
+    return badRequest("dateTimeStart must be a valid ISO date.");
   }
 
   if (parsed.data.dateTimeEnd !== undefined && !dateTimeEnd) {
-    return NextResponse.json(
-      { error: "dateTimeEnd must be a valid ISO date." },
-      { status: 400 },
-    );
+    return badRequest("dateTimeEnd must be a valid ISO date.");
   }
 
   const event = await createEventForSpace(spaceId, userId, {

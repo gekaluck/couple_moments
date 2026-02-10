@@ -1,76 +1,92 @@
-# Deployment Guide - Duet
+# Deployment Guide (Current)
 
-## Current State
-- Database: PostgreSQL (Prisma + `@prisma/adapter-pg` + `pg`)
-- Auth: DB-backed session tokens stored in `Session` table
-- Framework: Next.js 16 with App Router
+Updated: 2026-02-10
 
-## Recommended Stack for Production
+## Scope
 
-### Option A: Railway (Easiest for your setup)
-**Why**: One-click PostgreSQL + automatic Next.js deployment.
+This guide covers production deployment for the current Duet stack:
+- Next.js 16 (App Router)
+- Prisma + PostgreSQL
+- Cookie-based sessions (`cm_session`)
+- Optional integrations: Google Calendar, Google Maps Places, Cloudinary uploads
 
-### Option B: Vercel + Neon/Supabase
-**Why**: Best for Next.js, but requires external DB.
+## 1) Required environment variables
 
-### Option C: Fly.io
-**Why**: Low-cost always-on apps, but more manual setup.
+Minimum required:
 
----
-
-## Step-by-Step: Railway Deployment
-
-### 1) Create a PostgreSQL database
-- Create a Railway project and add a PostgreSQL service.
-- Copy the `DATABASE_URL` (use `?sslmode=require` if needed).
-
-### 2) Set environment variables
-Set these in Railway dashboard:
-```
-DATABASE_URL=<postgres connection string>
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=<optional>
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=<optional>
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=<optional>
-```
-
-### 3) Run migrations
-After deployment, run:
 ```bash
+DATABASE_URL=postgresql://...
+```
+
+Required if Google Calendar integration is enabled:
+
+```bash
+TOKEN_ENCRYPTION_KEY=base64-encoded-32-byte-key
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=https://<your-domain>/api/integrations/google/callback
+```
+
+Required if Google Maps place search is enabled:
+
+```bash
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
+```
+
+Required if Cloudinary photo upload is enabled:
+
+```bash
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=...
+```
+
+## 2) Build and migrate
+
+```bash
+npm ci
 npx prisma migrate deploy
-```
-
-### 4) Build and start
-The build script already runs `prisma generate`:
-```bash
 npm run build
+npm run start
 ```
 
-If you want migrations in build:
-```bash
-npx prisma migrate deploy && npm run build
-```
+Notes:
+- `npm run build` already runs `prisma generate`.
+- Run `prisma migrate deploy` before first production start.
 
----
+## 3) Hosting options
 
-## Quick Checklist
-- [ ] PostgreSQL database provisioned
-- [ ] `DATABASE_URL` set in environment
-- [ ] Migrations deployed (`prisma migrate deploy`)
-- [ ] Build succeeds (`npm run build`)
-- [ ] Optional: Google Maps + Cloudinary env vars
+## Option A: Railway (fastest setup)
+- Provision Postgres in the same project.
+- Set all env vars in Railway service settings.
+- Deploy app service from repository.
+- Run `npx prisma migrate deploy` once against production DB.
 
----
+## Option B: Vercel + managed Postgres (Neon/Supabase)
+- Configure DB separately.
+- Add env vars in Vercel project settings.
+- Run migrations via CI step or one-off job before release.
 
-## Troubleshooting
+## Option C: Fly.io
+- Works well for always-on Node runtime.
+- Requires explicit process and release migration setup.
 
-**Prisma connection fails**:
-- Verify `DATABASE_URL` is correct and includes SSL if required by host.
-- Check that the database allows connections from your deploy host.
+## 4) Release checklist
 
-**Migrations fail**:
-- Ensure the schema matches your migrations.
-- Try `npx prisma migrate deploy` from the provider's console.
+- [ ] Env vars configured for enabled features
+- [ ] `npx prisma migrate deploy` executed successfully
+- [ ] `npm run build` passes in production environment
+- [ ] Login, register, logout work
+- [ ] Space creation and membership checks work
+- [ ] Calendar load and event create/edit/delete work
+- [ ] If enabled: Google connect/sync and Cloudinary upload tested
 
-**Cloudinary uploads fail**:
-- Confirm unsigned preset name and cloud name.
-- Verify the preset allows uploads from your domain.
+## 5) Common issues
+
+`PrismaClientInitializationError`:
+- Check `DATABASE_URL` correctness and SSL requirements.
+
+Google OAuth callback mismatch:
+- Ensure `GOOGLE_REDIRECT_URI` exactly matches the callback URL configured in Google Cloud.
+
+Cloudinary upload fails:
+- Verify cloud name, preset, and preset upload permissions.

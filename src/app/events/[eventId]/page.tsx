@@ -2,13 +2,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { createEventComment, createEventPhoto, deleteEvent, getEventForUser, listEventComments, updateEvent, updateEventRating } from "@/lib/events";
+import { createEventComment, createEventPhoto, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
 import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
-import { prisma } from "@/lib/prisma";
 import { normalizeTags, parseTags } from "@/lib/tags";
-import { getEventSyncStatus } from "@/lib/integrations/google/events";
+import { parseJsonStringArray } from "@/lib/parsers";
 
+import { loadEventBaseData, loadEventDetailData } from "./page-data";
 import EventComments from "./event-comments";
 import EventEditModal from "./event-edit-modal";
 import EventRating from "./event-rating";
@@ -111,51 +111,12 @@ function isEventInPast(event: { dateTimeStart: Date; dateTimeEnd: Date | null })
   return end < new Date();
 }
 
-function parseJsonArray(value?: string | null) {
-  if (!value) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.map((item) => `${item}`) : null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function EventPage({ params, searchParams }: PageProps) {
   const userId = await requireUserId();
   const { eventId } = await params;
   const search = (await searchParams) ?? {};
   const isEditing = search.edit === "1";
-  const event = await getEventForUser(eventId, userId);
-  const currentUserRating = event
-    ? await prisma.rating.findUnique({
-        where: {
-          userId_eventId: {
-            userId,
-            eventId,
-          },
-        },
-        select: { value: true },
-      })
-    : null;
-  const photos = await prisma.photo.findMany({
-    where: { eventId },
-    orderBy: { createdAt: "asc" },
-  });
-  const comments = await listEventComments(eventId);
-  const currentUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { name: true, email: true },
-  });
-  const creator = event
-    ? await prisma.user.findUnique({
-        where: { id: event.createdByUserId },
-        select: { name: true, email: true },
-      })
-    : null;
-  const googleSyncStatus = event ? await getEventSyncStatus(event.id) : null;
+  const [event, currentUser] = await loadEventBaseData(eventId, userId);
 
   if (!event) {
     notFound();
@@ -163,6 +124,13 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   if (!currentUser) {
     redirect("/login");
   }
+  const { currentUserRating, photos, comments, creator, googleSyncStatus } =
+    await loadEventDetailData({
+      eventId,
+      userId,
+      coupleSpaceId: event.coupleSpaceId,
+      createdByUserId: event.createdByUserId,
+    });
   // Store event ID for use in server actions (avoids TypeScript narrowing issues)
   const eventIdForActions = event.id;
   const spaceIdForActions = event.coupleSpaceId;
@@ -185,10 +153,10 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
     const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const placeOpeningHours = parseJsonArray(
+    const placeOpeningHours = parseJsonStringArray(
       formData.get("placeOpeningHours")?.toString() ?? null,
     );
-    const placePhotoUrls = parseJsonArray(
+    const placePhotoUrls = parseJsonStringArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
     const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
@@ -279,19 +247,29 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const tags = parseTags(event.tags);
   const tagsValue = tags.join(", ");
   const isPast = isEventInPast(event);
-  const statusLabel = isPast ? "Past" : "Upcoming";
   const creatorName = creator?.name || creator?.email || "Unknown";
   const eventDateLabel = event.dateTimeStart.toLocaleDateString("en-US", {
+    weekday: "short",
     month: "long",
     day: "numeric",
     year: "numeric",
   });
-  const eventTimeLabel = event.timeIsSet
-    ? event.dateTimeStart.toLocaleTimeString("en-US", {
+  const startTimeLabel = event.dateTimeStart.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const endTimeLabel = event.dateTimeEnd
+    ? event.dateTimeEnd.toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
       })
+    : null;
+  const eventTimeLabel = event.timeIsSet
+    ? endTimeLabel && endTimeLabel !== startTimeLabel
+      ? `${startTimeLabel} - ${endTimeLabel}`
+      : startTimeLabel
     : "Anytime";
+  const statusLabel = isPast ? "Past memory" : "Upcoming";
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const hasPlace = Boolean(event.placeName || event.placeAddress);
   const placeLink =
@@ -303,13 +281,14 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const placeOpeningHours = Array.isArray(event.placeOpeningHours)
     ? (event.placeOpeningHours as string[])
     : null;
-  const todayDayLabel = new Date().toLocaleDateString("en-US", { weekday: "long" });
-  const todayHours = placeOpeningHours?.find((line) =>
-    line.toLowerCase().startsWith(todayDayLabel.toLowerCase()),
-  );
   const placePhotoUrls = Array.isArray(event.placePhotoUrls)
     ? (event.placePhotoUrls as string[])
     : null;
+  const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const todayHours =
+    placeOpeningHours?.find((line) =>
+      line.toLowerCase().startsWith(todayName.toLowerCase()),
+    ) ?? null;
   const staticMapUrl =
     mapsKey && event.placeLat && event.placeLng
       ? `https://maps.googleapis.com/maps/api/staticmap?center=${event.placeLat},${event.placeLng}&zoom=14&size=700x320&markers=color:0xdb2777%7C${event.placeLat},${event.placeLng}&key=${mapsKey}`

@@ -519,16 +519,6 @@ h3,
   opacity: 1;
 }
 
-/* Tag hover effect */
-.tag-interactive {
-  transition: all var(--transition-fast);
-}
-
-.tag-interactive:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-md);
-}
-
 /* Button press effect */
 .btn-press {
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
@@ -584,27 +574,19 @@ h3,
   transform: scale(1.05);
 }
 
-/* ========================================
-   Section Headers & Visual Hierarchy
-   ======================================== */
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
-.section-header-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-dark));
-  color: white;
-  box-shadow: var(--shadow-sm);
+.section-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
 }
 
 .section-divider {
@@ -783,72 +765,6 @@ h3,
 }
 
 /* ========================================
-   Tag Chips - Clickable Filters
-   ======================================== */
-
-.tag-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  border: 1px solid transparent;
-}
-
-.tag-filter:hover {
-  transform: scale(1.05);
-}
-
-.tag-filter-active {
-  box-shadow: 0 0 0 2px var(--accent-primary);
-}
-
-.tag-filter-inactive {
-  opacity: 0.6;
-}
-
-/* ========================================
-   Breadcrumbs
-   ======================================== */
-
-.breadcrumbs {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.breadcrumb-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.breadcrumb-link {
-  color: var(--text-muted);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-.breadcrumb-link:hover {
-  color: var(--accent-primary);
-}
-
-.breadcrumb-current {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.breadcrumb-separator {
-  color: var(--text-tertiary);
-}
-
-/* ========================================
    Page Load Animations
    ======================================== */
 
@@ -930,37 +846,3 @@ h3,
   color: var(--accent-primary);
 }
 
-/* ========================================
-   Today Shortcut Badge
-   ======================================== */
-
-.today-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-dark));
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 999px;
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.today-badge:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-md);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}

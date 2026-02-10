@@ -3,62 +3,49 @@
 import { useEffect, useRef, useState } from "react";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 
-type GoogleLatLng = {
-  lat: () => number;
-  lng: () => number;
-};
+let mapsConfigured = false;
 
-type GoogleAutocompletePlace = {
+type LatLng = { lat: () => number; lng: () => number };
+type AutocompletePlace = {
   place_id?: string;
   name?: string;
   formatted_address?: string;
-  geometry?: { location?: GoogleLatLng };
+  geometry?: { location?: LatLng };
   url?: string;
 };
-
-type GooglePlaceDetails = {
+type PlacePhoto = { getUrl: (options: { maxWidth: number; maxHeight: number }) => string };
+type PlaceDetails = {
   website?: string;
   opening_hours?: { weekday_text?: string[] };
-  photos?: Array<{
-    getUrl: (options: { maxWidth: number; maxHeight: number }) => string;
-  }>;
+  photos?: PlacePhoto[];
   url?: string;
   name?: string;
 };
-
-type GooglePlacesAutocomplete = {
-  addListener: (eventName: "place_changed", handler: () => void) => void;
-  getPlace: () => GoogleAutocompletePlace | undefined;
-};
-
-type GooglePlacesService = {
+type PlacesService = {
   getDetails: (
     request: { placeId: string; fields: string[] },
-    callback: (details: GooglePlaceDetails | null, status: string) => void,
+    callback: (details: PlaceDetails | null, status: string) => void,
   ) => void;
 };
-
-type GoogleMapsNamespace = {
+type AutocompleteService = {
+  addListener: (eventName: string, handler: () => void) => void;
+  getPlace: () => AutocompletePlace;
+};
+type GoogleMapsGlobal = {
   maps: {
     places: {
       Autocomplete: new (
         input: HTMLInputElement,
         options: { fields: string[] },
-      ) => GooglePlacesAutocomplete;
-      PlacesService: new (container: HTMLDivElement) => GooglePlacesService;
-      PlacesServiceStatus: {
-        OK: string;
-      };
+      ) => AutocompleteService;
+      PlacesService: new (container: HTMLDivElement | object) => PlacesService;
+      PlacesServiceStatus: { OK: string };
     };
     event: {
       clearInstanceListeners: (instance: unknown) => void;
     };
   };
 };
-
-declare const google: GoogleMapsNamespace;
-
-let mapsConfigured = false;
 
 export type PlaceSelection = {
   placeId: string;
@@ -97,7 +84,7 @@ export default function PlaceSearch({
       return;
     }
 
-    let autocomplete: GooglePlacesAutocomplete | null = null;
+    let autocomplete: AutocompleteService | null = null;
 
     if (!mapsConfigured) {
       setOptions({ key } as Parameters<typeof setOptions>[0]);
@@ -108,10 +95,14 @@ export default function PlaceSearch({
       if (!inputRef.current) {
         return;
       }
-      const service = new google.maps.places.PlacesService(
+      const googleMaps = (globalThis as unknown as { google?: GoogleMapsGlobal }).google;
+      if (!googleMaps) {
+        return;
+      }
+      const service = new googleMaps.maps.places.PlacesService(
         document.createElement("div"),
       );
-      autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
+      autocomplete = new googleMaps.maps.places.Autocomplete(inputRef.current, {
         fields: ["place_id", "name", "formatted_address", "geometry", "url"],
       });
       autocomplete.addListener("place_changed", () => {
@@ -135,7 +126,7 @@ export default function PlaceSearch({
           },
           (details, status) => {
             if (
-              status !== google.maps.places.PlacesServiceStatus.OK ||
+              status !== googleMaps.maps.places.PlacesServiceStatus.OK ||
               !details
             ) {
               setValue(baseSelection.name);
@@ -164,8 +155,9 @@ export default function PlaceSearch({
     });
 
     return () => {
-      if (autocomplete) {
-        google.maps.event.clearInstanceListeners(autocomplete);
+      const googleMaps = (globalThis as unknown as { google?: GoogleMapsGlobal }).google;
+      if (autocomplete && googleMaps) {
+        googleMaps.maps.event.clearInstanceListeners(autocomplete);
       }
     };
   }, [apiKey, onSelect]);
