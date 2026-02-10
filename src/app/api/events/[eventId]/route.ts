@@ -4,7 +4,8 @@ import { z } from "zod";
 import { badRequest, notFound, parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { getEventForUser, updateEvent, deleteEvent } from "@/lib/events";
 import {
-  deleteGoogleCalendarEvent,
+  cancelGoogleCalendarEvent,
+  getGoogleEventDeleteContext,
   updateGoogleCalendarEvent,
 } from "@/lib/integrations/google/events";
 import { parseJsonOrForm } from "@/lib/request";
@@ -102,11 +103,18 @@ export async function PUT(request: Request, { params }: PageProps) {
     placeName: event.placeName,
     placeAddress: event.placeAddress,
   });
-  if (!googleSyncResult.success) {
-    console.warn("Google Calendar update sync skipped:", googleSyncResult.error);
-  }
+  const googleSync =
+    googleSyncResult.code === "NOT_SYNCED"
+      ? { attempted: false, success: true as const }
+      : {
+          attempted: true,
+          success: googleSyncResult.success,
+          code: googleSyncResult.code,
+          error: googleSyncResult.success ? undefined : googleSyncResult.error,
+          recovered: googleSyncResult.recovered ?? false,
+        };
 
-  return NextResponse.json({ event });
+  return NextResponse.json({ event, googleSync });
 }
 
 export async function DELETE(_request: Request, { params }: PageProps) {
@@ -122,10 +130,18 @@ export async function DELETE(_request: Request, { params }: PageProps) {
     return notFound();
   }
 
-  const googleDeleteResult = await deleteGoogleCalendarEvent(eventId);
-  if (!googleDeleteResult.success) {
-    console.warn("Google Calendar delete sync skipped:", googleDeleteResult.error);
-  }
+  const googleDeleteContext = await getGoogleEventDeleteContext(eventId);
   const event = await deleteEvent(eventId, userId);
-  return NextResponse.json({ event });
+  const googleDeleteResult = await cancelGoogleCalendarEvent(googleDeleteContext);
+  const googleSync =
+    googleDeleteResult.code === "NOT_SYNCED"
+      ? { attempted: false, success: true as const }
+      : {
+          attempted: true,
+          success: googleDeleteResult.success,
+          code: googleDeleteResult.code,
+          error: googleDeleteResult.success ? undefined : googleDeleteResult.error,
+          recovered: googleDeleteResult.recovered ?? false,
+        };
+  return NextResponse.json({ event, googleSync });
 }
