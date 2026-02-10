@@ -54,7 +54,17 @@ type IdeaCardProps = {
   currentUserId: string;
   mapsApiKey?: string;
   hasGoogleCalendar?: boolean;
-  onSchedule: (formData: FormData) => Promise<void>;
+  onSchedule: (formData: FormData) => Promise<
+    | void
+    | {
+        googleSync?: {
+          attempted: boolean;
+          success: boolean;
+          message?: string;
+          info?: string;
+        };
+      }
+  >;
   onAddComment: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
   onEdit: (formData: FormData) => Promise<void>;
@@ -306,8 +316,16 @@ export default function IdeaCard({
               const formData = new FormData(event.currentTarget);
               startTransition(async () => {
                 try {
-                  await onSchedule(formData);
+                  const result = await onSchedule(formData);
                   toast.success("Event created from idea!");
+                  if (result?.googleSync?.attempted && !result.googleSync.success) {
+                    toast.warning(
+                      result.googleSync.message ??
+                        "Created in Duet, but Google Calendar sync failed.",
+                    );
+                  } else if (result?.googleSync?.info) {
+                    toast.info(result.googleSync.info);
+                  }
                   router.refresh();
                   setIsScheduleOpen(false);
                 } catch {

@@ -22,7 +22,17 @@ type PrefillData = {
 };
 
 type CalendarAddControlsProps = {
-  onCreateEvent: (formData: FormData) => Promise<void>;
+  onCreateEvent: (formData: FormData) => Promise<
+    | void
+    | {
+        googleSync?: {
+          attempted: boolean;
+          success: boolean;
+          message?: string;
+          info?: string;
+        };
+      }
+  >;
   onCreateBlock: (formData: FormData) => Promise<void>;
   initialEventDate?: string | null;
   prefillData?: PrefillData | null;
@@ -135,8 +145,16 @@ export default function CalendarAddControls({
             }));
             startTransition(async () => {
               try {
-                await onCreateEvent(formData);
+                const result = await onCreateEvent(formData);
                 toast.success(prefillData ? "Event created!" : "Event saved!");
+                if (result?.googleSync?.attempted && !result.googleSync.success) {
+                  toast.warning(
+                    result.googleSync.message ??
+                      "Saved in Duet, but Google Calendar sync failed.",
+                  );
+                } else if (result?.googleSync?.info) {
+                  toast.info(result.googleSync.info);
+                }
                 closePanel();
                 clearModalParams();
                 router.refresh();

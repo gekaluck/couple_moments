@@ -52,6 +52,8 @@ Behavior:
 - Idea-to-event scheduling supports same toggle
 - Linked external event metadata is persisted (`ExternalEventLink`)
 - Event detail surfaces sync status when link exists
+- Update/delete sync now retries transient Google API failures with backoff
+- If linked Google events are missing (404), stale links are cleaned up and update flow recreates links
 
 ---
 

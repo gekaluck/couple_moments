@@ -13,6 +13,103 @@ type DuetEvent = {
   placeAddress: string | null;
 };
 
+export type GoogleSyncCode =
+  | 'NOT_CONNECTED'
+  | 'ALREADY_SYNCED'
+  | 'NO_PRIMARY_CALENDAR'
+  | 'NOT_SYNCED'
+  | 'ACCOUNT_REVOKED'
+  | 'MISSING_EXTERNAL_EVENT'
+  | 'TRANSIENT_ERROR'
+  | 'API_ERROR';
+
+export type GoogleSyncResult = {
+  success: boolean;
+  code?: GoogleSyncCode;
+  error?: string;
+  externalEventId?: string;
+  recovered?: boolean;
+  skipped?: boolean;
+};
+
+const RETRYABLE_HTTP_STATUS = new Set([408, 429, 500, 502, 503, 504]);
+const RETRYABLE_NETWORK_CODES = new Set([
+  'ETIMEDOUT',
+  'ECONNRESET',
+  'ECONNABORTED',
+  'EAI_AGAIN',
+  'ENOTFOUND',
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getErrorStatus(error: unknown): number | null {
+  if (!isRecord(error) || !('response' in error)) {
+    return null;
+  }
+  const response = error.response;
+  if (!isRecord(response) || !('status' in response)) {
+    return null;
+  }
+  const status = response.status;
+  return typeof status === 'number' ? status : null;
+}
+
+function getErrorCode(error: unknown): string | null {
+  if (!isRecord(error) || !('code' in error)) {
+    return null;
+  }
+  const code = error.code;
+  return typeof code === 'string' ? code : null;
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return 'Unknown error';
+}
+
+function isRetryableGoogleError(error: unknown): boolean {
+  const status = getErrorStatus(error);
+  if (status !== null && RETRYABLE_HTTP_STATUS.has(status)) {
+    return true;
+  }
+  const code = getErrorCode(error);
+  return code !== null && RETRYABLE_NETWORK_CODES.has(code);
+}
+
+function isGoogleNotFoundError(error: unknown): boolean {
+  return getErrorStatus(error) === 404;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function withRetry<T>(operation: () => Promise<T>): Promise<T> {
+  const maxAttempts = 3;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableGoogleError(error) || attempt === maxAttempts - 1) {
+        throw error;
+      }
+      await delay(300 * 2 ** attempt);
+    }
+  }
+
+  throw lastError;
+}
+
 async function getInviteAttendees(
   eventId: string,
   organizerUserId: string,
@@ -112,7 +209,7 @@ async function getPrimaryCalendarId(externalAccountId: string): Promise<string |
 export async function createGoogleCalendarEvent(
   userId: string,
   event: DuetEvent
-): Promise<{ success: boolean; externalEventId?: string; error?: string }> {
+): Promise<GoogleSyncResult> {
   try {
     // Get user's Google account
     const account = await prisma.externalAccount.findFirst({
@@ -124,7 +221,11 @@ export async function createGoogleCalendarEvent(
     });
 
     if (!account) {
-      return { success: false, error: 'No Google account connected' };
+      return {
+        success: false,
+        code: 'NOT_CONNECTED',
+        error: 'No Google account connected',
+      };
     }
 
     // Check if already linked
@@ -133,13 +234,21 @@ export async function createGoogleCalendarEvent(
     });
 
     if (existingLink) {
-      return { success: false, error: 'Event already synced to Google Calendar' };
+      return {
+        success: false,
+        code: 'ALREADY_SYNCED',
+        error: 'Event already synced to Google Calendar',
+      };
     }
 
     // Get primary calendar
     const calendarId = await getPrimaryCalendarId(account.id);
     if (!calendarId) {
-      return { success: false, error: 'No primary calendar found' };
+      return {
+        success: false,
+        code: 'NO_PRIMARY_CALENDAR',
+        error: 'No primary calendar found',
+      };
     }
 
     // Get authenticated client
@@ -178,14 +287,20 @@ export async function createGoogleCalendarEvent(
     }
 
     // Insert event
-    const response = await calendar.events.insert({
-      calendarId,
-      sendUpdates: 'all',
-      requestBody: googleEvent,
-    });
+    const response = await withRetry(() =>
+      calendar.events.insert({
+        calendarId,
+        sendUpdates: 'all',
+        requestBody: googleEvent,
+      }),
+    );
 
     if (!response.data.id) {
-      return { success: false, error: 'Failed to create Google Calendar event' };
+      return {
+        success: false,
+        code: 'API_ERROR',
+        error: 'Failed to create Google Calendar event',
+      };
     }
 
     // Store the link
@@ -205,7 +320,8 @@ export async function createGoogleCalendarEvent(
     console.error('Error creating Google Calendar event:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      code: isRetryableGoogleError(error) ? 'TRANSIENT_ERROR' : 'API_ERROR',
+      error: getErrorMessage(error),
     };
   }
 }
@@ -216,7 +332,7 @@ export async function createGoogleCalendarEvent(
 export async function updateGoogleCalendarEvent(
   eventId: string,
   event: DuetEvent
-): Promise<{ success: boolean; error?: string }> {
+): Promise<GoogleSyncResult> {
   try {
     // Get existing link
     const link = await prisma.externalEventLink.findUnique({
@@ -225,11 +341,19 @@ export async function updateGoogleCalendarEvent(
     });
 
     if (!link) {
-      return { success: false, error: 'Event not synced to Google Calendar' };
+      return {
+        success: false,
+        code: 'NOT_SYNCED',
+        error: 'Event not synced to Google Calendar',
+      };
     }
 
     if (link.externalAccount.revokedAt) {
-      return { success: false, error: 'Google account access revoked' };
+      return {
+        success: false,
+        code: 'ACCOUNT_REVOKED',
+        error: 'Google account access revoked',
+      };
     }
 
     // Get authenticated client
@@ -266,18 +390,52 @@ export async function updateGoogleCalendarEvent(
     }
 
     // Update event
-    const response = await calendar.events.update({
-      calendarId: link.calendarId,
-      eventId: link.externalEventId,
-      sendUpdates: 'all',
-      requestBody: googleEvent,
-    });
+    let responseData: calendar_v3.Schema$Event;
+    try {
+      responseData = await withRetry(() =>
+        calendar.events
+          .update({
+            calendarId: link.calendarId,
+            eventId: link.externalEventId,
+            sendUpdates: 'all',
+            requestBody: googleEvent,
+          })
+          .then((response) => response.data),
+      );
+    } catch (error) {
+      if (isGoogleNotFoundError(error)) {
+        await prisma.externalEventLink.delete({ where: { eventId } }).catch(() => undefined);
+        const recreateResult = await createGoogleCalendarEvent(
+          link.externalAccount.userId,
+          event,
+        );
+        if (recreateResult.success) {
+          return {
+            success: true,
+            recovered: true,
+            externalEventId: recreateResult.externalEventId,
+          };
+        }
+        return {
+          success: false,
+          code: recreateResult.code ?? 'MISSING_EXTERNAL_EVENT',
+          error:
+            recreateResult.error ??
+            'Linked Google event was missing and could not be recreated',
+        };
+      }
+      return {
+        success: false,
+        code: isRetryableGoogleError(error) ? 'TRANSIENT_ERROR' : 'API_ERROR',
+        error: getErrorMessage(error),
+      };
+    }
 
     // Update link
     await prisma.externalEventLink.update({
       where: { eventId },
       data: {
-        etag: response.data.etag || null,
+        etag: responseData.etag || null,
         lastSyncedAt: new Date(),
       },
     });
@@ -287,7 +445,8 @@ export async function updateGoogleCalendarEvent(
     console.error('Error updating Google Calendar event:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      code: isRetryableGoogleError(error) ? 'TRANSIENT_ERROR' : 'API_ERROR',
+      error: getErrorMessage(error),
     };
   }
 }
@@ -297,7 +456,7 @@ export async function updateGoogleCalendarEvent(
  */
 export async function deleteGoogleCalendarEvent(
   eventId: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<GoogleSyncResult> {
   try {
     // Get existing link
     const link = await prisma.externalEventLink.findUnique({
@@ -306,8 +465,12 @@ export async function deleteGoogleCalendarEvent(
     });
 
     if (!link) {
-      return { success: true }; // Not synced, nothing to delete
+      return { success: true, skipped: true, code: 'NOT_SYNCED' };
     }
+
+    let syncError: string | undefined;
+    let syncCode: GoogleSyncCode | undefined;
+    let recovered = false;
 
     if (!link.externalAccount.revokedAt) {
       try {
@@ -316,28 +479,39 @@ export async function deleteGoogleCalendarEvent(
         const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
         // Delete event from Google
-        await calendar.events.delete({
-          calendarId: link.calendarId,
-          eventId: link.externalEventId,
-          sendUpdates: 'all',
-        });
+        await withRetry(() =>
+          calendar.events.delete({
+            calendarId: link.calendarId,
+            eventId: link.externalEventId,
+            sendUpdates: 'all',
+          }),
+        );
       } catch (error) {
-        // Log but don't fail - event might already be deleted on Google side
-        console.warn('Could not delete Google Calendar event:', error);
+        if (isGoogleNotFoundError(error)) {
+          recovered = true;
+        } else {
+          syncCode = isRetryableGoogleError(error) ? 'TRANSIENT_ERROR' : 'API_ERROR';
+          syncError =
+            'Deleted in Duet, but failed to cancel the Google Calendar event';
+        }
       }
+    } else {
+      recovered = true;
     }
 
     // Remove the link
-    await prisma.externalEventLink.delete({
-      where: { eventId },
-    });
+    await prisma.externalEventLink.delete({ where: { eventId } }).catch(() => undefined);
 
-    return { success: true };
+    if (syncError) {
+      return { success: false, code: syncCode, error: syncError };
+    }
+    return { success: true, recovered };
   } catch (error) {
     console.error('Error deleting Google Calendar event:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      code: isRetryableGoogleError(error) ? 'TRANSIENT_ERROR' : 'API_ERROR',
+      error: getErrorMessage(error),
     };
   }
 }

@@ -110,6 +110,14 @@ export async function POST(request: Request, { params }: PageProps) {
   // Sync to Google Calendar if requested
   const addToGoogle = parsed.data.addToGoogleCalendar === true || parsed.data.addToGoogleCalendar === "true";
   let googleCalendarSynced = false;
+  let googleSync:
+    | {
+        attempted: boolean;
+        success: boolean;
+        code?: string;
+        error?: string;
+      }
+    | undefined;
 
   if (addToGoogle) {
     const syncResult = await createGoogleCalendarEvent(userId, {
@@ -123,7 +131,18 @@ export async function POST(request: Request, { params }: PageProps) {
       placeAddress: event.placeAddress,
     });
     googleCalendarSynced = syncResult.success;
+    googleSync = {
+      attempted: true,
+      success: syncResult.success,
+      code: syncResult.code,
+      error: syncResult.success ? undefined : syncResult.error,
+    };
+  } else {
+    googleSync = {
+      attempted: false,
+      success: true,
+    };
   }
 
-  return NextResponse.json({ event, googleCalendarSynced }, { status: 201 });
+  return NextResponse.json({ event, googleCalendarSynced, googleSync }, { status: 201 });
 }

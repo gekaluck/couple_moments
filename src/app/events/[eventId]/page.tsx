@@ -97,6 +97,15 @@ type PageProps = {
   searchParams?: Promise<{ edit?: string; from?: string; spaceId?: string }>;
 };
 
+type EventActionResult = {
+  googleSync?: {
+    attempted: boolean;
+    success: boolean;
+    message?: string;
+    info?: string;
+  };
+};
+
 function formatDateInput(date: Date) {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -143,7 +152,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     ? `/spaces/${search.spaceId}/memories`
     : `/spaces/${event.coupleSpaceId}/calendar`;
 
-  async function handleUpdate(formData: FormData) {
+  async function handleUpdate(formData: FormData): Promise<EventActionResult | void> {
     "use server";
     const currentUserId = await requireUserId();
     const title = formData.get("title")?.toString().trim() ?? "";
@@ -202,22 +211,69 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       placeName: event.placeName,
       placeAddress: event.placeAddress,
     });
-    if (!googleSyncResult.success) {
-      console.warn("Google Calendar update sync skipped:", googleSyncResult.error);
-    }
 
     revalidatePath(`/events/${eventIdForActions}`);
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
+    if (googleSyncResult.code === "NOT_SYNCED") {
+      return {
+        googleSync: {
+          attempted: false,
+          success: true,
+        },
+      };
+    }
+    return {
+      googleSync: {
+        attempted: true,
+        success: googleSyncResult.success,
+        message: googleSyncResult.success
+          ? undefined
+          : googleSyncResult.error ??
+            "Updated in Duet, but failed to sync changes to Google Calendar.",
+        info: googleSyncResult.recovered
+          ? "Google event link was stale. The invite was recreated."
+          : undefined,
+      },
+    };
   }
 
-  async function handleDelete() {
+  async function runDeleteWithGoogleSync(): Promise<EventActionResult> {
     "use server";
-    const currentUserId = await requireUserId();
     const googleDeleteResult = await deleteGoogleCalendarEvent(eventIdForActions);
-    if (!googleDeleteResult.success) {
-      console.warn("Google Calendar delete sync skipped:", googleDeleteResult.error);
-    }
+    const currentUserId = await requireUserId();
     await deleteEvent(eventIdForActions, currentUserId);
+
+    if (googleDeleteResult.code === "NOT_SYNCED") {
+      return {
+        googleSync: {
+          attempted: false,
+          success: true,
+        },
+      };
+    }
+    return {
+      googleSync: {
+        attempted: true,
+        success: googleDeleteResult.success,
+        message: googleDeleteResult.success
+          ? undefined
+          : googleDeleteResult.error ??
+            "Deleted in Duet, but failed to cancel Google Calendar event.",
+        info: googleDeleteResult.recovered
+          ? "Linked Google event was already missing. Local sync link was cleaned up."
+          : undefined,
+      },
+    };
+  }
+
+  async function handleDeleteFromModal(): Promise<EventActionResult> {
+    "use server";
+    return runDeleteWithGoogleSync();
+  }
+
+  async function handleDeleteFromHeader(): Promise<void> {
+    "use server";
+    await runDeleteWithGoogleSync();
     redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
@@ -346,7 +402,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             >
               <PencilIcon />
             </Link>
-            <ConfirmForm action={handleDelete} message="Delete this event?">
+            <ConfirmForm action={handleDeleteFromHeader} message="Delete this event?">
               <button
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-white/90 text-red-600 shadow-[var(--shadow-sm)] transition hover:border-red-300 hover:bg-red-50"
                 type="submit"
@@ -589,7 +645,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         isOpen={isEditing}
         onCloseHref={`/events/${event.id}`}
         onSubmit={handleUpdate}
-        onDelete={handleDelete}
+        onDelete={handleDeleteFromModal}
         mapsApiKey={mapsKey}
         title={event.title}
         dateValue={formatDateInput(event.dateTimeStart)}

@@ -102,11 +102,18 @@ export async function PUT(request: Request, { params }: PageProps) {
     placeName: event.placeName,
     placeAddress: event.placeAddress,
   });
-  if (!googleSyncResult.success) {
-    console.warn("Google Calendar update sync skipped:", googleSyncResult.error);
-  }
+  const googleSync =
+    googleSyncResult.code === "NOT_SYNCED"
+      ? { attempted: false, success: true as const }
+      : {
+          attempted: true,
+          success: googleSyncResult.success,
+          code: googleSyncResult.code,
+          error: googleSyncResult.success ? undefined : googleSyncResult.error,
+          recovered: googleSyncResult.recovered ?? false,
+        };
 
-  return NextResponse.json({ event });
+  return NextResponse.json({ event, googleSync });
 }
 
 export async function DELETE(_request: Request, { params }: PageProps) {
@@ -123,9 +130,16 @@ export async function DELETE(_request: Request, { params }: PageProps) {
   }
 
   const googleDeleteResult = await deleteGoogleCalendarEvent(eventId);
-  if (!googleDeleteResult.success) {
-    console.warn("Google Calendar delete sync skipped:", googleDeleteResult.error);
-  }
   const event = await deleteEvent(eventId, userId);
-  return NextResponse.json({ event });
+  const googleSync =
+    googleDeleteResult.code === "NOT_SYNCED"
+      ? { attempted: false, success: true as const }
+      : {
+          attempted: true,
+          success: googleDeleteResult.success,
+          code: googleDeleteResult.code,
+          error: googleDeleteResult.success ? undefined : googleDeleteResult.error,
+          recovered: googleDeleteResult.recovered ?? false,
+        };
+  return NextResponse.json({ event, googleSync });
 }
