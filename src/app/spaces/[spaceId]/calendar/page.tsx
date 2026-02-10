@@ -475,6 +475,25 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   };
 
   const blocksByDay = buildBlocksByDay(blocks);
+  const unavailableLegendEntries = Array.from(
+    new Set([
+      ...blocks.manual.map((block) => block.createdByUserId),
+      ...blocks.external.map((block) => block.userId),
+    ]),
+  )
+    .map((userIdValue) => {
+      if (!userIdValue) {
+        return null;
+      }
+      const accent = creatorPalette.get(userIdValue);
+      const visual = memberVisuals[userIdValue];
+      return {
+        userId: userIdValue,
+        color: accent?.accent ?? "#f59e0b",
+        label: visual?.displayName ?? "Unavailable",
+      };
+    })
+    .filter((entry): entry is { userId: string; color: string; label: string } => entry !== null);
   const { ideaCommentCounts, ideaCommentsByIdea } = buildIdeaCommentAggregates(
     ideaComments,
   );
@@ -606,10 +625,19 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             <span className="h-2 w-2 rounded-full bg-rose-400" />
             <span>Events</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-amber-400" />
-            <span>Busy</span>
-          </div>
+          {unavailableLegendEntries.length > 0 ? (
+            unavailableLegendEntries.map((entry) => (
+              <div key={entry.userId} className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                <span>{entry.label} unavailable</span>
+              </div>
+            ))
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              <span>Unavailable</span>
+            </div>
+          )}
           <div className="flex items-center gap-1.5">
             <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--action-primary)] text-[8px] font-bold text-white">
               •
