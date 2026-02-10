@@ -208,7 +208,7 @@ export default function TagInput({
               onClick={() => addTag(filter.trim())}
             >
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
-                + Add "{filter}"
+                + Add &quot;{filter}&quot;
               </span>
             </button>
           )}

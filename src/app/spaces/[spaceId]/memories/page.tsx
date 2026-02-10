@@ -10,6 +10,27 @@ type PageProps = {
   params: Promise<{ spaceId: string }>;
 };
 
+function getFirstPlacePhotoUrl(value: unknown): string | null {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const raw = typeof value === "string" ? JSON.parse(value) : value;
+    if (!Array.isArray(raw)) {
+      return null;
+    }
+
+    const firstUrl = raw
+      .map((item) => `${item}`.trim())
+      .find((item) => /^https?:\/\//i.test(item));
+
+    return firstUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function MemoriesPage({ params }: PageProps) {
   const userId = await requireUserId();
   const { spaceId } = await params;
@@ -24,26 +45,16 @@ export default async function MemoriesPage({ params }: PageProps) {
     includePhotos: true,
   });
   const memoriesForClient = memories.map((event) => {
-    // Use attached photo first, then fall back to Google Places photo
     const attachedPhoto = event.photos?.[0]?.storageUrl ?? null;
-    let placePhotoUrl: string | null = null;
-    if (event.placePhotoUrls) {
-      try {
-        const urls = typeof event.placePhotoUrls === "string"
-          ? JSON.parse(event.placePhotoUrls)
-          : event.placePhotoUrls;
-        placePhotoUrl = Array.isArray(urls) && urls.length > 0 ? urls[0] : null;
-      } catch {
-        placePhotoUrl = null;
-      }
-    }
+    const placePhoto = getFirstPlacePhotoUrl(event.placePhotoUrls);
     return {
       id: event.id,
       title: event.title,
       description: event.description,
       dateTimeStart: event.dateTimeStart.toISOString(),
       tags: parseTags(event.tags),
-      coverUrl: attachedPhoto ?? placePhotoUrl,
+      coverUrl: attachedPhoto,
+      fallbackCoverUrl: placePhoto,
     };
   });
 

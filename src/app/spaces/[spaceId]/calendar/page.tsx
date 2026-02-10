@@ -60,10 +60,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       ? "monday"
       : "sunday";
   const weekStartsOn = calendarWeekStart === "monday" ? 1 : 0;
-  const calendarTimeFormat =
-    cookieStore.get("cm_calendar_time_format")?.value === "12h"
-      ? "12h"
-      : "24h";
   const userId = await requireUserId();
   const { spaceId } = await params;
   const search = (await searchParams) ?? {};
@@ -518,7 +514,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     }
     return `/spaces/${space.id}/calendar?${params.toString()}`;
   };
-
   const blocksByDay = new Map<string, Array<{ id: string; startAt: Date; endAt: Date; title: string; createdBy: { name: string | null; email: string }; createdByUserId?: string; source?: string }>>();
   
   // Add manual blocks
@@ -653,79 +648,84 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
 
   return (
     <>
-      <section className="surface p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <section className="surface p-6 md:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4 md:items-center">
           <div>
             <p className="section-kicker">Calendar</p>
-            <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+            <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl">
               {formatMonthTitle(now)}
             </h2>
             <p className="section-subtitle">
-              Tap any day to add something special or block time.
+              Build a cozy rhythm for both of you, one day at a time.
             </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
-            <CalendarAddControls
-              onCreateEvent={handleCreate}
-              onCreateBlock={handleCreateBlock}
-              initialEventDate={initialEventDate}
-              prefillData={prefillData}
-              hasGoogleCalendar={hasGoogleCalendar}
-            />
-            <Link
-              className="pill-button button-hover"
-              href={buildCalendarHref(monthParam(prevMonth))}
-            >
-              Prev
-            </Link>
-            <Link
-              className="pill-button button-hover"
-              href={buildCalendarHref(monthParam(today))}
-            >
-              Today
-            </Link>
-            <Link
-              className="pill-button button-hover"
-              href={buildCalendarHref(monthParam(nextMonth))}
-            >
-              Next
-            </Link>
-            <div className="flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-              <Link
-                className={`rounded-full px-3 py-1 transition ${isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
-                  }`}
-                href={buildCalendarHref(monthParam(now), { density: "compact" })}
-              >
-                Compact
-              </Link>
-              <Link
-                className={`rounded-full px-3 py-1 transition ${!isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
-                  }`}
-                href={buildCalendarHref(monthParam(now), { density: "comfortable" })}
-              >
-                Comfortable
-              </Link>
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-[var(--color-primary)]" />
+                Plans
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" />
+                Busy
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-[var(--text-muted)]" />
+                Memories
+              </span>
             </div>
-            <a
-              className="pill-button button-hover inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent-strong)]"
-              href={`/api/spaces/${space.id}/calendar.ics`}
-              download
-              title="Export to calendar app"
-            >
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
+          </div>
+          <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:justify-end">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+              <CalendarAddControls
+                onCreateEvent={handleCreate}
+                onCreateBlock={handleCreateBlock}
+                initialEventDate={initialEventDate}
+                prefillData={prefillData}
+                hasGoogleCalendar={hasGoogleCalendar}
+              />
+              <div className="flex min-w-fit items-center rounded-full border border-[var(--panel-border)] bg-white/90 p-1 shadow-[var(--shadow-sm)]">
+                <Link
+                  className="rounded-full px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-50)] hover:text-[var(--text-primary)]"
+                  href={buildCalendarHref(monthParam(prevMonth))}
+                >
+                  Prev
+                </Link>
+                <Link
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-50)]"
+                  href={buildCalendarHref(monthParam(today))}
+                >
+                  Today
+                </Link>
+                <Link
+                  className="rounded-full px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition hover:bg-[var(--surface-50)] hover:text-[var(--text-primary)]"
+                  href={buildCalendarHref(monthParam(nextMonth))}
+                >
+                  Next
+                </Link>
+              </div>
+            </div>
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+              <a
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-2 text-xs font-medium text-[var(--text-muted)] shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:border-[var(--border-medium)] hover:text-[var(--text-primary)]"
+                href={`/api/spaces/${space.id}/calendar.ics`}
+                download
+                title="Export to calendar app"
+                aria-label="Export calendar as ICS"
               >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M7 10l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Export
-            </a>
+                <svg
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M7 10l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Export
+              </a>
+            </div>
           </div>
         </div>
 
@@ -738,23 +738,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
         ) : (
           <>
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--text-tertiary)]">
-              <div className="inline-flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-                Upcoming
-              </div>
-              <div className="inline-flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
-                Memory
-              </div>
-              <div className="inline-flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-amber-400" />
-                Unavailable
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               {dayLabels.map((day) => (
-                <div key={day} className="px-2 py-1">
+                <div
+                  key={day}
+                  className="rounded-lg border border-white/80 bg-white/55 px-2 py-1.5 text-center"
+                >
                   {day}
                 </div>
               ))}
@@ -795,17 +784,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </>
         )}
       </section>
-      <PlanningSection
-        actions={(
-          <Link
-            className="pill-button button-hover"
-            href={buildCalendarHref(monthParam(today))}
-          >
-            Today
-          </Link>
-        )}
-      >
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <PlanningSection>
+        <div className="flex flex-col gap-8">
           <IdeasColumn
             ideas={ideasForPlanning}
             commentCounts={ideaCommentCounts}
@@ -833,7 +813,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               placeName: event.placeName,
             }))}
             commentCounts={eventCommentCounts}
-            todayHref={buildCalendarHref(monthParam(today))}
             newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
           />
         </div>

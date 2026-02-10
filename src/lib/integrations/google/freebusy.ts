@@ -37,7 +37,7 @@ export async function fetchFreeBusy(
     requestBody: {
       timeMin: start.toISOString(),
       timeMax: end.toISOString(),
-      items: selectedCalendars.map((cal: any) => ({ id: cal.calendarId })),
+      items: selectedCalendars.map((cal) => ({ id: cal.calendarId })),
     },
   });
   

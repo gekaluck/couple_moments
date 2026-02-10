@@ -97,6 +97,35 @@ function formatDayHeading(date: Date) {
   });
 }
 
+function getActivityTone(entityType: string) {
+  if (entityType === "EVENT") {
+    return {
+      chip: "border border-rose-200 bg-rose-100 text-rose-700",
+      card:
+        "bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,239,246,0.76))]",
+    };
+  }
+  if (entityType === "IDEA") {
+    return {
+      chip: "border border-amber-200 bg-amber-100 text-amber-700",
+      card:
+        "bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,248,233,0.76))]",
+    };
+  }
+  if (entityType === "COMMENT") {
+    return {
+      chip: "border border-sky-200 bg-sky-100 text-sky-700",
+      card:
+        "bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(235,246,255,0.78))]",
+    };
+  }
+  return {
+    chip: "border border-violet-200 bg-violet-100 text-violet-700",
+    card:
+      "bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(243,238,255,0.78))]",
+  };
+}
+
 export default async function ActivityPage({ params }: PageProps) {
   const userId = await requireUserId();
   const { spaceId } = await params;
@@ -132,6 +161,14 @@ export default async function ActivityPage({ params }: PageProps) {
         <p className="section-subtitle">
           Every meaningful action across your space.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+          <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1">
+            {activity.length} actions
+          </span>
+          <span className="rounded-full border border-rose-200 bg-rose-100 px-2.5 py-1 text-rose-700">
+            Shared timeline
+          </span>
+        </div>
       </section>
       <section className="flex flex-col gap-6">
         {activity.length === 0 ? (
@@ -145,48 +182,60 @@ export default async function ActivityPage({ params }: PageProps) {
         ) : null}
         {groupedEntries.map(([key, entries]) => (
           <div key={key} className="stagger-children flex flex-col gap-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--text-tertiary)]">
+            <div className="sticky top-[88px] z-20 w-fit rounded-full border border-[var(--panel-border)] bg-white/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] backdrop-blur-sm">
               {formatDayHeading(entries[0].createdAt)}
             </div>
             {entries
               .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
-              .map((entry) => (
-                <div key={entry.id} className="surface p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="flex items-center gap-2 text-sm text-gray-700">
-                        {entry.entityType === "EVENT" ? (
-                          <CalendarIcon />
-                        ) : entry.entityType === "IDEA" ? (
-                          <IdeaIcon />
-                        ) : entry.entityType === "COMMENT" ? (
-                          <CommentIcon />
-                        ) : (
-                          <NoteIcon />
-                        )}
-                        <span>{entry.action}</span>
-                        {entry.entityTitle && entry.entityHref ? (
-                          <>
-                            <span>:</span>
-                            <Link
-                              className="font-medium text-rose-600 transition hover:text-rose-700 hover:underline"
-                              href={entry.entityHref}
-                            >
-                              {entry.entityTitle}
-                            </Link>
-                          </>
-                        ) : null}
-                      </p>
-                      <p className="mt-1 text-xs text-[var(--text-muted)]">
-                        {entry.user.name || entry.user.email}
-                      </p>
+              .map((entry) => {
+                const tone = getActivityTone(entry.entityType);
+                return (
+                  <div
+                    key={entry.id}
+                    className={`surface relative overflow-hidden p-5 ${tone.card}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                          {entry.entityType === "EVENT" ? (
+                            <CalendarIcon />
+                          ) : entry.entityType === "IDEA" ? (
+                            <IdeaIcon />
+                          ) : entry.entityType === "COMMENT" ? (
+                            <CommentIcon />
+                          ) : (
+                            <NoteIcon />
+                          )}
+                          <span>{entry.action}</span>
+                          {entry.entityTitle && entry.entityHref ? (
+                            <>
+                              <span>:</span>
+                              <Link
+                                className="font-medium text-rose-600 transition hover:text-rose-700 hover:underline"
+                                href={entry.entityHref}
+                              >
+                                {entry.entityTitle}
+                              </Link>
+                            </>
+                          ) : null}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                          <span>{entry.user.name || entry.user.email}</span>
+                          <span>/</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${tone.chip}`}
+                          >
+                            {entry.entityType.toLowerCase()}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="rounded-full border border-[var(--panel-border)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
+                        {formatTimestamp(entry.createdAt)}
+                      </span>
                     </div>
-                    <span className="text-xs text-[var(--text-tertiary)]">
-                      {formatTimestamp(entry.createdAt)}
-                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
         ))}
       </section>

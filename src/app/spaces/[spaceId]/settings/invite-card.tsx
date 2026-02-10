@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 type InviteCardProps = {
-  spaceId: string;
   inviteCode: string;
 };
 
@@ -48,7 +47,7 @@ const ShareIcon = () => (
   </svg>
 );
 
-export default function InviteCard({ spaceId, inviteCode }: InviteCardProps) {
+export default function InviteCard({ inviteCode }: InviteCardProps) {
   const [copied, setCopied] = useState<"link" | "code" | null>(null);
 
   const inviteUrl =
@@ -84,7 +83,7 @@ export default function InviteCard({ spaceId, inviteCode }: InviteCardProps) {
   };
 
   return (
-    <section className="surface border-2 border-dashed border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 p-6">
+    <section className="surface border border-rose-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.88),rgba(255,236,245,0.75))] p-6 md:p-8">
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-lg shadow-rose-500/25">
           <svg
@@ -121,7 +120,7 @@ export default function InviteCard({ spaceId, inviteCode }: InviteCardProps) {
             </div>
             <button
               onClick={() => copyToClipboard(inviteUrl, "link")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              className={`flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35 ${
                 copied === "link"
                   ? "bg-emerald-500 text-white"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -144,7 +143,7 @@ export default function InviteCard({ spaceId, inviteCode }: InviteCardProps) {
             </div>
             <button
               onClick={() => copyToClipboard(inviteCode, "code")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              className={`flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35 ${
                 copied === "code"
                   ? "bg-emerald-500 text-white"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -159,7 +158,7 @@ export default function InviteCard({ spaceId, inviteCode }: InviteCardProps) {
         {/* Share Button */}
         <button
           onClick={handleShare}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:shadow-xl hover:shadow-rose-500/30"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-[var(--action-primary)] px-6 py-3 text-sm font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
         >
           <ShareIcon />
           Share with partner

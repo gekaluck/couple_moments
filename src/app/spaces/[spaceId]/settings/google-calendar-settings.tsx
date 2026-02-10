@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { CalendarDays, Link2, Link2Off, RefreshCw } from 'lucide-react';
 
 type Calendar = {
   id: string;
@@ -32,7 +33,7 @@ export default function GoogleCalendarSettings() {
   const router = useRouter();
   const [data, setData] = useState<GoogleCalendarData>(null);
   const [loading, setLoading] = useState(true);
-  const [syncing, setsyncing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to load Google Calendar settings');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load Google Calendar settings');
     } finally {
       setLoading(false);
@@ -80,7 +81,7 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to disconnect');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to disconnect Google Calendar');
     }
   }
@@ -99,13 +100,13 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to toggle calendar');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to toggle calendar');
     }
   }
 
   async function handleSync() {
-    setsyncing(true);
+    setSyncing(true);
     setError(null);
 
     try {
@@ -119,16 +120,16 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to sync');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to sync availability');
     } finally {
-      setsyncing(false);
+      setSyncing(false);
     }
   }
 
   if (loading) {
     return (
-      <section className="surface p-6">
+      <section className="surface border border-sky-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(233,245,255,0.8))] p-6 md:p-8">
         <div className="flex items-center justify-center py-8">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600"></div>
         </div>
@@ -137,105 +138,112 @@ export default function GoogleCalendarSettings() {
   }
 
   return (
-    <section className="surface p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-[var(--text-primary)]">
-            Google Calendar Integration
-          </h3>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Connect your Google Calendar to sync your busy times automatically.
-          </p>
+    <section className="surface border border-sky-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(233,245,255,0.8))] p-6 md:p-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-sky-200/80 bg-sky-50/90 text-sky-700 shadow-[var(--shadow-sm)]">
+            <CalendarDays className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="section-kicker">Integrations</p>
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">
+              Google Calendar
+            </h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Bring in real busy time so plans feel realistic for both of you.
+            </p>
+          </div>
         </div>
-
-        {data ? (
-          <button
-            onClick={handleDisconnect}
-            className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
-          >
-            Disconnect
-          </button>
-        ) : (
-          <button
-            onClick={handleConnect}
-            className="pill-button button-hover text-sm font-semibold"
-          >
-            <svg
-              className="mr-2 inline h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M19.5 3.5h-1V2h-2v1.5h-9V2h-2v1.5h-1C3.67 3.5 3 4.17 3 5v14c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5V5c0-.83-.67-1.5-1.5-1.5zm0 15.5h-15V8.5h15V19z" />
-            </svg>
-            Connect Google Calendar
-          </button>
-        )}
+        <span
+          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+            data
+              ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+              : "border-slate-200 bg-white/85 text-slate-600"
+          }`}
+        >
+          {data ? <Link2 className="h-3 w-3" /> : <Link2Off className="h-3 w-3" />}
+          {data ? "Connected" : "Not connected"}
+        </span>
       </div>
 
       {error && (
-        <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-4">
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
-      {data && (
+      {!data ? (
+        <div className="mt-5 rounded-2xl border border-white/80 bg-white/75 p-4 shadow-[var(--shadow-sm)] backdrop-blur-sm">
+          <p className="text-sm text-[var(--text-secondary)]">
+            Connect once, then choose exactly which calendars should contribute availability.
+          </p>
+          <button
+            onClick={handleConnect}
+            className="button-hover mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
+          >
+            <CalendarDays className="h-4 w-4" />
+            Connect Google Calendar
+          </button>
+        </div>
+      ) : (
         <>
-          <div className="mt-6 rounded-lg bg-slate-50 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-[var(--text-primary)]">
-                  Connected as
-                </p>
-                <p className="text-sm text-[var(--text-muted)]">{data.account.email}</p>
-              </div>
+          <div className="mt-5 grid gap-3">
+            <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                Connected account
+              </p>
+              <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
+                {data.account.email}
+              </p>
               {data.account.isRevoked && (
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
-                  Reconnect Required
-                </span>
+                <p className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
+                  Reconnect required
+                </p>
               )}
             </div>
 
-            {data.syncState && (
-              <div className="mt-4 border-t border-slate-200 pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-[var(--text-muted)]">Last synced</p>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">
-                      {data.syncState.lastSyncedAt
-                        ? new Date(data.syncState.lastSyncedAt).toLocaleString()
-                        : 'Never'}
+            <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                    Availability sync
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
+                    {data.syncState?.lastSyncedAt
+                      ? new Date(data.syncState.lastSyncedAt).toLocaleString()
+                      : 'Never synced'}
+                  </p>
+                  {data.syncState?.lastSyncError ? (
+                    <p className="mt-1 text-xs text-red-600">
+                      {data.syncState.lastSyncError}
                     </p>
-                    {data.syncState.lastSyncError && (
-                      <p className="mt-1 text-xs text-red-600">
-                        {data.syncState.lastSyncError}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={handleSync}
-                    disabled={syncing}
-                    className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100 disabled:opacity-50"
-                  >
-                    {syncing ? 'Syncing...' : 'Sync Now'}
-                  </button>
+                  ) : null}
                 </div>
+                <button
+                  onClick={handleSync}
+                  disabled={syncing}
+                  className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                >
+                  <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Syncing...' : 'Sync now'}
+                </button>
               </div>
-            )}
+            </div>
           </div>
 
           {data.calendars.length > 0 && (
             <div className="mt-6">
               <h4 className="text-sm font-semibold text-[var(--text-primary)]">
-                Calendars
+                Calendars included in sync
               </h4>
               <p className="mt-1 text-xs text-[var(--text-muted)]">
-                Select which calendars to sync busy times from
+                Toggle calendars that should contribute to unavailable blocks.
               </p>
               <div className="mt-3 space-y-2">
                 {data.calendars.map((calendar) => (
                   <label
                     key={calendar.id}
-                    className="flex items-center gap-3 rounded-lg border border-[var(--panel-border)] bg-white/80 p-3 hover:bg-slate-50 cursor-pointer"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/80 bg-white/80 p-3 shadow-[var(--shadow-sm)] transition hover:bg-white"
                   >
                     <input
                       type="checkbox"
@@ -245,9 +253,9 @@ export default function GoogleCalendarSettings() {
                       }
                       className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
                     />
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-[var(--text-primary)]">
+                        <p className="truncate text-sm font-medium text-[var(--text-primary)]">
                           {calendar.summary}
                         </p>
                         {calendar.primary && (
@@ -259,7 +267,7 @@ export default function GoogleCalendarSettings() {
                     </div>
                     {calendar.backgroundColor && (
                       <div
-                        className="h-4 w-4 rounded-full"
+                        className="h-4 w-4 rounded-full border border-slate-200"
                         style={{ backgroundColor: calendar.backgroundColor }}
                       />
                     )}
@@ -268,6 +276,13 @@ export default function GoogleCalendarSettings() {
               </div>
             </div>
           )}
+
+          <button
+            onClick={handleDisconnect}
+            className="mt-5 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+          >
+            Disconnect Google Calendar
+          </button>
         </>
       )}
     </section>

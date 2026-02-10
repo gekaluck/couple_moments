@@ -58,21 +58,21 @@ export default function AvailabilityBlockModal({
       >
         <input type="hidden" name="blockId" value={block.id} />
         <input
-          className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+          className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
           name="title"
           defaultValue={block.title}
           required
         />
         <div className="grid gap-3 md:grid-cols-2">
           <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
             name="start"
             type="date"
             defaultValue={block.startDate}
             required
           />
           <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
             name="end"
             type="date"
             defaultValue={block.endDate}
@@ -80,7 +80,7 @@ export default function AvailabilityBlockModal({
           />
         </div>
         <input
-          className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+          className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
           name="note"
           defaultValue={block.note ?? ""}
           placeholder="Optional note"

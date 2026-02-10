@@ -34,6 +34,14 @@ type DayCellProps = {
   buildBlockEditHref: (blockId: string) => string;
 };
 
+function formatTimeLabel(value: Date) {
+  const hours = value.getHours();
+  const minutes = value.getMinutes();
+  const period = hours >= 12 ? "pm" : "am";
+  const hour = hours % 12 || 12;
+  return minutes === 0 ? `${hour}${period}` : `${hour}:${minutes.toString().padStart(2, "0")}${period}`;
+}
+
 export default function DayCell({
   date,
   isCurrentMonth,
@@ -48,111 +56,147 @@ export default function DayCell({
   creatorPalette,
   buildBlockEditHref,
 }: DayCellProps) {
-  const maxEvents = isCompact ? 2 : 3;
+  const maxItems = isCompact ? 2 : 3;
+  const maxEvents = maxItems;
+  const maxBlocks = Math.max(maxItems - Math.min(events.length, maxItems), 0);
   const visibleEvents = events.slice(0, maxEvents);
-  const overflowCount = Math.max(events.length - maxEvents, 0);
-  const dayCellBase = isCompact ? "min-h-[90px] p-1.5" : "min-h-[120px] p-2";
+  const visibleBlocks = blocks.slice(0, maxBlocks);
+  const overflowItems = Math.max(
+    events.length + blocks.length - (visibleEvents.length + visibleBlocks.length),
+    0,
+  );
+  const dayCellBase = isCompact ? "min-h-[104px] p-2" : "min-h-[136px] p-2.5";
   const today = new Date();
+  const hasEvents = events.length > 0;
+  const hasBlocks = blocks.length > 0;
+  const inMonthTone = isToday
+    ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.96),rgba(255,236,244,0.82))]"
+    : isWeekend
+      ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.88),rgba(250,248,255,0.78))]"
+      : hasEvents
+        ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.9),rgba(255,242,248,0.78))]"
+        : "border-[var(--panel-border)] bg-[rgba(255,255,255,0.82)]";
+  const datePillClass = isToday
+    ? "bg-[var(--action-primary)] text-white shadow-[var(--shadow-sm)]"
+    : isCurrentMonth
+      ? "bg-white/90 text-[var(--text-primary)]"
+      : "bg-white/60 text-[var(--text-tertiary)]";
+  const occupancyDots = [
+    hasEvents ? "plan" : null,
+    hasBlocks ? "busy" : null,
+  ].filter((value): value is "plan" | "busy" => value !== null);
 
   return (
     <div
-      className={`relative rounded-xl border text-xs transition hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${
-        isCurrentMonth
-          ? isWeekend
-            ? "bg-rose-50/50"
-            : "bg-white/80"
-          : "bg-[var(--surface-50)] text-[var(--surface-400)] opacity-50"
-      } ${isPast ? "opacity-60" : ""} ${
-        isToday ? "border-rose-400 border-2" : "border-[var(--panel-border)]"
-      }`}
+      className={`group/day relative rounded-2xl border text-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${
+        isCurrentMonth ? inMonthTone : "border-[var(--panel-border)] bg-[var(--surface-50)] text-[var(--surface-400)] opacity-55"
+      } ${isPast ? "opacity-65" : ""}`}
     >
       <Link
         aria-label={`Add event on ${date.toDateString()}`}
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
         href={addEventHref}
       />
-      <div className="flex items-center justify-between text-xs font-semibold text-[var(--text-muted)]">
-        {date.getDate()}
-        {isToday ? (
-          <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-strong)]">
-            Today
+      <div className="relative z-10 flex items-start justify-between gap-2">
+        <div className="inline-flex items-center gap-2">
+          <span className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${datePillClass}`}>
+            {date.getDate()}
           </span>
-        ) : null}
+        </div>
+        <div className="flex min-h-6 items-center">
+          {occupancyDots.length > 0 ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/85 px-1.5 py-1">
+              {occupancyDots.map((type, index) => (
+                <span
+                  key={`${type}-${index}`}
+                  className={`h-2 w-2 rounded-full ${
+                    type === "plan" ? "bg-rose-400" : "bg-amber-400"
+                  }`}
+                />
+              ))}
+            </span>
+          ) : null}
+        </div>
       </div>
       {isToday ? (
-        <div className="mt-1 inline-flex items-center gap-1.5 text-[9px] font-medium text-[var(--text-tertiary)]">
+        <div className="relative z-10 mt-1 inline-flex items-center gap-1.5 text-[9px] font-medium text-[var(--text-tertiary)]">
           <span className="h-1 w-1 rounded-full bg-rose-400" />
           {nowLabel}
         </div>
       ) : null}
-      <div className="relative z-10 mt-2 flex flex-col gap-1">
-        {blocks.map((block) => {
-          const isExternal = block.source === 'GOOGLE';
-          const createdByUserId = block.createdByUserId || 'external';
-          const blockAccent =
-            creatorPalette.get(createdByUserId)?.accent ??
-            (isExternal ? "#64748b" : "var(--accent-secondary)");
-          const blockSoft =
-            creatorPalette.get(createdByUserId)?.accentSoft ??
-            (isExternal ? "#f1f5f9" : "#fef3c7");
-          const blockText =
-            creatorPalette.get(createdByUserId)?.accentText ??
-            (isExternal ? "#475569" : "#b45309");
+      <div className="relative z-10 mt-2.5 flex flex-col gap-1.5">
+        {visibleEvents.map((event) => (
+          <EventBubble
+            key={event.id}
+            href={`/events/${event.id}`}
+            title={event.title}
+            isPast={event.dateTimeStart < today}
+          />
+        ))}
+        {visibleBlocks.map((block) => {
+          const isExternal = block.source === "GOOGLE";
+          const createdByUserId = block.createdByUserId || "external";
+          const blockAccent = isExternal
+            ? "var(--color-secondary)"
+            : (creatorPalette.get(createdByUserId)?.accent ?? "var(--accent-secondary)");
+          const blockSoft = isExternal
+            ? "var(--color-secondary-soft)"
+            : (creatorPalette.get(createdByUserId)?.accentSoft ?? "#fef3c7");
+          const blockText = isExternal
+            ? "var(--text-secondary)"
+            : (creatorPalette.get(createdByUserId)?.accentText ?? "#8b6131");
 
-          // Format time for external blocks
-          const formatTime = (d: Date) => {
-            const h = d.getHours();
-            const m = d.getMinutes();
-            const ampm = h >= 12 ? 'pm' : 'am';
-            const hour = h % 12 || 12;
-            return m === 0 ? `${hour}${ampm}` : `${hour}:${m.toString().padStart(2, '0')}${ampm}`;
-          };
+          const currentDay = new Date(date);
+          currentDay.setHours(0, 0, 0, 0);
+          const blockStartDay = block.startAt ? new Date(block.startAt) : null;
+          const blockEndDay = block.endAt ? new Date(block.endAt) : null;
+          if (blockStartDay) {
+            blockStartDay.setHours(0, 0, 0, 0);
+          }
+          if (blockEndDay) {
+            blockEndDay.setHours(0, 0, 0, 0);
+          }
+          const isMultiDay = Boolean(
+            blockStartDay && blockEndDay && blockStartDay < blockEndDay,
+          );
+          const isStartDay = Boolean(
+            blockStartDay && blockStartDay.getTime() === currentDay.getTime(),
+          );
+          const isContinuation = isMultiDay && !isStartDay;
+          const useThinBar = (isExternal && isMultiDay) || isContinuation;
 
-          const timeLabel = isExternal && block.startAt && block.endAt
-            ? `${formatTime(new Date(block.startAt))}-${formatTime(new Date(block.endAt))}`
-            : null;
+          const timeLabel =
+            isExternal && block.startAt && block.endAt
+              ? `${formatTimeLabel(new Date(block.startAt))}-${formatTimeLabel(new Date(block.endAt))}`
+              : null;
 
           const tooltipText = isExternal && block.startAt && block.endAt
-            ? `Busy: ${formatTime(new Date(block.startAt))} - ${formatTime(new Date(block.endAt))}`
+            ? `Busy: ${formatTimeLabel(new Date(block.startAt))} - ${formatTimeLabel(new Date(block.endAt))}`
             : block.title;
-
-          const initials = isExternal ? "G" : getCreatorInitials({
+          const creatorInitials = getCreatorInitials({
             id: createdByUserId,
             name: block.createdBy?.name ?? null,
             email: block.createdBy?.email ?? "??",
           });
 
-          const blockContent = (
-            <div className="flex items-center justify-between gap-2">
-              <span className="flex min-w-0 items-center gap-1 truncate font-medium">
-                {isExternal ? (
-                  <span className="truncate">{timeLabel}</span>
-                ) : (
-                  <>
-                    <svg
-                      aria-hidden="true"
-                      className="h-3 w-3 flex-shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <circle cx="12" cy="12" r="9" strokeWidth="1.5" />
-                      <path
-                        d="M12 7.5v5l3 2"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <span className="truncate">{block.title}</span>
-                  </>
-                )}
+          const blockContent = useThinBar ? (
+            <div className="flex min-w-0 items-center gap-1.5">
+              <div className="h-1.5 flex-1 rounded-full" style={{ backgroundColor: blockAccent }} />
+              <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                {creatorInitials}
               </span>
+            </div>
+          ) : (
+            <div className="flex min-w-0 items-center gap-1.5">
               <span
-                className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white"
+                className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: blockAccent }}
-              >
-                {initials}
+              />
+              <span className="truncate text-[10px] font-medium">
+                {isExternal ? timeLabel ?? "Busy" : block.title}
+              </span>
+              <span className="ml-auto text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                {creatorInitials}
               </span>
             </div>
           );
@@ -160,9 +204,8 @@ export default function DayCell({
           return isExternal ? (
             <div
               key={block.id}
-              className="group relative rounded-lg border-2 border-dashed px-2 py-1 text-[11px]"
+              className={`relative rounded-lg px-2 py-1 ${isContinuation ? "pt-1.5" : ""}`}
               style={{
-                borderColor: blockAccent,
                 backgroundColor: blockSoft,
                 color: blockText,
               }}
@@ -173,10 +216,9 @@ export default function DayCell({
           ) : (
             <Link
               key={block.id}
-              className="rounded-lg border-2 border-dashed px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] opacity-80"
+              className={`rounded-lg px-2 py-1 transition hover:shadow-[var(--shadow-sm)] ${isContinuation ? "pt-1.5" : ""}`}
               href={buildBlockEditHref(block.id)}
               style={{
-                borderColor: blockAccent,
                 backgroundColor: blockSoft,
                 color: blockText,
               }}
@@ -185,20 +227,16 @@ export default function DayCell({
             </Link>
           );
         })}
-        {visibleEvents.map((event) => (
-          <EventBubble
-            key={event.id}
-            href={`/events/${event.id}`}
-            title={event.title}
-            isPast={event.dateTimeStart < today}
-          />
-        ))}
-        {overflowCount > 0 ? (
-          <div className="rounded-lg border border-dashed border-[var(--panel-border)] px-2 py-1 text-[10px] text-[var(--text-muted)]">
-            ... +{overflowCount} more
+
+        {overflowItems > 0 ? (
+          <div className="rounded-lg border border-[var(--panel-border)] bg-white/75 px-2 py-1 text-[10px] font-medium text-[var(--text-muted)]">
+            +{overflowItems} more
           </div>
         ) : null}
       </div>
+      <span className="pointer-events-none absolute bottom-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/90 bg-white/80 text-[10px] font-semibold text-[var(--text-muted)] opacity-0 transition group-hover/day:opacity-100">
+        +
+      </span>
     </div>
   );
 }

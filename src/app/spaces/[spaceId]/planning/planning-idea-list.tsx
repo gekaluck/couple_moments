@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 
 import Modal from "@/components/Modal";
 
@@ -59,7 +58,6 @@ const TrashIcon = () => (
 );
 
 type PlanningIdeaListProps = {
-  spaceId: string;
   ideas: Array<{
     id: string;
     title: string;
@@ -82,7 +80,6 @@ type PlanningIdeaListProps = {
   onSchedule: (formData: FormData) => Promise<void>;
   onAddComment: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
-  onMarkDone?: (formData: FormData) => Promise<void>;
 };
 
 function parseTags(raw: string) {
@@ -102,18 +99,6 @@ function formatDate(date: Date) {
   });
 }
 
-const AVATAR_GRADIENTS = [
-  "from-rose-500 to-pink-600",
-  "from-sky-500 to-indigo-600",
-];
-
-function getAvatarGradient(userId: string) {
-  let hash = 0;
-  for (let index = 0; index < userId.length; index += 1) {
-    hash = (hash * 31 + userId.charCodeAt(index)) % 997;
-  }
-  return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
-}
 
 type IdeaComment = {
   id: string;
@@ -178,7 +163,7 @@ function IdeaComments({
                   <span className="font-semibold text-[var(--text-primary)]">
                     {comment.author.name || comment.author.email}
                   </span>
-                  <span className="mx-2">•</span>
+                  <span className="mx-2">/</span>
                   {formatTimeAgo(comment.createdAt)}
                 </p>
                 <p className="mt-1 text-sm text-[var(--text-primary)]">
@@ -219,7 +204,6 @@ function IdeaComments({
 }
 
 export default function PlanningIdeaList({
-  spaceId,
   ideas,
   currentUserId,
   commentsByIdea,
@@ -227,7 +211,6 @@ export default function PlanningIdeaList({
   onSchedule,
   onAddComment,
   onDelete,
-  onMarkDone,
 }: PlanningIdeaListProps) {
   const [activeIdeaId, setActiveIdeaId] = useState<string | null>(null);
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
@@ -418,3 +401,4 @@ export default function PlanningIdeaList({
     </section>
   );
 }
+

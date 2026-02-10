@@ -2,6 +2,7 @@
 
 import { Fragment, ReactNode } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import { X } from "lucide-react";
 
 type ModalProps = {
   isOpen: boolean;
@@ -16,39 +17,40 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
       <Dialog as="div" className="relative z-[60]" onClose={onClose}>
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-200"
+          enter="ease-out duration-250"
           enterFrom="opacity-0"
           enterTo="opacity-100"
-          leave="ease-in duration-150"
+          leave="ease-in duration-180"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-[var(--surface-900)]/30 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(30,41,59,0.38),rgba(15,23,42,0.58))] backdrop-blur-md" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center px-4 py-6 text-center">
             <Transition.Child
               as={Fragment}
-              enter="ease-out duration-200"
-              enterFrom="opacity-0 translate-y-3 scale-95"
+              enter="ease-out duration-250"
+              enterFrom="opacity-0 translate-y-4 scale-95"
               enterTo="opacity-100 translate-y-0 scale-100"
-              leave="ease-in duration-150"
+              leave="ease-in duration-180"
               leaveFrom="opacity-100 translate-y-0 scale-100"
-              leaveTo="opacity-0 translate-y-3 scale-95"
+              leaveTo="opacity-0 translate-y-4 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform rounded-3xl border border-[var(--panel-border)] bg-white p-6 text-left shadow-[var(--shadow-xl)] md:p-8">
+              <Dialog.Panel className="relative w-full max-w-lg transform overflow-hidden rounded-[24px] border border-[var(--panel-border)] bg-white p-6 text-left shadow-[var(--shadow-xl)] md:p-8">
                 {title ? (
-                  <div className="mb-4 flex items-center justify-between">
-                    <Dialog.Title className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+                  <div className="relative mb-4 flex items-center justify-between">
+                    <Dialog.Title className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)] md:text-xl">
                       {title}
                     </Dialog.Title>
                     <button
-                      className="rounded-full border border-[var(--panel-border)] px-3 py-1 text-xs text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/85 text-[var(--text-muted)] transition hover:border-[var(--border-medium)] hover:bg-white hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
+                      aria-label="Close modal"
                       onClick={onClose}
                       type="button"
                     >
-                      Close
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 ) : null}

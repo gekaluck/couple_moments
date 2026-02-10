@@ -11,17 +11,17 @@ type ButtonProps = {
 
 const variantStyles = {
   primary:
-    "bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)]",
+    "border border-transparent bg-[var(--action-primary)] text-white shadow-[var(--shadow-md)] hover:bg-[var(--action-primary-strong)] hover:shadow-[var(--shadow-lg)]",
   secondary:
-    "border border-[var(--border-light)] bg-white text-[var(--text-primary)] hover:shadow-[var(--shadow-sm)]",
+    "border border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] hover:border-[var(--border-medium)] hover:bg-white hover:shadow-[var(--shadow-sm)]",
   ghost:
-    "border border-[var(--panel-border)] text-[var(--text-muted)] hover:text-[var(--text-primary)]",
-  danger: "border border-red-200 bg-red-50 text-red-600 hover:bg-red-100",
+    "border border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-50)] hover:text-[var(--text-primary)]",
+  danger: "border border-red-200 bg-red-50 text-red-700 hover:bg-red-100",
 };
 
 const sizeStyles = {
-  sm: "px-3 py-2 text-xs",
-  md: "px-4 py-2 text-xs",
+  sm: "px-3 py-1.5 text-xs",
+  md: "px-4 py-2 text-sm",
   lg: "px-5 py-2.5 text-sm",
 };
 
@@ -38,7 +38,7 @@ export default function Button({
 }: ButtonProps) {
   const isDisabled = disabled || loading;
   const baseStyles =
-    "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition duration-200 disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35";
 
   return (
     <button
