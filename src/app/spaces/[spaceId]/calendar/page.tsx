@@ -32,6 +32,7 @@ import {
 import { normalizeTags, parseTags } from "@/lib/tags";
 import { buildCreatorPalette } from "@/lib/creator-colors";
 import { hasGoogleCalendarWithEventsScope, createGoogleCalendarEvent } from "@/lib/integrations/google/events";
+import { parseJsonStringArray } from "@/lib/parsers";
 import CalendarAddControls from "./add-controls";
 import PlanningSection from "@/components/planning/PlanningSection";
 import IdeasColumn from "@/components/planning/IdeasColumn";
@@ -60,10 +61,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       ? "monday"
       : "sunday";
   const weekStartsOn = calendarWeekStart === "monday" ? 1 : 0;
-  const calendarTimeFormat =
-    cookieStore.get("cm_calendar_time_format")?.value === "12h"
-      ? "12h"
-      : "24h";
   const userId = await requireUserId();
   const { spaceId } = await params;
   const search = (await searchParams) ?? {};
@@ -86,10 +83,50 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   // Store space ID for use in server actions (avoids TypeScript narrowing issues)
   const spaceIdForActions = space.id;
 
-  // Fetch event to repeat if repeat param is present
-  const repeatEvent = repeatEventId
-    ? await getEventForUser(repeatEventId, userId)
-    : null;
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const actualToday = new Date();
+  const [
+    repeatEvent,
+    events,
+    members,
+    hasGoogleCalendar,
+    blocks,
+    ideas,
+    upcomingEvents,
+  ] = await Promise.all([
+    repeatEventId ? getEventForUser(repeatEventId, userId) : Promise.resolve(null),
+    listEventsForSpace({
+      spaceId: space.id,
+      from: monthStart,
+      to: monthEnd,
+    }),
+    listSpaceMembers(space.id),
+    hasGoogleCalendarWithEventsScope(userId),
+    listAvailabilityBlocks({
+      spaceId: space.id,
+      from: monthStart,
+      to: monthEnd,
+    }),
+    listIdeasForSpace({ spaceId: space.id, status: "NEW" }),
+    // Use actual current date for upcoming plans, not the selected calendar month
+    listEventsForSpace({
+      spaceId: space.id,
+      from: actualToday,
+      timeframe: "upcoming",
+    }),
+  ]);
+  const creatorPalette = buildCreatorPalette(
+    members.map((member) => ({
+      id: member.userId,
+      name: member.user.name ?? null,
+      email: member.user.email,
+    })),
+  );
+  const [ideaComments, eventComments] = await Promise.all([
+    listIdeaCommentsForIdeas(ideas.map((idea) => idea.id)),
+    listEventCommentsForEvents(upcomingEvents.map((event) => event.id)),
+  ]);
   const prefillData = repeatEvent
     ? {
       title: repeatEvent.title,
@@ -110,40 +147,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         : null,
     }
     : null;
-
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-  const events = await listEventsForSpace({
-    spaceId: space.id,
-    from: monthStart,
-    to: monthEnd,
-  });
-  const members = await listSpaceMembers(space.id);
-  const hasGoogleCalendar = await hasGoogleCalendarWithEventsScope(userId);
-  const creatorPalette = buildCreatorPalette(
-    members.map((member) => ({
-      id: member.userId,
-      name: member.user.name ?? null,
-      email: member.user.email,
-    })),
-  );
-  const blocks = await listAvailabilityBlocks({
-    spaceId: space.id,
-    from: monthStart,
-    to: monthEnd,
-  });
-  const ideas = await listIdeasForSpace({ spaceId: space.id, status: "NEW" });
-  // Use actual current date for upcoming plans, not the selected calendar month
-  const actualToday = new Date();
-  const upcomingEvents = await listEventsForSpace({
-    spaceId: space.id,
-    from: actualToday,
-    timeframe: "upcoming",
-  });
-  const ideaComments = await listIdeaCommentsForIdeas(ideas.map((idea) => idea.id));
-  const eventComments = await listEventCommentsForEvents(
-    upcomingEvents.map((event) => event.id),
-  );
 
   const eventsByDay = new Map<string, typeof events>();
   for (const event of events) {
@@ -168,24 +171,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
     const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const parseJsonArray = (value?: string | null) => {
-      if (!value) {
-        return null;
-      }
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.map((item) => `${item}`);
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    };
-    const placeOpeningHours = parseJsonArray(
+    const placeOpeningHours = parseJsonStringArray(
       formData.get("placeOpeningHours")?.toString() ?? null,
     );
-    const placePhotoUrls = parseJsonArray(
+    const placePhotoUrls = parseJsonStringArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
     const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
@@ -303,24 +292,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
     const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const parseJsonArray = (value?: string | null) => {
-      if (!value) {
-        return null;
-      }
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.map((item) => `${item}`);
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    };
-    const placeOpeningHours = parseJsonArray(
+    const placeOpeningHours = parseJsonStringArray(
       formData.get("placeOpeningHours")?.toString() ?? null,
     );
-    const placePhotoUrls = parseJsonArray(
+    const placePhotoUrls = parseJsonStringArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
     const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
@@ -446,24 +421,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
     const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const parseJsonArray = (value?: string | null) => {
-      if (!value) {
-        return null;
-      }
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) {
-          return parsed.map((item) => `${item}`);
-        }
-        return null;
-      } catch {
-        return null;
-      }
-    };
-    const placeOpeningHours = parseJsonArray(
+    const placeOpeningHours = parseJsonStringArray(
       formData.get("placeOpeningHours")?.toString() ?? null,
     );
-    const placePhotoUrls = parseJsonArray(
+    const placePhotoUrls = parseJsonStringArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
     const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");

@@ -9,6 +9,7 @@ import { buildCreatorPalette, getCreatorInitials } from "@/lib/creator-colors";
 import { prisma } from "@/lib/prisma";
 import { normalizeTags, parseTags } from "@/lib/tags";
 import { getEventSyncStatus } from "@/lib/integrations/google/events";
+import { parseJsonStringArray } from "@/lib/parsers";
 
 import EventComments from "./event-comments";
 import EventEditModal from "./event-edit-modal";
@@ -113,51 +114,18 @@ function isEventInPast(event: { dateTimeStart: Date; dateTimeEnd: Date | null })
   return end < new Date();
 }
 
-function parseJsonArray(value?: string | null) {
-  if (!value) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.map((item) => `${item}`) : null;
-  } catch {
-    return null;
-  }
-}
-
 export default async function EventPage({ params, searchParams }: PageProps) {
   const userId = await requireUserId();
   const { eventId } = await params;
   const search = (await searchParams) ?? {};
   const isEditing = search.edit === "1";
-  const event = await getEventForUser(eventId, userId);
-  const currentUserRating = event
-    ? await prisma.rating.findUnique({
-        where: {
-          userId_eventId: {
-            userId,
-            eventId,
-          },
-        },
-        select: { value: true },
-      })
-    : null;
-  const photos = await prisma.photo.findMany({
-    where: { eventId },
-    orderBy: { createdAt: "asc" },
-  });
-  const comments = await listEventComments(eventId);
-  const currentUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { name: true, email: true },
-  });
-  const creator = event
-    ? await prisma.user.findUnique({
-        where: { id: event.createdByUserId },
-        select: { name: true, email: true },
-      })
-    : null;
-  const googleSyncStatus = event ? await getEventSyncStatus(event.id) : null;
+  const [event, currentUser] = await Promise.all([
+    getEventForUser(eventId, userId),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    }),
+  ]);
 
   if (!event) {
     notFound();
@@ -165,6 +133,35 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   if (!currentUser) {
     redirect("/login");
   }
+  const [currentUserRating, photos, comments, creator, googleSyncStatus, members] =
+    await Promise.all([
+      prisma.rating.findUnique({
+        where: {
+          userId_eventId: {
+            userId,
+            eventId,
+          },
+        },
+        select: { value: true },
+      }),
+      prisma.photo.findMany({
+        where: { eventId },
+        orderBy: { createdAt: "asc" },
+      }),
+      listEventComments(eventId),
+      prisma.user.findUnique({
+        where: { id: event.createdByUserId },
+        select: { name: true, email: true },
+      }),
+      getEventSyncStatus(event.id),
+      prisma.membership.findMany({
+        where: { coupleSpaceId: event.coupleSpaceId },
+        select: {
+          userId: true,
+          user: { select: { name: true, email: true } },
+        },
+      }),
+    ]);
   // Store event ID for use in server actions (avoids TypeScript narrowing issues)
   const eventIdForActions = event.id;
   const spaceIdForActions = event.coupleSpaceId;
@@ -187,10 +184,10 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     const placeName = formData.get("placeName")?.toString() || null;
     const placeAddress = formData.get("placeAddress")?.toString() || null;
     const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const placeOpeningHours = parseJsonArray(
+    const placeOpeningHours = parseJsonStringArray(
       formData.get("placeOpeningHours")?.toString() ?? null,
     );
-    const placePhotoUrls = parseJsonArray(
+    const placePhotoUrls = parseJsonStringArray(
       formData.get("placePhotoUrls")?.toString() ?? null,
     );
     const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
@@ -281,13 +278,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const tags = parseTags(event.tags);
   const tagsValue = tags.join(", ");
   const isPast = isEventInPast(event);
-  const members = await prisma.membership.findMany({
-    where: { coupleSpaceId: event.coupleSpaceId },
-    select: {
-      userId: true,
-      user: { select: { name: true, email: true } },
-    },
-  });
   const creatorPalette = buildCreatorPalette(
     members.map((member) => ({
       id: member.userId,
@@ -317,9 +307,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const placeWebsite = event.placeWebsite ?? null;
   const placeOpeningHours = Array.isArray(event.placeOpeningHours)
     ? (event.placeOpeningHours as string[])
-    : null;
-  const placePhotoUrls = Array.isArray(event.placePhotoUrls)
-    ? (event.placePhotoUrls as string[])
     : null;
   const staticMapUrl =
     mapsKey && event.placeLat && event.placeLng
