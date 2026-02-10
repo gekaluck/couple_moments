@@ -1,13 +1,13 @@
-# Duet — Rollout Plan
+# Duet - Rollout Plan
 
-**Updated:** 2026-02-04
-**Status:** P0/P1 complete — moving to deployment and polish
+**Updated:** 2026-02-10
+**Status:** P0/P1 complete - frontend redesign rounds 4/5 shipped; deployment remains pending
 
 ---
 
 ## Completed Milestones
 
-### P0 — Critical Fixes (Done)
+### P0 - Critical Fixes (Done)
 
 | Item | Summary |
 |------|---------|
@@ -16,7 +16,7 @@
 | P0-3 | Middleware auth guard |
 | P0-4 | Sanitize ICS Content-Disposition header |
 
-### P1 — Robustness (Done)
+### P1 - Robustness (Done)
 
 | Item | Summary |
 |------|---------|
@@ -31,7 +31,7 @@ Full evaluation details archived in `docs/90_archive/release-2026-02-04/EVALUATI
 
 ## Current Milestone
 
-### M1. Deployment — Hosting + DB + Env Vars
+### M1. Deployment - Hosting + DB + Env Vars
 
 Get the app running in production for two real users.
 
@@ -49,19 +49,19 @@ See `docs/00_current/DEPLOYMENT.md` for platform options and step-by-step instru
 Replace Cloudinary placeholder with working upload flow.
 
 - [ ] Confirm Cloudinary unsigned preset is configured and env vars are set
-- [ ] Wire up photo upload on event detail page (client-side upload → save URL)
-- [ ] Display uploaded photos in event detail and memories views
+- [x] Wire up photo upload on event detail page (client-side upload -> save URL)
+- [x] Display uploaded photos in event detail and memories views
 - [ ] Add basic file-size and type validation on the client
 
 ### M3. UX Polish Round 2
 
-Improvements surfaced during evaluation — do after deployment is stable.
+Improvements surfaced during evaluation - do after deployment is stable.
 
 - [x] Add empty-state messaging for spaces with no events/ideas
-- [ ] Add loading skeletons for calendar, event list, and idea list pages
+- [x] Add loading skeletons for calendar, event list, and idea list pages
 - [ ] Add inline form validation feedback (client-side, complementing Zod on server)
 - [x] Standardize card layouts across event and idea lists (Button.tsx, Card standardization)
-- [ ] Add error boundaries for core pages
+- [x] Add error boundaries for core pages
 - [x] Tighten form feedback (loading spinners on submit buttons)
 - [x] Extract DayCell component from calendar
 - [x] Redesign EventBubble for cleaner visual density
@@ -83,10 +83,25 @@ Sync busy/free time from external calendars.
 See `docs/00_current/TECH_PLAN_GOOGLE_CALENDAR.md` for implementation details.
 
 **Environment variables required:**
-- `TOKEN_ENCRYPTION_KEY` — 32-byte base64 key for token encryption
-- `GOOGLE_CLIENT_ID` — OAuth client ID from Google Cloud Console
-- `GOOGLE_CLIENT_SECRET` — OAuth client secret
-- `GOOGLE_REDIRECT_URI` — Callback URL for OAuth flow
+- `TOKEN_ENCRYPTION_KEY` - 32-byte base64 key for token encryption
+- `GOOGLE_CLIENT_ID` - OAuth client ID from Google Cloud Console
+- `GOOGLE_CLIENT_SECRET` - OAuth client secret
+- `GOOGLE_REDIRECT_URI` - Callback URL for OAuth flow
+
+### M5. Frontend Redesign Iterations (Rounds 4/5)
+
+Recent design iterations implemented from `docs/00_current/visual_issue.md`.
+
+- [x] Replace noisy event header chips with a structured details presentation
+- [x] Add dedicated event details card (status/date/time/creator/tags/rating/sync)
+- [x] Redesign memories filter/header into a cohesive single filter bar
+- [x] Harden broken image handling for memories and place photo strips
+- [x] Rename planning section to "What's ahead"
+- [x] Remove dead-end `TODAY` control from upcoming plans
+- [x] Add minimal calendar legend for plans/busy/memories
+- [x] Ensure busy blocks consistently show initials, including external Google blocks
+- [x] Add contextual top-nav date indicator with today's plan summary
+- [x] Restyle plan cards to match idea-card language using a rose palette
 
 ---
 
@@ -94,9 +109,9 @@ See `docs/00_current/TECH_PLAN_GOOGLE_CALENDAR.md` for implementation details.
 
 ### P1-5. Cascade deletes for space-owned entities
 
-Configure `onDelete: Cascade` from `CoupleSpace` to `Event`, `Idea`, `Note`, `AvailabilityBlock` and from `Event` to `Photo`, `Notification`. Low urgency — application-level cleanup covers this today.
+Configure `onDelete: Cascade` from `CoupleSpace` to `Event`, `Idea`, `Note`, `AvailabilityBlock` and from `Event` to `Photo`, `Notification`. Low urgency - application-level cleanup covers this today.
 
-### P2 — Deferred Items
+### P2 - Deferred Items
 
 | Item | Why defer |
 |------|-----------|
@@ -121,4 +136,3 @@ Configure `onDelete: Cascade` from `CoupleSpace` to `Event`, `Idea`, `Note`, `Av
 - Smoke test checklist complete
 - Docs updated
 - Changes reviewed and merged
-
