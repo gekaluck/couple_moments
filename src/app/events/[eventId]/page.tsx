@@ -12,11 +12,14 @@ import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
 import { normalizeTags, parseTags } from "@/lib/tags";
 import { parseJsonStringArray } from "@/lib/parsers";
+import { getAvatarGradient } from "@/lib/creator-colors";
+import { getInitials } from "@/lib/formatters";
 
 import { loadEventBaseData, loadEventDetailData } from "./page-data";
 import EventComments from "./event-comments";
 import EventEditModal from "./event-edit-modal";
 import EventRating from "./event-rating";
+import HeartRating from "@/components/ui/HeartRating";
 import ConfirmForm from "@/components/ConfirmForm";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 
@@ -137,7 +140,15 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   if (!currentUser) {
     redirect("/login");
   }
-  const { currentUserRating, comments, creator, googleSyncStatus } =
+  const {
+    currentUserRating,
+    allRatings,
+    comments,
+    creator,
+    googleSyncStatus,
+    members,
+    memberVisuals,
+  } =
     await loadEventDetailData({
       eventId,
       userId,
@@ -314,7 +325,12 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const tags = parseTags(event.tags);
   const tagsValue = tags.join(", ");
   const isPast = isEventInPast(event);
-  const creatorName = creator?.name || creator?.email || "Unknown";
+  const creatorVisual = memberVisuals[event.createdByUserId];
+  const creatorName = creatorVisual?.displayName || creator?.name || creator?.email || "Unknown";
+  const creatorInitials =
+    creatorVisual?.initials || getInitials(creator?.name ?? null, creator?.email ?? creatorName);
+  const ratingsByUserId = new Map(allRatings.map((rating) => [rating.userId, rating.value]));
+  const partnerMembers = members.filter((member) => member.userId !== userId);
   const eventDateLabel = event.dateTimeStart.toLocaleDateString("en-US", {
     weekday: "short",
     month: "long",
@@ -462,11 +478,15 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             {/* Created By Card */}
             <div className="rounded-xl border border-rose-100/80 bg-white/70 p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" strokeLinecap="round" />
-                  </svg>
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold text-white"
+                  style={{
+                    backgroundImage: creatorVisual
+                      ? getAvatarGradient(creatorVisual.accent)
+                      : "linear-gradient(135deg,#fb7185,#db2777)",
+                  }}
+                >
+                  {creatorInitials}
                 </div>
                 <div>
                   <p className="text-xs text-[var(--text-muted)]">Created by</p>
@@ -496,7 +516,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
           {/* Rating (for past events) */}
           {isPast ? (
             <div className="mt-4 rounded-xl border border-rose-100/80 bg-white/70 p-4">
-              <div className="flex items-center justify-between">
+              <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -504,16 +524,49 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-xs text-[var(--text-muted)]">Your rating</p>
+                    <p className="text-xs text-[var(--text-muted)]">Ratings</p>
                     <p className="text-sm font-medium text-[var(--text-primary)]">How was this date?</p>
                   </div>
                 </div>
-                <EventRating
-                  eventId={event.id}
-                  currentRating={currentUserRating?.value ?? null}
-                  onRate={handleRate}
-                  compact
-                />
+
+                <div className="space-y-2 rounded-xl border border-rose-100/80 bg-white/80 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-medium text-[var(--text-muted)]">Your rating</p>
+                    <EventRating
+                      eventId={event.id}
+                      currentRating={currentUserRating?.value ?? null}
+                      onRate={handleRate}
+                      compact
+                    />
+                  </div>
+
+                  {partnerMembers.map((partnerMember) => {
+                    const partnerVisual = memberVisuals[partnerMember.userId];
+                    const partnerName =
+                      partnerVisual?.displayName ||
+                      partnerMember.user.name ||
+                      partnerMember.user.email;
+                    const partnerRating = ratingsByUserId.get(partnerMember.userId) ?? null;
+
+                    return (
+                      <div
+                        key={partnerMember.userId}
+                        className="flex items-center justify-between gap-3 border-t border-rose-100/80 pt-2"
+                      >
+                        <p className="text-xs font-medium text-[var(--text-muted)]">
+                          {partnerName}
+                        </p>
+                        {partnerRating ? (
+                          <HeartRating value={partnerRating} readonly size="sm" />
+                        ) : (
+                          <span className="text-xs text-[var(--text-tertiary)]">
+                            Not rated yet
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : null}
@@ -669,6 +722,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             name: currentUser.name,
             email: currentUser.email,
           }}
+          memberVisuals={memberVisuals}
           onSubmit={handleComment}
           onDelete={handleDeleteComment}
         />

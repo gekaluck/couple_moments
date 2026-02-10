@@ -106,6 +106,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     eventComments,
     hasGoogleCalendar,
     creatorPalette,
+    memberVisuals,
     prefillData,
   } = await loadCalendarPageData({
     spaceId: space.id,
@@ -490,6 +491,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       name: idea.createdBy.name,
       email: idea.createdBy.email,
     },
+    createdByUserId: idea.createdByUserId,
     placeId: idea.placeId,
     placeName: idea.placeName,
     placeAddress: idea.placeAddress,
@@ -506,7 +508,9 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   }));
 
   const editBlock = editBlockId
-    ? blocks.manual.find((block) => block.id === editBlockId)
+    ? blocks.manual.find(
+        (block) => block.id === editBlockId && block.createdByUserId === userId,
+      )
     : null;
 
   const formatDateInput = (date: Date) => {
@@ -657,7 +661,9 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     blocks={dayBlocks}
                     nowLabel={nowLabel}
                     addEventHref={buildCalendarHref(monthParam(now), { new: key })}
+                    currentUserId={userId}
                     creatorPalette={creatorPalette}
+                    memberVisuals={memberVisuals}
                     buildBlockEditHref={(blockId) =>
                       buildCalendarHref(monthParam(now), { editBlock: blockId })
                     }
@@ -676,6 +682,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             commentCounts={ideaCommentCounts}
             commentsByIdea={ideaCommentsByIdea}
             currentUserId={userId}
+            memberVisuals={memberVisuals}
             mapsApiKey={mapsApiKey}
             hasGoogleCalendar={hasGoogleCalendar}
             onCreateIdea={handleCreateIdea}
@@ -693,7 +700,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               dateTimeStart: event.dateTimeStart,
               timeIsSet: event.timeIsSet,
               createdBy: event.createdBy
-                ? { name: event.createdBy.name, email: event.createdBy.email }
+                ? {
+                    name:
+                      memberVisuals[event.createdByUserId]?.displayName ??
+                      event.createdBy.name,
+                    email: event.createdBy.email,
+                  }
                 : undefined,
               placeName: event.placeName,
             }))}

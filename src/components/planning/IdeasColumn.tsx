@@ -6,6 +6,7 @@ import { Lightbulb } from "lucide-react";
 import EmptyState from "./EmptyState";
 import IdeaCard from "./IdeaCard";
 import CreateIdeaModal from "./CreateIdeaModal";
+import { CreatorVisualMap } from "@/lib/creator-colors";
 
 type Idea = {
   id: string;
@@ -14,6 +15,7 @@ type Idea = {
   tags: string[];
   createdAt: Date;
   createdBy: { name: string | null; email: string };
+  createdByUserId: string;
   placeId?: string | null;
   placeName?: string | null;
   placeAddress?: string | null;
@@ -37,6 +39,7 @@ type IdeasColumnProps = {
   commentCounts: Record<string, number>;
   commentsByIdea: Record<string, IdeaComment[]>;
   currentUserId: string;
+  memberVisuals: CreatorVisualMap;
   mapsApiKey?: string;
   hasGoogleCalendar?: boolean;
   onCreateIdea: (formData: FormData) => Promise<void>;
@@ -62,6 +65,7 @@ export default function IdeasColumn({
   commentCounts,
   commentsByIdea,
   currentUserId,
+  memberVisuals,
   mapsApiKey,
   hasGoogleCalendar = false,
   onCreateIdea,
@@ -116,6 +120,7 @@ export default function IdeasColumn({
               commentCount={commentCounts[idea.id] ?? 0}
               comments={commentsByIdea[idea.id] ?? []}
               currentUserId={currentUserId}
+              memberVisuals={memberVisuals}
               mapsApiKey={mapsApiKey}
               hasGoogleCalendar={hasGoogleCalendar}
               onSchedule={onScheduleIdea}

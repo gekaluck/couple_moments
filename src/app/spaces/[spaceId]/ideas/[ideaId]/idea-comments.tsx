@@ -3,6 +3,7 @@
 import { useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 
+import { CreatorVisualMap, getAvatarGradient } from "@/lib/creator-colors";
 import { formatTimestamp } from "@/lib/formatters";
 
 type Comment = {
@@ -24,6 +25,7 @@ type IdeaCommentsProps = {
     name: string | null;
     email: string;
   };
+  memberVisuals: CreatorVisualMap;
   onSubmit: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
 };
@@ -33,6 +35,7 @@ export default function IdeaComments({
   initialComments,
   currentUserId,
   currentUser,
+  memberVisuals,
   onSubmit,
   onDelete,
 }: IdeaCommentsProps) {
@@ -135,28 +138,44 @@ export default function IdeaComments({
         {optimisticComments.map((comment) => {
           const isOwnComment = comment.author.id === currentUserId;
           const isOptimistic = comment.id.startsWith("optimistic-");
+          const authorVisual = memberVisuals[comment.author.id];
+          const authorName =
+            authorVisual?.displayName || comment.author.name || comment.author.email;
+          const avatarGradient = authorVisual
+            ? getAvatarGradient(authorVisual.accent)
+            : "linear-gradient(135deg,#fb7185,#db2777)";
           return (
             <div
               key={comment.id}
               className="rounded-2xl border border-[var(--panel-border)] bg-white/70 p-4"
             >
-              <p className="text-sm text-[var(--text-primary)]">{comment.body}</p>
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-tertiary)]">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-[var(--text-primary)]">
-                    {comment.author.name || comment.author.email}
-                  </span>
-                  <span>- {formatTimestamp(comment.createdAt)}</span>
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+                  style={{ backgroundImage: avatarGradient }}
+                >
+                  {authorVisual?.initials ?? authorName.slice(0, 2).toUpperCase()}
                 </div>
-                {isOwnComment && !isOptimistic ? (
-                  <button
-                    className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-500 transition hover:text-rose-600"
-                    type="button"
-                    onClick={() => handleDelete(comment)}
-                  >
-                    Delete
-                  </button>
-                ) : null}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-[var(--text-primary)]">{comment.body}</p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-tertiary)]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-[var(--text-primary)]">
+                        {authorName}
+                      </span>
+                      <span>- {formatTimestamp(comment.createdAt)}</span>
+                    </div>
+                    {isOwnComment && !isOptimistic ? (
+                      <button
+                        className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-500 transition hover:text-rose-600"
+                        type="button"
+                        onClick={() => handleDelete(comment)}
+                      >
+                        Delete
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </div>
           );

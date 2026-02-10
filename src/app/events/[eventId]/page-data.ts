@@ -1,4 +1,6 @@
 import { getEventForUser, listEventComments } from "@/lib/events";
+import { listSpaceMembers } from "@/lib/couple-spaces";
+import { buildCreatorVisuals } from "@/lib/creator-colors";
 import { getEventSyncStatus } from "@/lib/integrations/google/events";
 import { prisma } from "@/lib/prisma";
 
@@ -20,7 +22,7 @@ export async function loadEventDetailData(params: {
 }) {
   const { eventId, userId, coupleSpaceId, createdByUserId } = params;
 
-  const [currentUserRating, photos, comments, creator, googleSyncStatus, members] =
+  const [currentUserRating, allRatings, photos, comments, creator, googleSyncStatus, members] =
     await Promise.all([
       prisma.rating.findUnique({
         where: {
@@ -30,6 +32,10 @@ export async function loadEventDetailData(params: {
           },
         },
         select: { value: true },
+      }),
+      prisma.rating.findMany({
+        where: { eventId },
+        select: { userId: true, value: true },
       }),
       prisma.photo.findMany({
         where: { eventId },
@@ -41,21 +47,27 @@ export async function loadEventDetailData(params: {
         select: { name: true, email: true },
       }),
       getEventSyncStatus(eventId),
-      prisma.membership.findMany({
-        where: { coupleSpaceId },
-        select: {
-          userId: true,
-          user: { select: { name: true, email: true } },
-        },
-      }),
+      listSpaceMembers(coupleSpaceId),
     ]);
+  const memberVisuals = buildCreatorVisuals(
+    members.map((member) => ({
+      id: member.userId,
+      name: member.user.name,
+      email: member.user.email,
+      alias: member.alias,
+      initials: member.initials,
+      color: member.color,
+    })),
+  );
 
   return {
     currentUserRating,
+    allRatings,
     photos,
     comments,
     creator,
     googleSyncStatus,
     members,
+    memberVisuals,
   };
 }

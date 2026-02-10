@@ -1,6 +1,7 @@
 import { google, calendar_v3 } from 'googleapis';
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedClient } from './calendar';
+import { getCreatorDisplayName } from '@/lib/creator-colors';
 
 type DuetEvent = {
   id: string;
@@ -123,12 +124,11 @@ async function getInviteAttendees(
 ): Promise<calendar_v3.Schema$EventAttendee[]> {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    select: {
+    include: {
       coupleSpace: {
-        select: {
+        include: {
           memberships: {
-            select: {
-              userId: true,
+            include: {
               user: {
                 select: {
                   email: true,
@@ -158,9 +158,17 @@ async function getInviteAttendees(
       continue;
     }
     emails.add(email);
+    const membershipAppearance = membership as {
+      alias?: string | null;
+    };
     attendees.push({
       email,
-      displayName: membership.user.name ?? undefined,
+      displayName: getCreatorDisplayName({
+        id: membership.userId,
+        name: membership.user.name,
+        email: membership.user.email,
+        alias: membershipAppearance.alias ?? null,
+      }),
     });
   }
 

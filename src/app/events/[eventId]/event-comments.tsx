@@ -4,6 +4,7 @@ import { useOptimistic, useRef, useState, useTransition } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { CreatorVisualMap, getAvatarGradient } from "@/lib/creator-colors";
 import { formatTimestamp, getInitials } from "@/lib/formatters";
 
 type Comment = {
@@ -25,20 +26,17 @@ type EventCommentsProps = {
     name: string | null;
     email: string;
   };
+  memberVisuals: CreatorVisualMap;
   onSubmit: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
 };
-
-const AVATAR_GRADIENTS = [
-  "from-rose-500 to-pink-600",
-  "from-sky-500 to-indigo-500",
-];
 
 export default function EventComments({
   eventId,
   initialComments,
   currentUserId,
   currentUser,
+  memberVisuals,
   onSubmit,
   onDelete,
 }: EventCommentsProps) {
@@ -161,6 +159,17 @@ export default function EventComments({
         {optimisticComments.map((comment, index) => {
           const isOwnComment = comment.author.id === currentUserId;
           const isOptimistic = comment.id.startsWith("optimistic-");
+          const authorVisual = memberVisuals[comment.author.id];
+          const avatarGradient = authorVisual
+            ? getAvatarGradient(authorVisual.accent)
+            : index % 2 === 0
+              ? "linear-gradient(135deg,#fb7185,#db2777)"
+              : "linear-gradient(135deg,#0ea5e9,#4f46e5)";
+          const authorName =
+            authorVisual?.displayName || comment.author.name || comment.author.email;
+          const authorInitials =
+            authorVisual?.initials ||
+            getInitials(comment.author.name, comment.author.email);
           return (
             <div
               key={comment.id}
@@ -168,17 +177,16 @@ export default function EventComments({
             >
               <div className="flex items-start gap-3">
                 <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white ${
-                    AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length]
-                  }`}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white"
+                  style={{ backgroundImage: avatarGradient }}
                 >
-                  {getInitials(comment.author.name, comment.author.email)}
+                  {authorInitials}
                 </div>
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--text-tertiary)]">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-[var(--text-primary)]">
-                        {comment.author.name || comment.author.email}
+                        {authorName}
                       </span>
                       <span>- {formatTimestamp(comment.createdAt)}</span>
                     </div>

@@ -76,6 +76,9 @@ model Membership {
   userId        String
   coupleSpaceId String
   role          String       @default("member")
+  alias         String?
+  initials      String?
+  color         String?
 
   user          User         @relation(fields: [userId], references: [id])
   coupleSpace   CoupleSpace  @relation(fields: [coupleSpaceId], references: [id])
