@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -59,6 +60,9 @@ export default function CalendarAddControls({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isAutoOpeningEvent = Boolean(initialEventDate || prefillData);
+  const activePanel = isAutoOpeningEvent ? "event" : openPanel;
+  const activeEventDate = initialEventDate ?? eventDate;
 
   const clearModalParams = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -75,14 +79,16 @@ export default function CalendarAddControls({
   const modalTitle = prefillData ? "Do this again" : "New event";
 
   return (
-    <div className="flex flex-col items-end gap-3">
+    <>
       <div className="flex flex-wrap items-center gap-2">
         <button
-          className="button-hover inline-flex items-center gap-2 rounded-full border border-[var(--color-border-hover)] px-4 py-2 text-xs font-semibold text-[var(--color-primary)] shadow-[var(--shadow-sm)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-primary-hover)]"
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3.5 py-2 text-xs font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-medium)] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
+          aria-label="Create a new event"
           onClick={() => {
             setEventDate(undefined);
             setErrors({});
             setOpenPanel("event");
+            setErrors({});
           }}
           type="button"
         >
@@ -103,7 +109,7 @@ export default function CalendarAddControls({
             <path d="M12 6v6l4 2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M12 22a10 10 0 1 0-9.95-11" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          + Unavailable
+          Block time
         </button>
       </div>
       <Modal
@@ -151,7 +157,7 @@ export default function CalendarAddControls({
           <input
             aria-describedby={errors.eventTitle ? "event-title-error" : undefined}
             aria-invalid={errors.eventTitle ? "true" : "false"}
-            className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
             name="title"
             placeholder="Dinner at Aurora"
             defaultValue={prefillData?.title ?? ""}
@@ -166,15 +172,15 @@ export default function CalendarAddControls({
             <input
               aria-describedby={errors.eventDate ? "event-date-error" : undefined}
               aria-invalid={errors.eventDate ? "true" : "false"}
-              className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
               name="date"
               type="date"
-              defaultValue={eventDate}
+              defaultValue={activeEventDate}
               min={todayStr}
               required
             />
             <input
-              className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
               name="time"
               type="time"
             />
@@ -185,13 +191,13 @@ export default function CalendarAddControls({
             </p>
           ) : null}
           <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
             name="tags"
             placeholder="tags (comma separated)"
             defaultValue={prefillData?.tags ?? ""}
           />
           <textarea
-            className="min-h-[100px] rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="min-h-[100px] rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
             name="description"
             placeholder="Notes or details"
             defaultValue={prefillData?.description ?? ""}
@@ -237,7 +243,7 @@ export default function CalendarAddControls({
           {prefillData?.placeName && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
               <span className="font-semibold">Place:</span> {prefillData.placeName}
-              {prefillData.placeAddress && <span className="text-emerald-600"> — {prefillData.placeAddress}</span>}
+              {prefillData.placeAddress && <span className="text-emerald-600"> - {prefillData.placeAddress}</span>}
             </div>
           )}
           <div className="flex flex-wrap justify-end gap-2">
@@ -249,7 +255,7 @@ export default function CalendarAddControls({
               Cancel
             </button>
             <button
-              className="button-hover rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
+              className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
               type="submit"
               disabled={isPending}
             >
@@ -299,7 +305,7 @@ export default function CalendarAddControls({
           <input
             aria-describedby={errors.blockTitle ? "block-title-error" : undefined}
             aria-invalid={errors.blockTitle ? "true" : "false"}
-            className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
             name="title"
             placeholder="Out of town"
             required
@@ -313,7 +319,7 @@ export default function CalendarAddControls({
             <input
               aria-describedby={errors.blockDate ? "block-date-error" : undefined}
               aria-invalid={errors.blockDate ? "true" : "false"}
-              className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
               name="start"
               type="date"
               required
@@ -321,7 +327,7 @@ export default function CalendarAddControls({
             <input
               aria-describedby={errors.blockDate ? "block-date-error" : undefined}
               aria-invalid={errors.blockDate ? "true" : "false"}
-              className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
               name="end"
               type="date"
               required
@@ -333,7 +339,7 @@ export default function CalendarAddControls({
             </p>
           ) : null}
           <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-4 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
             name="note"
             placeholder="Optional note"
           />
@@ -346,7 +352,7 @@ export default function CalendarAddControls({
               Cancel
             </button>
             <button
-              className="button-hover rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
+              className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
               type="submit"
               disabled={isPending}
             >
@@ -355,6 +361,7 @@ export default function CalendarAddControls({
           </div>
         </form>
       </Modal>
-    </div>
+    </>
   );
 }
+

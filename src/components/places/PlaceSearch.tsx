@@ -60,7 +60,7 @@ export type PlaceSelection = {
 };
 
 type PlaceSearchProps = {
-  label?: string;
+  label?: string | null;
   placeholder?: string;
   initialValue?: string;
   apiKey?: string;
@@ -125,6 +125,7 @@ export default function PlaceSearch({
             fields: ["website", "opening_hours", "photos", "url", "name"],
           },
           (details, status) => {
+          (details, status) => {
             if (
               status !== googleMaps.maps.places.PlacesServiceStatus.OK ||
               !details
@@ -140,6 +141,7 @@ export default function PlaceSearch({
               photoUrls: Array.isArray(details.photos)
                 ? details.photos
                     .slice(0, 3)
+                    .map((photo) =>
                     .map((photo) =>
                       photo.getUrl({ maxWidth: 800, maxHeight: 600 }),
                     )
@@ -163,11 +165,11 @@ export default function PlaceSearch({
   }, [apiKey, onSelect]);
 
   return (
-    <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
-      {label}
+    <label className={`flex flex-col text-sm font-medium text-[var(--text-muted)] ${label ? "gap-2" : "gap-0"}`}>
+      {label ? <span>{label}</span> : null}
       <input
         ref={inputRef}
-        className="rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+        className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
         placeholder={placeholder}
         value={value}
         onChange={(event) => setValue(event.target.value)}

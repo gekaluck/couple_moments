@@ -11,13 +11,13 @@ type CardProps = {
 };
 
 const variantStyles = {
-  default: "border-[var(--panel-border)] bg-white/70",
-  rose: "border-rose-200 bg-rose-50",
-  amber: "border-amber-200 bg-amber-50",
-  emerald: "border-emerald-200 bg-emerald-50",
-  sky: "border-sky-200 bg-sky-50",
-  violet: "border-violet-200 bg-violet-50",
-  slate: "border-slate-200 bg-slate-50",
+  default: "border-[var(--panel-border)] bg-[var(--color-surface-card)]",
+  rose: "border-[var(--panel-border)] bg-[var(--color-surface-card)]",
+  amber: "border-[var(--panel-border)] bg-[var(--color-secondary-soft)]",
+  emerald: "border-[var(--panel-border)] bg-[var(--surface-50)]",
+  sky: "border-[var(--panel-border)] bg-[var(--surface-50)]",
+  violet: "border-[var(--panel-border)] bg-[var(--surface-50)]",
+  slate: "border-[var(--panel-border)] bg-[var(--surface-50)]",
 };
 
 const paddingStyles = {
@@ -36,9 +36,9 @@ export default function Card({
   onClick,
   ...rest
 }: CardProps) {
-  const baseStyles = "rounded-2xl border transition-all duration-200";
+  const baseStyles = "rounded-xl border shadow-[var(--shadow-sm)] transition-all duration-200";
   const hoverStyles = hover
-    ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:border-opacity-80"
+    ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] hover:border-opacity-95"
     : "";
   const interactiveStyles = onClick ? "cursor-pointer" : "";
 
@@ -86,7 +86,7 @@ type CardTitleProps = {
 export function CardTitle({ children, className = "" }: CardTitleProps) {
   return (
     <h3
-      className={`min-w-0 flex-1 text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-all overflow-hidden ${className}`}
+      className={`min-w-0 flex-1 text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-all overflow-hidden tracking-[-0.015em] ${className}`}
     >
       {children}
     </h3>
@@ -103,7 +103,7 @@ export function CardDescription({
   className = "",
 }: CardDescriptionProps) {
   return (
-    <p className={`mt-2 text-sm text-[var(--text-muted)] line-clamp-2 ${className}`}>
+    <p className={`mt-2 text-sm leading-6 text-[var(--text-muted)] line-clamp-2 ${className}`}>
       {children}
     </p>
   );

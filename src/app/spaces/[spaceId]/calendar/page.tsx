@@ -476,11 +476,11 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
 
   return (
     <>
-      <section className="surface p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <section className="surface p-6 md:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4 md:items-center">
           <div>
             <p className="section-kicker">Calendar</p>
-            <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+            <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl">
               {formatMonthTitle(now)}
             </h2>
             <p className="section-subtitle">
@@ -562,23 +562,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
         ) : (
           <>
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[var(--text-tertiary)]">
-              <div className="inline-flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-                Upcoming
-              </div>
-              <div className="inline-flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
-                Memory
-              </div>
-              <div className="inline-flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-amber-400" />
-                Unavailable
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
               {dayLabels.map((day) => (
-                <div key={day} className="px-2 py-1">
+                <div
+                  key={day}
+                  className="rounded-lg border border-white/80 bg-white/55 px-2 py-1.5 text-center"
+                >
                   {day}
                 </div>
               ))}
@@ -619,17 +608,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </>
         )}
       </section>
-      <PlanningSection
-        actions={(
-          <Link
-            className="pill-button button-hover"
-            href={buildCalendarHref(monthParam(today))}
-          >
-            Today
-          </Link>
-        )}
-      >
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <PlanningSection>
+        <div className="flex flex-col gap-8">
           <IdeasColumn
             key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
             ideas={ideasForPlanning}
@@ -658,7 +638,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               placeName: event.placeName,
             }))}
             commentCounts={eventCommentCounts}
-            todayHref={buildCalendarHref(monthParam(today))}
             newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
           />
         </div>

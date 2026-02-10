@@ -98,7 +98,7 @@ export default function EventEditModal({
         <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)] md:col-span-2">
           Title
           <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
             name="title"
             defaultValue={title}
             required
@@ -107,7 +107,7 @@ export default function EventEditModal({
         <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
           Date
           <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
             name="date"
             type="date"
             defaultValue={dateValue}
@@ -117,7 +117,7 @@ export default function EventEditModal({
         <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
           Time (optional)
           <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
             name="time"
             type="time"
             defaultValue={timeValue}
@@ -130,7 +130,7 @@ export default function EventEditModal({
         <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)] md:col-span-2">
           Notes
           <textarea
-            className="min-h-[120px] rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            className="min-h-[120px] rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
             name="description"
             defaultValue={descriptionValue}
           />

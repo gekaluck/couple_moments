@@ -9,12 +9,14 @@ type EventRatingProps = {
   eventId: string;
   currentRating: number | null;
   onRate: (formData: FormData) => Promise<void>;
+  compact?: boolean;
 };
 
 export default function EventRating({
   eventId,
   currentRating,
   onRate,
+  compact = false,
 }: EventRatingProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -31,6 +33,19 @@ export default function EventRating({
         toast.error("Failed to save rating");
       }
     });
+  }
+
+  if (compact) {
+    return (
+      <div className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-1.5">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
+          Rating
+        </span>
+        <div className={isPending ? "opacity-50 pointer-events-none" : ""}>
+          <HeartRating value={currentRating} onChange={handleRatingChange} size="sm" />
+        </div>
+      </div>
+    );
   }
 
   return (

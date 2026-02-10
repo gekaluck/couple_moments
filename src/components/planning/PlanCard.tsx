@@ -26,13 +26,29 @@ export default function PlanCard({
   createdBy,
   placeName,
 }: PlanCardProps) {
+  const dayDiff = getDayDiff(dateTimeStart);
+  const proximityLabel =
+    dayDiff === 0 ? "Today" : dayDiff === 1 ? "Tomorrow" : null;
+
   return (
     <Link href={`/events/${id}`} className="block">
-      <Card variant="rose" hover padding="md" className="animate-fade-in-up">
+      <Card
+        variant="rose"
+        hover
+        padding="sm"
+        className="group/plan card-hover animate-fade-in-up border-rose-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,238,244,0.74))]"
+      >
         <CardHeader>
-          <CardTitle className="text-base text-rose-900">{title}</CardTitle>
+          <div className="min-w-0 flex-1 space-y-1">
+            {proximityLabel ? (
+              <span className="inline-flex rounded-full border border-rose-200/70 bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-700">
+                {proximityLabel}
+              </span>
+            ) : null}
+            <CardTitle className="text-lg text-[var(--text-primary)]">{title}</CardTitle>
+          </div>
           {commentCount > 0 ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white/80 px-2 py-1 text-xs text-rose-600 shadow-sm">
+            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200/70 bg-white/85 px-2 py-1 text-xs text-rose-700 shadow-sm">
               <MessageSquare className="h-3.5 w-3.5" />
               {commentCount}
             </span>
@@ -43,13 +59,13 @@ export default function PlanCard({
             {description}
           </CardDescription>
         ) : null}
-        <CardFooter className="flex-col items-start gap-2">
+        <CardFooter className="flex-col items-start gap-2 pt-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
               <CalendarClock className="h-4 w-4 text-rose-500" />
               {formatEventDateTime(dateTimeStart, timeIsSet)}
               {!timeIsSet ? (
-                <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-600">
+                <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
                   Anytime
                 </span>
               ) : null}
@@ -64,9 +80,11 @@ export default function PlanCard({
             ) : null}
           </div>
           {placeName ? (
-            <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-              <MapPin className="h-4 w-4 text-rose-500" />
-              <span className="text-[var(--text-muted)]">{placeName}</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-rose-200/70 bg-white/75 px-3 py-1 text-xs text-[var(--text-tertiary)]">
+              <MapPin className="h-3.5 w-3.5 text-rose-500" />
+              <span className="text-[var(--text-muted)]">
+                {placeName}
+              </span>
             </div>
           ) : null}
         </CardFooter>

@@ -6,7 +6,6 @@ import { requireUserId } from "@/lib/current-user";
 import { formatTimestamp, getInitials } from "@/lib/formatters";
 
 import ConfirmForm from "@/components/ConfirmForm";
-import IconButton from "@/components/ui/IconButton";
 import EmptyState from "@/components/ui/EmptyState";
 import MutationToast from "@/components/ui/MutationToast";
 import {
@@ -61,15 +60,8 @@ function getAvatarGradient(userId: string) {
   return AVATAR_GRADIENTS[hash % AVATAR_GRADIENTS.length];
 }
 
-function getNoteAccent(kind: string) {
-  if (kind === "EVENT_COMMENT") {
-    return "border-l-rose-400";
-  }
-  if (kind === "IDEA_COMMENT") {
-    return "border-l-amber-400";
-  }
-  return "border-l-violet-400";
-}
+const NOTE_BADGE_CLASS =
+  "rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -154,20 +146,26 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
         }}
       />
       <section className="surface-muted p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="section-kicker">Notes</p>
             <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
               Notes center
             </h2>
-            <p className="section-subtitle">
-              Capture quick thoughts, links, and reminders.
-            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+              <span className="rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2.5 py-1 text-[var(--text-secondary)]">
+                {totalCount} notes
+              </span>
+              <span className="rounded-full border border-[var(--panel-border)] bg-white/85 px-2.5 py-1">
+                Page {page} / {totalPages}
+              </span>
+            </div>
           </div>
           <form
-            className="flex w-full max-w-xl flex-wrap items-center gap-2 md:flex-nowrap"
+            className="grid w-full max-w-xl gap-2 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-2 md:grid-cols-[minmax(160px,auto),1fr]"
             method="get"
           >
+            <input type="hidden" name="page" value="1" />
             <div className="relative flex h-10 min-w-[150px] items-center">
               <select
                 className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white px-4 text-sm font-medium leading-none text-[var(--text-primary)] shadow-sm outline-none transition focus:border-[var(--accent)]"
@@ -190,18 +188,15 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                 defaultValue={query}
               />
             </div>
-            <button
-              className="h-10 shrink-0 rounded-full bg-violet-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-600 hover:shadow-md"
-              type="submit"
-            >
+            <button type="submit" className="sr-only">
               Search
             </button>
           </form>
         </div>
-        <form className="mt-6 flex flex-col gap-3" action={handleCreate}>
-          <div className="rounded-2xl bg-[var(--panel-border)] p-px transition focus-within:bg-violet-500">
+        <form className="mt-4 flex flex-col gap-3 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3" action={handleCreate}>
+          <div className="rounded-2xl bg-[var(--panel-border)] p-px transition focus-within:bg-[var(--action-primary)]">
             <textarea
-              className="min-h-[160px] w-full rounded-[15px] bg-white/90 px-4 py-3 text-sm text-[var(--text-primary)] outline-none"
+              className="min-h-[44px] w-full rounded-[15px] bg-white/90 px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-[min-height] duration-200 focus:min-h-[132px]"
               name="content"
               placeholder="Write a note..."
               required
@@ -209,7 +204,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
           </div>
           <div className="flex justify-end">
             <button
-              className="rounded-full bg-violet-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-600 hover:shadow-md"
+              className="rounded-full bg-[var(--action-primary)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--action-primary-strong)] hover:shadow-md"
               type="submit"
             >
               Add note
@@ -242,7 +237,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
           return (
             <article
               key={note.id}
-              className={`surface border-l-4 p-4 ${getNoteAccent(note.kind)}`}
+              className="group surface border border-[var(--panel-border)] bg-white p-4"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-1 gap-3">
@@ -255,14 +250,16 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                     <p className="text-sm text-[var(--text-primary)]">
                       {note.body}
                     </p>
-                    <p className="mt-2 text-xs text-[var(--text-tertiary)]">
+                    <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
                       <span className="font-semibold text-[var(--text-primary)]">
                         {note.author.name || note.author.email}
                       </span>
-                      <span className="mx-2">-</span>
+                      <span>/</span>
                       <span>{formatTimestamp(note.createdAt)}</span>
-                      <span className="mx-2">-</span>
-                      <span>{metadataLabel}</span>
+                      <span>/</span>
+                      <span className={NOTE_BADGE_CLASS}>
+                        {metadataLabel}
+                      </span>
                     </p>
                     {note.parentType === "EVENT" && note.parentId ? (
                       <Link
@@ -284,12 +281,14 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                 </div>
                 <ConfirmForm action={handleDelete} message="Delete this note?">
                   <input type="hidden" name="noteId" value={note.id} />
-                  <IconButton
-                    icon={<TrashIcon />}
-                    label="Delete note"
-                    variant="danger"
+                  <button
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white text-[var(--text-muted)] opacity-55 transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
                     type="submit"
-                  />
+                    aria-label="Delete note"
+                    title="Delete note"
+                  >
+                    <TrashIcon />
+                  </button>
                 </ConfirmForm>
               </div>
             </article>
