@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { createEventComment, createEventPhoto, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
 import {
-  deleteGoogleCalendarEvent,
+  cancelGoogleCalendarEvent,
+  getGoogleEventDeleteContext,
   updateGoogleCalendarEvent,
 } from "@/lib/integrations/google/events";
 import { deleteNote } from "@/lib/notes";
@@ -239,9 +240,10 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
   async function runDeleteWithGoogleSync(): Promise<EventActionResult> {
     "use server";
-    const googleDeleteResult = await deleteGoogleCalendarEvent(eventIdForActions);
+    const googleDeleteContext = await getGoogleEventDeleteContext(eventIdForActions);
     const currentUserId = await requireUserId();
     await deleteEvent(eventIdForActions, currentUserId);
+    const googleDeleteResult = await cancelGoogleCalendarEvent(googleDeleteContext);
 
     if (googleDeleteResult.code === "NOT_SYNCED") {
       return {

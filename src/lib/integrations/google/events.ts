@@ -32,6 +32,13 @@ export type GoogleSyncResult = {
   skipped?: boolean;
 };
 
+export type GoogleEventDeleteContext = {
+  externalAccountId: string;
+  calendarId: string;
+  externalEventId: string;
+  accountRevoked: boolean;
+};
+
 const RETRYABLE_HTTP_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 const RETRYABLE_NETWORK_CODES = new Set([
   'ETIMEDOUT',
@@ -452,19 +459,41 @@ export async function updateGoogleCalendarEvent(
 }
 
 /**
- * Delete a Google Calendar event
+ * Get the external sync context required to cancel a Google event after local deletion.
  */
-export async function deleteGoogleCalendarEvent(
-  eventId: string
+export async function getGoogleEventDeleteContext(
+  eventId: string,
+): Promise<GoogleEventDeleteContext | null> {
+  const link = await prisma.externalEventLink.findUnique({
+    where: { eventId },
+    include: {
+      externalAccount: {
+        select: { revokedAt: true },
+      },
+    },
+  });
+
+  if (!link) {
+    return null;
+  }
+
+  return {
+    externalAccountId: link.externalAccountId,
+    calendarId: link.calendarId,
+    externalEventId: link.externalEventId,
+    accountRevoked: !!link.externalAccount.revokedAt,
+  };
+}
+
+/**
+ * Cancel a Google Calendar event using a captured link context.
+ * Safe to call after local event deletion.
+ */
+export async function cancelGoogleCalendarEvent(
+  context: GoogleEventDeleteContext | null,
 ): Promise<GoogleSyncResult> {
   try {
-    // Get existing link
-    const link = await prisma.externalEventLink.findUnique({
-      where: { eventId },
-      include: { externalAccount: true },
-    });
-
-    if (!link) {
+    if (!context) {
       return { success: true, skipped: true, code: 'NOT_SYNCED' };
     }
 
@@ -472,17 +501,17 @@ export async function deleteGoogleCalendarEvent(
     let syncCode: GoogleSyncCode | undefined;
     let recovered = false;
 
-    if (!link.externalAccount.revokedAt) {
+    if (!context.accountRevoked) {
       try {
         // Get authenticated client
-        const oauth2Client = await getAuthenticatedClient(link.externalAccountId);
+        const oauth2Client = await getAuthenticatedClient(context.externalAccountId);
         const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
         // Delete event from Google
         await withRetry(() =>
           calendar.events.delete({
-            calendarId: link.calendarId,
-            eventId: link.externalEventId,
+            calendarId: context.calendarId,
+            eventId: context.externalEventId,
             sendUpdates: 'all',
           }),
         );
@@ -499,13 +528,31 @@ export async function deleteGoogleCalendarEvent(
       recovered = true;
     }
 
-    // Remove the link
-    await prisma.externalEventLink.delete({ where: { eventId } }).catch(() => undefined);
-
     if (syncError) {
       return { success: false, code: syncCode, error: syncError };
     }
     return { success: true, recovered };
+  } catch (error) {
+    console.error('Error deleting Google Calendar event:', error);
+    return {
+      success: false,
+      code: isRetryableGoogleError(error) ? 'TRANSIENT_ERROR' : 'API_ERROR',
+      error: getErrorMessage(error),
+    };
+  }
+}
+
+/**
+ * Delete a Google Calendar event using event id (legacy wrapper).
+ */
+export async function deleteGoogleCalendarEvent(
+  eventId: string
+): Promise<GoogleSyncResult> {
+  try {
+    const context = await getGoogleEventDeleteContext(eventId);
+    const result = await cancelGoogleCalendarEvent(context);
+    await prisma.externalEventLink.delete({ where: { eventId } }).catch(() => undefined);
+    return result;
   } catch (error) {
     console.error('Error deleting Google Calendar event:', error);
     return {

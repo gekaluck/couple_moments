@@ -4,7 +4,8 @@ import { z } from "zod";
 import { badRequest, notFound, parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { getEventForUser, updateEvent, deleteEvent } from "@/lib/events";
 import {
-  deleteGoogleCalendarEvent,
+  cancelGoogleCalendarEvent,
+  getGoogleEventDeleteContext,
   updateGoogleCalendarEvent,
 } from "@/lib/integrations/google/events";
 import { parseJsonOrForm } from "@/lib/request";
@@ -129,8 +130,9 @@ export async function DELETE(_request: Request, { params }: PageProps) {
     return notFound();
   }
 
-  const googleDeleteResult = await deleteGoogleCalendarEvent(eventId);
+  const googleDeleteContext = await getGoogleEventDeleteContext(eventId);
   const event = await deleteEvent(eventId, userId);
+  const googleDeleteResult = await cancelGoogleCalendarEvent(googleDeleteContext);
   const googleSync =
     googleDeleteResult.code === "NOT_SYNCED"
       ? { attempted: false, success: true as const }
