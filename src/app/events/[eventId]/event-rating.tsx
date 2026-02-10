@@ -37,13 +37,8 @@ export default function EventRating({
 
   if (compact) {
     return (
-      <div className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3 py-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-          Rating
-        </span>
-        <div className={isPending ? "opacity-50 pointer-events-none" : ""}>
-          <HeartRating value={currentRating} onChange={handleRatingChange} size="sm" />
-        </div>
+      <div className={isPending ? "opacity-50 pointer-events-none" : ""}>
+        <HeartRating value={currentRating} onChange={handleRatingChange} size="sm" />
       </div>
     );
   }

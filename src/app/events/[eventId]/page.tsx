@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { createEventComment, createEventPhoto, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
+import { createEventComment, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
 import {
   cancelGoogleCalendarEvent,
   getGoogleEventDeleteContext,
@@ -18,7 +18,6 @@ import EventComments from "./event-comments";
 import EventEditModal from "./event-edit-modal";
 import EventRating from "./event-rating";
 import ConfirmForm from "@/components/ConfirmForm";
-import PhotoUploader from "@/components/photos/PhotoUploader";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 
 const PencilIcon = () => (
@@ -138,7 +137,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   if (!currentUser) {
     redirect("/login");
   }
-  const { currentUserRating, photos, comments, creator, googleSyncStatus } =
+  const { currentUserRating, comments, creator, googleSyncStatus } =
     await loadEventDetailData({
       eventId,
       userId,
@@ -301,17 +300,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     revalidatePath(`/events/${eventIdForActions}`);
   }
 
-  async function handleAddPhoto(formData: FormData) {
-    "use server";
-    const currentUserId = await requireUserId();
-    const url = formData.get("photoUrl")?.toString().trim() ?? "";
-    if (!url) {
-      return;
-    }
-    await createEventPhoto(eventIdForActions, currentUserId, url);
-    revalidatePath(`/events/${eventIdForActions}`);
-  }
-
   async function handleRate(formData: FormData) {
     "use server";
     const currentUserId = await requireUserId();
@@ -348,7 +336,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       ? `${startTimeLabel} - ${endTimeLabel}`
       : startTimeLabel
     : "Anytime";
-  const statusLabel = isPast ? "Past memory" : "Upcoming";
+  const statusLabel = isPast ? "Past" : "Upcoming";
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const hasPlace = Boolean(event.placeName || event.placeAddress);
   const placeLink =
@@ -375,15 +363,27 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="min-h-screen page-enter">
-      <header className="border-b border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.9),rgba(255,240,246,0.68))] backdrop-blur-xl">
+      <header className="border-b border-rose-200/50 bg-[linear-gradient(175deg,rgba(255,255,255,0.92),rgba(255,236,244,0.75))] backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-start justify-between gap-4 px-6 py-7">
           <div className="max-w-4xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-              {isFromMemories ? "Memories" : "Calendar"} / Event
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+            <div className="flex items-center gap-2">
+              <Link
+                href={backHref}
+                className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)] transition hover:text-rose-600"
+              >
+                {isFromMemories ? "Memories" : "Calendar"}
+              </Link>
+              <span className="text-[var(--text-tertiary)]">/</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-600">
+                Event
+              </span>
+            </div>
+            <h1 className="mt-2 text-3xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
               {event.title}
             </h1>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              {eventDateLabel} · {eventTimeLabel}
+            </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {isPast ? (
@@ -425,59 +425,89 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       </header>
 
       <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-6 py-8">
-        <section className="surface p-5 md:p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-            Event details
-          </p>
-          <div className="mt-3 grid gap-2">
-            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                Status
-              </p>
-              <p className="text-sm text-[var(--text-primary)]">{statusLabel}</p>
-            </div>
-            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                Date
-              </p>
-              <p className="text-sm text-[var(--text-primary)]">{eventDateLabel}</p>
-            </div>
-            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                Time
-              </p>
-              <p className="text-sm text-[var(--text-primary)]">{eventTimeLabel}</p>
-            </div>
-            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                Created by
-              </p>
-              <p className="text-sm text-[var(--text-primary)]">{creatorName}</p>
-            </div>
-            <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                Tags
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {tags.length > 0 ? (
-                  tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex rounded-full border border-[var(--panel-border)] bg-white/80 px-2.5 py-1 text-xs text-[var(--text-secondary)]"
-                    >
-                      {tag}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-sm text-[var(--text-muted)]">None</p>
-                )}
+        <section className="rounded-2xl border border-rose-200/60 bg-[linear-gradient(150deg,rgba(255,255,255,0.96),rgba(255,240,246,0.72))] p-6 shadow-[var(--shadow-sm)]">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+              Event Details
+            </h3>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                isPast
+                  ? "border border-slate-200 bg-slate-100 text-slate-600"
+                  : "border border-rose-200 bg-rose-50 text-rose-700"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${isPast ? "bg-slate-400" : "bg-rose-500"}`} />
+              {statusLabel}
+            </span>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {/* Date & Time Card */}
+            <div className="rounded-xl border border-rose-100/80 bg-white/70 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{eventDateLabel}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{eventTimeLabel}</p>
+                </div>
               </div>
             </div>
-            {isPast ? (
-              <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                  Rating
-                </p>
+
+            {/* Created By Card */}
+            <div className="rounded-xl border border-rose-100/80 bg-white/70 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--text-muted)]">Created by</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{creatorName}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tags */}
+          {tags.length > 0 ? (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium text-[var(--text-tertiary)]">Tags</p>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex rounded-full border border-rose-200/70 bg-white/85 px-3 py-1 text-xs font-medium text-rose-700"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Rating (for past events) */}
+          {isPast ? (
+            <div className="mt-4 rounded-xl border border-rose-100/80 bg-white/70 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[var(--text-muted)]">Your rating</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">How was this date?</p>
+                  </div>
+                </div>
                 <EventRating
                   eventId={event.id}
                   currentRating={currentUserRating?.value ?? null}
@@ -485,45 +515,71 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   compact
                 />
               </div>
-            ) : null}
-            {googleSyncStatus?.synced ? (
-              <div className="grid items-center gap-1 sm:grid-cols-[110px_1fr]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
-                  Sync
-                </p>
-                <p className="text-sm text-emerald-700">Synced with Google Calendar</p>
-              </div>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
+
+          {/* Google Sync Status */}
+          {googleSyncStatus?.synced ? (
+            <div className="mt-4 flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Synced with Google Calendar
+            </div>
+          ) : null}
         </section>
 
-        {event.description ? (
-          <section className="surface p-5 md:p-6">
-            <p className="text-sm leading-relaxed text-[var(--text-muted)]">
-              {event.description}
-            </p>
-          </section>
-        ) : (
-          <section className="border-b border-dashed border-[var(--panel-border)] pb-4">
+        <section className="rounded-2xl border border-rose-200/60 bg-[linear-gradient(150deg,rgba(255,255,255,0.96),rgba(255,240,246,0.72))] p-6 shadow-[var(--shadow-sm)]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+              Notes
+            </h3>
+          </div>
+          {event.description ? (
+            <div className="mt-4 rounded-xl border border-rose-100/80 bg-white/70 p-4">
+              <p className="text-sm leading-relaxed text-[var(--text-primary)]">
+                {event.description}
+              </p>
+            </div>
+          ) : (
             <Link
-              className="inline-flex items-center text-sm font-medium text-[var(--text-secondary)] underline decoration-dashed underline-offset-4 transition hover:text-[var(--action-primary)]"
+              className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-rose-200/80 bg-white/50 px-4 py-4 text-sm text-[var(--text-muted)] transition hover:border-rose-300 hover:bg-white/70"
               href={`/events/${event.id}?edit=1`}
             >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-400">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                </svg>
+              </span>
               Add a note about this event...
             </Link>
-          </section>
-        )}
+          )}
+        </section>
 
         {hasPlace ? (
-          <section className="surface p-5 md:p-6">
-            <div className="grid gap-4 md:grid-cols-[1fr_1.15fr]">
-              <div>
+          <section className="rounded-2xl border border-rose-200/60 bg-[linear-gradient(150deg,rgba(255,255,255,0.96),rgba(255,240,246,0.72))] p-6 shadow-[var(--shadow-sm)]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+                Location
+              </h3>
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.15fr]">
+              <div className="rounded-xl border border-rose-100/80 bg-white/70 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-                      Place
-                    </p>
-                    <p className="mt-1 text-base font-semibold text-[var(--text-primary)]">
+                    <p className="text-base font-semibold text-[var(--text-primary)]">
                       {event.placeName || "Selected place"}
                     </p>
                     {event.placeAddress ? (
@@ -534,32 +590,39 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   </div>
                   {placeLink ? (
                     <a
-                      className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                       href={placeLink}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Open in Maps
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Maps
                     </a>
                   ) : null}
                 </div>
                 {placeWebsite ? (
                   <a
-                    className="mt-2 inline-flex text-sm font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-rose-600 transition hover:text-rose-700 hover:underline"
                     href={placeWebsite}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {placeWebsite}
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z" />
+                    </svg>
+                    Visit website
                   </a>
                 ) : null}
 
                 {placeOpeningHours && placeOpeningHours.length > 0 ? (
-                  <details className="mt-4 rounded-xl border border-[var(--panel-border)] bg-white/70 p-3">
-                    <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-                      {todayHours ? `Hours today: ${todayHours}` : "Opening hours"}
+                  <details className="mt-4 rounded-lg border border-rose-100 bg-rose-50/50 p-3">
+                    <summary className="cursor-pointer text-xs font-semibold text-rose-700">
+                      {todayHours ? `Today: ${todayHours.split(": ")[1] || todayHours}` : "View hours"}
                     </summary>
-                    <ul className="mt-2 space-y-1 text-sm text-[var(--text-muted)]">
+                    <ul className="mt-2 space-y-1 text-xs text-[var(--text-muted)]">
                       {placeOpeningHours.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
@@ -568,12 +631,12 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                 ) : null}
               </div>
 
-              <div>
+              <div className="space-y-3">
                 {staticMapUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     alt={event.placeName || "Event location"}
-                    className="h-[220px] w-full rounded-2xl object-cover"
+                    className="h-[200px] w-full rounded-xl border border-rose-100/80 object-cover shadow-sm"
                     src={staticMapUrl}
                   />
                 ) : null}
@@ -582,45 +645,12 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   <PlacePhotoStrip
                     photoUrls={placePhotoUrls.slice(0, 3)}
                     alt={event.placeName || "Place photo"}
-                    className="mt-3"
                   />
                 ) : null}
               </div>
             </div>
           </section>
         ) : null}
-
-        <section className="surface p-5 md:p-6">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-              Photos
-            </p>
-          </div>
-          <div className="mt-4 rounded-2xl border border-dashed border-[var(--panel-border)] bg-white/70 p-4">
-            <form id="photo-upload-form" action={handleAddPhoto}>
-              <input id="photo-url-input" type="hidden" name="photoUrl" />
-              <PhotoUploader
-                cloudName={process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
-                uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-                formId="photo-upload-form"
-                inputId="photo-url-input"
-              />
-            </form>
-          </div>
-          {photos.length > 0 ? (
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {photos.map((photo) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={photo.id}
-                  alt={event.title}
-                  className="h-[170px] w-full rounded-xl object-cover"
-                  src={photo.storageUrl}
-                />
-              ))}
-            </div>
-          ) : null}
-        </section>
 
         <EventComments
           eventId={event.id}
