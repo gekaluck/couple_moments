@@ -3,7 +3,11 @@
 import { useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 
-import { CreatorVisualMap, getAvatarGradient } from "@/lib/creator-colors";
+import {
+  CREATOR_ACCENTS,
+  CreatorVisualMap,
+  getAvatarGradient,
+} from "@/lib/creator-colors";
 import { formatTimestamp } from "@/lib/formatters";
 
 type Comment = {
@@ -143,7 +147,7 @@ export default function IdeaComments({
             authorVisual?.displayName || comment.author.name || comment.author.email;
           const avatarGradient = authorVisual
             ? getAvatarGradient(authorVisual.accent)
-            : "linear-gradient(135deg,#fb7185,#db2777)";
+            : getAvatarGradient(CREATOR_ACCENTS.rose);
           return (
             <div
               key={comment.id}

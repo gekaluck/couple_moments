@@ -4,7 +4,11 @@ import { useOptimistic, useRef, useState, useTransition } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { CreatorVisualMap, getAvatarGradient } from "@/lib/creator-colors";
+import {
+  CREATOR_ACCENTS,
+  CreatorVisualMap,
+  getAvatarGradient,
+} from "@/lib/creator-colors";
 import { formatTimestamp, getInitials } from "@/lib/formatters";
 
 type Comment = {
@@ -163,8 +167,8 @@ export default function EventComments({
           const avatarGradient = authorVisual
             ? getAvatarGradient(authorVisual.accent)
             : index % 2 === 0
-              ? "linear-gradient(135deg,#fb7185,#db2777)"
-              : "linear-gradient(135deg,#0ea5e9,#4f46e5)";
+              ? getAvatarGradient(CREATOR_ACCENTS.rose)
+              : getAvatarGradient(CREATOR_ACCENTS.indigo);
           const authorName =
             authorVisual?.displayName || comment.author.name || comment.author.email;
           const authorInitials =

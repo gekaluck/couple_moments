@@ -213,13 +213,22 @@ export async function updateMembershipAppearance(params: {
   color: string | null;
 }) {
   const { coupleSpaceId, userId, alias, initials, color } = params;
-  await prisma.$executeRaw`
-    UPDATE "Membership"
-    SET "alias" = ${alias},
-        "initials" = ${initials},
-        "color" = ${color},
-        "updatedAt" = NOW()
-    WHERE "userId" = ${userId}
-      AND "coupleSpaceId" = ${coupleSpaceId}
-  `;
+  const appearanceData = {
+    alias,
+    initials,
+    color,
+  } as unknown as Parameters<typeof prisma.membership.updateMany>[0]["data"];
+  const result = await prisma.membership.updateMany({
+    where: {
+      userId,
+      coupleSpaceId,
+    },
+    // TODO: remove cast after running prisma generate in environments
+    // where Membership alias/initials/color are present in generated client types.
+    data: appearanceData,
+  });
+
+  if (result.count === 0) {
+    throw new Error("Membership not found.");
+  }
 }

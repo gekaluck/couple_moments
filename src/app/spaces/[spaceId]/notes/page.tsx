@@ -2,7 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
-import { buildCreatorVisuals, getAvatarGradient } from "@/lib/creator-colors";
+import {
+  buildCreatorVisuals,
+  CREATOR_ACCENTS,
+  getAvatarGradient,
+} from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
 import { formatTimestamp, getInitials } from "@/lib/formatters";
 
@@ -231,7 +235,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
             authorVisual?.displayName || note.author.name || note.author.email;
           const avatarGradient = authorVisual
             ? getAvatarGradient(authorVisual.accent)
-            : "linear-gradient(135deg,#fb7185,#db2777)";
+            : getAvatarGradient(CREATOR_ACCENTS.rose);
           const authorInitials =
             authorVisual?.initials || getInitials(note.author.name, note.author.email);
           const metadataLabel =

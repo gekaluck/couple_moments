@@ -3,7 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
-import { buildCreatorVisuals, getAvatarGradient } from "@/lib/creator-colors";
+import {
+  buildCreatorVisuals,
+  CREATOR_ACCENTS,
+  getAvatarGradient,
+} from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
 import { createEventForSpace } from "@/lib/events";
 import { createIdeaComment, getIdeaForUser, listIdeaComments } from "@/lib/ideas";
@@ -144,7 +148,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
             style={{
               backgroundImage: creatorVisual
                 ? getAvatarGradient(creatorVisual.accent)
-                : "linear-gradient(135deg,#f59e0b,#ea580c)",
+                : getAvatarGradient(CREATOR_ACCENTS.amber),
             }}
           >
             {creatorVisual?.initials ?? "ME"}

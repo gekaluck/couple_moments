@@ -4,7 +4,7 @@ import { z } from "zod";
 import { notFound, parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { createIdeaForSpace, listIdeasForSpace } from "@/lib/ideas";
-import { parseJsonStringArray } from "@/lib/parsers";
+import { parseStringArrayInput } from "@/lib/parsers";
 import { parseJsonOrForm } from "@/lib/request";
 import { normalizeTags } from "@/lib/tags";
 
@@ -80,16 +80,8 @@ export async function POST(request: Request, { params }: PageProps) {
     typeof parsed.data.placeLng === "number"
       ? parsed.data.placeLng
       : parseFloat(parsed.data.placeLng ?? "");
-  const placeOpeningHours =
-    Array.isArray(parsed.data.placeOpeningHours)
-      ? parsed.data.placeOpeningHours.map((item) => item.toString())
-      : parseJsonStringArray(
-          parsed.data.placeOpeningHours?.toString() ?? null,
-        );
-  const placePhotoUrls =
-    Array.isArray(parsed.data.placePhotoUrls)
-      ? parsed.data.placePhotoUrls.map((item) => item.toString())
-      : parseJsonStringArray(parsed.data.placePhotoUrls?.toString() ?? null);
+  const placeOpeningHours = parseStringArrayInput(parsed.data.placeOpeningHours);
+  const placePhotoUrls = parseStringArrayInput(parsed.data.placePhotoUrls);
 
   const idea = await createIdeaForSpace(spaceId, userId, {
     title,

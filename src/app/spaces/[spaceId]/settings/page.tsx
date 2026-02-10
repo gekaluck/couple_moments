@@ -8,6 +8,7 @@ import {
 } from "@/lib/couple-spaces";
 import {
   buildCreatorVisuals,
+  CREATOR_ACCENTS,
   CREATOR_COLOR_OPTIONS,
   getCreatorAccentByKey,
   getAvatarGradient,
@@ -172,7 +173,7 @@ export default async function SettingsPage({ params }: PageProps) {
                     style={{
                       backgroundImage: currentVisual
                         ? getAvatarGradient(currentVisual.accent)
-                        : "linear-gradient(135deg,#f59e0b,#ea580c)",
+                        : getAvatarGradient(CREATOR_ACCENTS.amber),
                     }}
                   >
                     {currentVisual?.initials ?? "ME"}
@@ -203,7 +204,7 @@ export default async function SettingsPage({ params }: PageProps) {
                       style={{
                         backgroundImage: partnerVisual
                           ? getAvatarGradient(partnerVisual.accent)
-                          : "linear-gradient(135deg,#fb7185,#db2777)",
+                          : getAvatarGradient(CREATOR_ACCENTS.rose),
                       }}
                     >
                       {partnerVisual?.initials ?? "PA"}

@@ -1,4 +1,4 @@
-const CREATOR_ACCENTS = {
+export const CREATOR_ACCENTS = {
   amber: {
     key: "amber",
     label: "Amber",

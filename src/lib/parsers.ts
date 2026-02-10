@@ -16,3 +16,13 @@ export function parseJsonStringArray(value?: string | null): string[] | null {
     return null;
   }
 }
+
+export function parseStringArrayInput(
+  value?: string | string[] | null,
+): string[] | null {
+  if (Array.isArray(value)) {
+    return value.map((item) => `${item}`);
+  }
+
+  return parseJsonStringArray(value);
+}

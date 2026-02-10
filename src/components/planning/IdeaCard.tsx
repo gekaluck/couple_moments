@@ -13,7 +13,11 @@ import Button from "@/components/ui/Button";
 import Card, { CardDescription, CardFooter, CardTitle } from "@/components/ui/Card";
 
 import { formatTimeAgo, getInitials } from "@/lib/formatters";
-import { CreatorVisualMap, getAvatarGradient } from "@/lib/creator-colors";
+import {
+  CREATOR_ACCENTS,
+  CreatorVisualMap,
+  getAvatarGradient,
+} from "@/lib/creator-colors";
 
 function getTodayDateString() {
   const today = new Date();
@@ -225,8 +229,8 @@ export default function IdeaCard({
               const avatarGradient = authorVisual
                 ? getAvatarGradient(authorVisual.accent)
                 : comment.author.id === currentUserId
-                  ? "linear-gradient(135deg,#0ea5e9,#4f46e5)"
-                  : "linear-gradient(135deg,#fb7185,#db2777)";
+                  ? getAvatarGradient(CREATOR_ACCENTS.indigo)
+                  : getAvatarGradient(CREATOR_ACCENTS.rose);
               const authorName =
                 authorVisual?.displayName || comment.author.name || comment.author.email;
               const authorInitials =

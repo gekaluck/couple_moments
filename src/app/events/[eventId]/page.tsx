@@ -12,7 +12,7 @@ import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
 import { normalizeTags, parseTags } from "@/lib/tags";
 import { parseJsonStringArray } from "@/lib/parsers";
-import { getAvatarGradient } from "@/lib/creator-colors";
+import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
 import { getInitials } from "@/lib/formatters";
 
 import { loadEventBaseData, loadEventDetailData } from "./page-data";
@@ -483,7 +483,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   style={{
                     backgroundImage: creatorVisual
                       ? getAvatarGradient(creatorVisual.accent)
-                      : "linear-gradient(135deg,#fb7185,#db2777)",
+                      : getAvatarGradient(CREATOR_ACCENTS.rose),
                   }}
                 >
                   {creatorInitials}
