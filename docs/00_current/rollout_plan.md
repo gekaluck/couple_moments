@@ -1,124 +1,110 @@
-# Duet — Rollout Plan
+# Duet Rollout Plan
 
-**Updated:** 2026-02-04
-**Status:** P0/P1 complete — moving to deployment and polish
+Updated: 2026-02-10
+Status: Active - deployment readiness and repo cleanup
 
 ---
 
-## Completed Milestones
+## Completed milestones
 
-### P0 — Critical Fixes (Done)
+## P0 - Critical fixes (done)
 
 | Item | Summary |
 |------|---------|
-| P0-1 | Authorization checks on all mutation functions |
+| P0-1 | Authorization checks on mutation paths |
 | P0-2 | Revert idea status on event deletion |
 | P0-3 | Middleware auth guard |
-| P0-4 | Sanitize ICS Content-Disposition header |
+| P0-4 | ICS Content-Disposition sanitization |
 
-### P1 — Robustness (Done)
+## P1 - Robustness (done)
 
 | Item | Summary |
 |------|---------|
 | P1-1 | Zod validation on API route inputs |
-| P1-2 | Per-user ratings (Rating model) |
-| P1-3 | Rate limiting on auth endpoints |
-| P1-4 | Comment deletion on event/idea detail pages |
+| P1-2 | Per-user ratings model |
+| P1-3 | Auth endpoint rate limiting |
+| P1-4 | Comment deletion on event and idea detail pages |
 
-Full evaluation details archived in `docs/90_archive/release-2026-02-04/EVALUATION_SUMMARY.md`.
+## M4 - Google Calendar integration (phase 1 + 2 done)
 
----
+Inbound availability:
+- [x] OAuth flow, token encryption, free/busy sync
+- [x] Calendar selection UI
+- [x] Busy-block rendering on calendar
 
-## Current Milestone
+Outbound events:
+- [x] Event creation to Google Calendar
+- [x] "Add to Google Calendar" toggle on event creation
+- [x] "Add to Google Calendar" toggle on idea scheduling
+- [x] Sync status indicator on event detail
 
-### M1. Deployment — Hosting + DB + Env Vars
-
-Get the app running in production for two real users.
-
-- [ ] Provision PostgreSQL (Railway / Neon / Supabase)
-- [ ] Configure production environment variables (`DATABASE_URL`, session secret, Cloudinary keys)
-- [ ] Run `prisma migrate deploy` against production DB
-- [ ] Deploy Next.js app (Railway / Vercel / Fly.io)
-- [ ] Verify auth flow, space creation, and event CRUD on production
-- [ ] Set up domain / HTTPS
-
-See `docs/00_current/DEPLOYMENT.md` for platform options and step-by-step instructions.
-
-### M2. Photo Upload MVP
-
-Replace Cloudinary placeholder with working upload flow.
-
-- [ ] Confirm Cloudinary unsigned preset is configured and env vars are set
-- [ ] Wire up photo upload on event detail page (client-side upload → save URL)
-- [ ] Display uploaded photos in event detail and memories views
-- [ ] Add basic file-size and type validation on the client
-
-### M3. UX Polish Round 2
-
-Improvements surfaced during evaluation — do after deployment is stable.
-
-- [x] Add empty-state messaging for spaces with no events/ideas
-- [ ] Add loading skeletons for calendar, event list, and idea list pages
-- [ ] Add inline form validation feedback (client-side, complementing Zod on server)
-- [x] Standardize card layouts across event and idea lists (Button.tsx, Card standardization)
-- [ ] Add error boundaries for core pages
-- [x] Tighten form feedback (loading spinners on submit buttons)
-- [x] Extract DayCell component from calendar
-- [x] Redesign EventBubble for cleaner visual density
-- [x] Remove tag filter from planning section
-
-### M4. Google Calendar Integration (In Review)
-
-Sync busy/free time from external calendars.
-
-- [x] OAuth2 flow with Google Calendar API
-- [x] Encrypted token storage (AES-256-GCM)
-- [x] Sync FreeBusy data from selected calendars
-- [x] Display external busy blocks with time ranges
-- [x] Color-coded blocks per user
-- [x] Settings UI for managing connected calendars
-- [ ] Automatic periodic sync (cron/webhook)
-- [ ] Support for additional calendar providers
-
-See `docs/00_current/TECH_PLAN_GOOGLE_CALENDAR.md` for implementation details.
-
-**Environment variables required:**
-- `TOKEN_ENCRYPTION_KEY` — 32-byte base64 key for token encryption
-- `GOOGLE_CLIENT_ID` — OAuth client ID from Google Cloud Console
-- `GOOGLE_CLIENT_SECRET` — OAuth client secret
-- `GOOGLE_REDIRECT_URI` — Callback URL for OAuth flow
+Future follow-ups:
+- [ ] Automatic periodic sync
+- [ ] Update/delete sync on event edits/deletes
+- [ ] Additional provider support
 
 ---
 
-## Remaining Backlog
+## Current milestones
 
-### P1-5. Cascade deletes for space-owned entities
+## M1 - Production deployment
 
-Configure `onDelete: Cascade` from `CoupleSpace` to `Event`, `Idea`, `Note`, `AvailabilityBlock` and from `Event` to `Photo`, `Notification`. Low urgency — application-level cleanup covers this today.
+- [ ] Provision production PostgreSQL
+- [ ] Configure required env vars
+- [ ] Run `npx prisma migrate deploy`
+- [ ] Deploy app runtime
+- [ ] Verify auth, space setup, event CRUD, and calendar load
+- [ ] Configure domain and HTTPS
 
-### P2 — Deferred Items
+Reference: `docs/00_current/DEPLOYMENT.md`
 
-| Item | Why defer |
-|------|-----------|
-| Reconcile EventType enum with runtime date logic | Nothing reads `type` after creation |
-| Test infrastructure | Not blocking launch for 2 users |
-| CSRF tokens on API routes | SameSite=lax + server actions cover main vectors |
-| Password strength policy | Low-impact for invite-only app |
-| Invite code rotation/expiration | 2-member cap limits damage |
-| Accessibility audit | Schedule as a dedicated pass |
+## M2 - Photo upload hardening
 
-### Tech Debt
+- [x] Event detail photo upload flow wired
+- [x] Photo persistence and gallery display
+- [x] URL fallback path implemented
+- [ ] Add stricter file size/type guardrails
+- [ ] Add clearer upload failure recovery states
 
-- Scheduled cleanup for expired sessions
-- Type-safe env validation
-- CI/CD pipeline baseline
+## M3 - UX polish backlog
+
+- [x] Empty-state messaging for sparse spaces
+- [x] Planning simplification (remove low-value tag/today filters)
+- [x] Calendar visual density improvements
+- [ ] Loading skeletons for key surfaces
+- [ ] Error boundaries for primary pages
+- [ ] Additional accessibility and keyboard pass
+
+## M5 - Repository cleanup and refactor (in progress)
+
+Tracked in: `docs/00_current/CLEANUP_PLAN.md`
+
+Phase status:
+- [ ] Phase 0: stabilize and commit pending cleanup diff
+- [ ] Phase 1: dead code and CSS sweep
+- [ ] Phase 2: docs source-of-truth alignment
+- [ ] Phase 3: API auth/validation helper consolidation
+- [ ] Phase 4: page decomposition and data-loader refactor
+- [ ] Phase 5: schema/dependency governance
 
 ---
 
-## Definition of Done
+## Deferred backlog
 
-- `npm run build` passes
-- Smoke test checklist complete
-- Docs updated
+| Item | Why deferred |
+|------|--------------|
+| EventType runtime reconciliation | Low immediate impact |
+| Full test infrastructure | Not blocking private two-user rollout |
+| CSRF hardening expansion | Current threat profile low for private MVP |
+| Invite code rotation/expiration | Space member cap limits exposure |
+| Full accessibility audit | Needs focused dedicated pass |
+
+---
+
+## Definition of done per milestone
+
+- Build passes: `npm run build`
+- Lint passes: `npm run lint`
+- Typecheck passes: `npx tsc --noEmit`
+- Relevant docs updated
 - Changes reviewed and merged
-

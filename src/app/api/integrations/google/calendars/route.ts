@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUserId } from '@/lib/current-user';
+import { getSessionUserId } from '@/lib/session';
 
 /**
  * GET /api/integrations/google/calendars
@@ -8,7 +8,7 @@ import { getCurrentUserId } from '@/lib/current-user';
  */
 export async function GET(request: Request) {
   try {
-    const userId = await getCurrentUserId();
+    const userId = await getSessionUserId();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },

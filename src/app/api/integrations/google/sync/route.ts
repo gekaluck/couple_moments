@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUserId } from '@/lib/current-user';
+import { getSessionUserId } from '@/lib/session';
 import { syncAvailabilityBlocks } from '@/lib/integrations/google/freebusy';
 
 /**
@@ -9,7 +9,7 @@ import { syncAvailabilityBlocks } from '@/lib/integrations/google/freebusy';
  */
 export async function POST(request: Request) {
   try {
-    const userId = await getCurrentUserId();
+    const userId = await getSessionUserId();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },

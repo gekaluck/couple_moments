@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUserId } from '@/lib/current-user';
+import { getSessionUserId } from '@/lib/session';
 
 /**
  * DELETE /api/integrations/google/disconnect
@@ -8,7 +8,7 @@ import { getCurrentUserId } from '@/lib/current-user';
  */
 export async function DELETE(request: Request) {
   try {
-    const userId = await getCurrentUserId();
+    const userId = await getSessionUserId();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },

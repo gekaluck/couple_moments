@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
 import { generateAuthUrl } from '@/lib/integrations/google/calendar';
-import { getCurrentUserId } from '@/lib/current-user';
+import { getSessionUserId } from '@/lib/session';
 
 /**
  * GET /api/integrations/google/start
@@ -11,7 +11,7 @@ import { getCurrentUserId } from '@/lib/current-user';
 export async function GET(request: Request) {
   try {
     // Verify user is authenticated
-    const userId = await getCurrentUserId();
+    const userId = await getSessionUserId();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },

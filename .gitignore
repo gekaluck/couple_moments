@@ -57,3 +57,5 @@ coverage/
 # Misc
 *.pem
 chatgpt_reqs/
+nul
+docs/JS_WEB_DEV_GUIDE.md

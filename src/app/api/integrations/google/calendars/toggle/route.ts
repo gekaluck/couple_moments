@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUserId } from '@/lib/current-user';
+import { getSessionUserId } from '@/lib/session';
 import { parseJsonOrForm } from '@/lib/request';
 import { syncAvailabilityBlocks } from '@/lib/integrations/google/freebusy';
 
@@ -16,7 +16,7 @@ const toggleSchema = z.object({
  */
 export async function POST(request: Request) {
   try {
-    const userId = await getCurrentUserId();
+    const userId = await getSessionUserId();
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUserId } from '@/lib/current-user';
+import { getSessionUserId } from '@/lib/session';
 import {
   exchangeCodeForTokens,
   getGoogleAccountInfo,
@@ -17,7 +17,7 @@ import { syncAvailabilityBlocks } from '@/lib/integrations/google/freebusy';
 export async function GET(request: Request) {
   try {
     // Verify user is authenticated
-    const userId = await getCurrentUserId();
+    const userId = await getSessionUserId();
     if (!userId) {
       return NextResponse.redirect(
         new URL('/login?error=unauthorized', request.url)
