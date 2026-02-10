@@ -38,6 +38,23 @@ export default function GoogleCalendarSettings() {
   const [error, setError] = useState<string | null>(null);
   const [isDisconnectOpen, setIsDisconnectOpen] = useState(false);
 
+  const selectedCalendarsCount = data
+    ? data.calendars.filter((calendar) => calendar.selected).length
+    : 0;
+  const hasSyncError = Boolean(data?.syncState?.lastSyncError);
+  const lastSuccessfulSync = data?.syncState?.lastSyncedAt
+    ? new Date(data.syncState.lastSyncedAt).toLocaleString()
+    : null;
+  const healthState = !data
+    ? "disconnected"
+    : hasSyncError
+      ? "error"
+      : selectedCalendarsCount === 0
+        ? "no-calendars"
+        : lastSuccessfulSync
+          ? "healthy"
+          : "pending";
+
   useEffect(() => {
     loadData();
   }, []);
@@ -189,6 +206,52 @@ export default function GoogleCalendarSettings() {
         </div>
       ) : (
         <>
+          <div className="mt-5 rounded-2xl border border-white/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+              Sync health
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.1em]">
+              <span
+                className={`rounded-full border px-2.5 py-1 ${
+                  healthState === "healthy"
+                    ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                    : healthState === "error"
+                      ? "border-red-200 bg-red-100 text-red-700"
+                      : "border-amber-200 bg-amber-100 text-amber-700"
+                }`}
+              >
+                {healthState === "healthy"
+                  ? "Healthy"
+                  : healthState === "error"
+                    ? "Needs attention"
+                    : healthState === "no-calendars"
+                      ? "No calendars selected"
+                      : "Pending first sync"}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                {selectedCalendarsCount} selected
+              </span>
+            </div>
+            <div className="mt-3 grid gap-2 text-sm text-[var(--text-secondary)]">
+              <p>
+                <span className="font-medium text-[var(--text-primary)]">Account:</span>{" "}
+                {data.account.email}
+              </p>
+              <p>
+                <span className="font-medium text-[var(--text-primary)]">
+                  Last successful sync:
+                </span>{" "}
+                {lastSuccessfulSync ?? "Never"}
+              </p>
+              <p>
+                <span className="font-medium text-[var(--text-primary)]">
+                  Latest sync error:
+                </span>{" "}
+                {data.syncState?.lastSyncError ?? "None"}
+              </p>
+            </div>
+          </div>
+
           <div className="mt-5 grid gap-3">
             <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
