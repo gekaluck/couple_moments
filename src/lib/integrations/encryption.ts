@@ -22,7 +22,7 @@ function getEncryptionKey(): Buffer {
       throw new Error('TOKEN_ENCRYPTION_KEY must be 32 bytes (256 bits)');
     }
     return decoded;
-  } catch (err) {
+  } catch {
     throw new Error('TOKEN_ENCRYPTION_KEY must be a valid base64-encoded 32-byte key');
   }
 }
@@ -57,7 +57,6 @@ export function decryptToken(encryptedToken: string): string {
   const combined = Buffer.from(encryptedToken, 'base64');
   
   // Extract components
-  const salt = combined.subarray(0, SALT_LENGTH);
   const iv = combined.subarray(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
   const authTag = combined.subarray(
     SALT_LENGTH + IV_LENGTH,

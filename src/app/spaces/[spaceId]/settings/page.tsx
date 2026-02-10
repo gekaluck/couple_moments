@@ -35,7 +35,6 @@ export default async function SettingsPage({ params }: PageProps) {
   const spaceIdForActions = space.id;
 
   const members = await listSpaceMembers(space.id);
-  const currentUser = members.find((m) => m.userId === userId);
   const partner = members.find((m) => m.userId !== userId);
   const isSpaceComplete = members.length >= 2;
 
@@ -173,7 +172,7 @@ export default async function SettingsPage({ params }: PageProps) {
       </section>
 
       {!isSpaceComplete && (
-        <InviteCard spaceId={space.id} inviteCode={space.inviteCode} />
+        <InviteCard inviteCode={space.inviteCode} />
       )}
 
       <section className="surface p-6">

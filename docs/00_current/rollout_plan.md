@@ -86,6 +86,7 @@ Phase status:
 - [x] Phase 3: API auth/validation helper consolidation
 - [x] Phase 4: page decomposition and data-loader refactor
 - [x] Phase 5: schema/dependency governance
+- [ ] Phase 6: zero-warning lint gate hardening (in progress)
 
 ---
 

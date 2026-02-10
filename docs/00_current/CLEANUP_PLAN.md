@@ -2,7 +2,7 @@
 
 Created: 2026-02-10
 Updated: 2026-02-10
-Status: Completed on branch `chore-unified-repo-cleanup` (Phase 0-5 complete)
+Status: Active on branch `chore-unified-repo-cleanup` (Phase 6 in progress)
 
 ## Execution Progress
 
@@ -12,6 +12,7 @@ Status: Completed on branch `chore-unified-repo-cleanup` (Phase 0-5 complete)
 - [x] Phase 3 - API auth/validation helper consolidation
 - [x] Phase 4 - parser/formatter dedupe and page data-loader decomposition
 - [x] Phase 5 - schema/dependency governance finalization
+- [ ] Phase 6 - code quality hardening and lint gate enforcement (in progress)
 
 ---
 
@@ -217,6 +218,29 @@ Progress notes (2026-02-10):
 
 ---
 
+## Phase 6 - Code quality hardening and lint gate enforcement
+
+Scope:
+- Remove residual lint warnings and lock in no-warning baseline
+- Ensure warning regressions fail local/CI lint runs
+
+Tasks:
+- Clear all remaining lint warnings
+- Update lint script to enforce `--max-warnings=0`
+- Re-run lint and typecheck after fixes
+
+Acceptance criteria:
+- `npm run lint` passes with zero warnings
+- `npx tsc --noEmit` passes
+- No behavior changes from warning-only code edits
+
+Progress notes (2026-02-10):
+- Remaining lint warnings removed across settings, integrations, and shared UI files.
+- `package.json` lint script updated to `eslint --max-warnings=0`.
+- Lint now passes at zero warnings.
+
+---
+
 ## 5) Commit strategy
 
 Recommended commit sequence:
@@ -226,6 +250,7 @@ Recommended commit sequence:
 4. `refactor(api): introduce shared api auth/validation helpers`
 5. `refactor(app): split large pages and dedupe parsing/formatting`
 6. `chore(schema): resolve notification model and dependency audit`
+7. `chore(quality): clear lint warnings and enforce zero-warning lint gate`
 
 Each commit must pass lint and typecheck before moving to next phase.
 

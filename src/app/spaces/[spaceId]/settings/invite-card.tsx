@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 type InviteCardProps = {
-  spaceId: string;
   inviteCode: string;
 };
 
@@ -48,7 +47,7 @@ const ShareIcon = () => (
   </svg>
 );
 
-export default function InviteCard({ spaceId, inviteCode }: InviteCardProps) {
+export default function InviteCard({ inviteCode }: InviteCardProps) {
   const [copied, setCopied] = useState<"link" | "code" | null>(null);
 
   const inviteUrl =

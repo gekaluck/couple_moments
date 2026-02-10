@@ -52,7 +52,7 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to load Google Calendar settings');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load Google Calendar settings');
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to disconnect');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to disconnect Google Calendar');
     }
   }
@@ -99,7 +99,7 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to toggle calendar');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to toggle calendar');
     }
   }
@@ -119,7 +119,7 @@ export default function GoogleCalendarSettings() {
         const json = await res.json();
         setError(json.error || 'Failed to sync');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to sync availability');
     } finally {
       setsyncing(false);

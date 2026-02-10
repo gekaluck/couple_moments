@@ -121,7 +121,7 @@ export async function getAuthenticatedClient(externalAccountId: string) {
           tokenExpiresAt: tokenExpiresAt,
         },
       });
-    } catch (error) {
+    } catch {
       // Mark account as revoked if refresh fails
       await prisma.externalAccount.update({
         where: { id: externalAccountId },
@@ -221,7 +221,7 @@ export async function syncCalendarList(externalAccountId: string) {
   }
   
   // Delete calendars that no longer exist
-  for (const [_, cal] of existingMap.entries()) {
+  for (const cal of existingMap.values()) {
     await prisma.externalCalendar.delete({
       where: { id: cal.id },
     });
