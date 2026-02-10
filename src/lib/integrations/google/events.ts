@@ -13,6 +13,56 @@ type DuetEvent = {
   placeAddress: string | null;
 };
 
+async function getInviteAttendees(
+  eventId: string,
+  organizerUserId: string,
+): Promise<calendar_v3.Schema$EventAttendee[]> {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: {
+      coupleSpace: {
+        select: {
+          memberships: {
+            select: {
+              userId: true,
+              user: {
+                select: {
+                  email: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!event) {
+    return [];
+  }
+
+  const emails = new Set<string>();
+  const attendees: calendar_v3.Schema$EventAttendee[] = [];
+
+  for (const membership of event.coupleSpace.memberships) {
+    if (membership.userId === organizerUserId) {
+      continue;
+    }
+    const email = membership.user.email.trim().toLowerCase();
+    if (!email || emails.has(email)) {
+      continue;
+    }
+    emails.add(email);
+    attendees.push({
+      email,
+      displayName: membership.user.name ?? undefined,
+    });
+  }
+
+  return attendees;
+}
+
 function toIsoDate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
@@ -98,6 +148,7 @@ export async function createGoogleCalendarEvent(
 
     // Build Google Calendar event
     const endTime = event.dateTimeEnd || new Date(event.dateTimeStart.getTime() + 2 * 60 * 60 * 1000); // Default 2 hours
+    const attendees = await getInviteAttendees(event.id, userId);
 
     const googleEvent: calendar_v3.Schema$Event = {
       summary: event.title,
@@ -105,6 +156,7 @@ export async function createGoogleCalendarEvent(
       location: event.placeName
         ? `${event.placeName}${event.placeAddress ? `, ${event.placeAddress}` : ''}`
         : undefined,
+      attendees: attendees.length > 0 ? attendees : undefined,
     };
 
     if (event.timeIsSet) {
@@ -128,6 +180,7 @@ export async function createGoogleCalendarEvent(
     // Insert event
     const response = await calendar.events.insert({
       calendarId,
+      sendUpdates: 'all',
       requestBody: googleEvent,
     });
 
@@ -185,6 +238,7 @@ export async function updateGoogleCalendarEvent(
 
     // Build updated event
     const endTime = event.dateTimeEnd || new Date(event.dateTimeStart.getTime() + 2 * 60 * 60 * 1000);
+    const attendees = await getInviteAttendees(eventId, link.externalAccount.userId);
 
     const googleEvent: calendar_v3.Schema$Event = {
       summary: event.title,
@@ -192,6 +246,7 @@ export async function updateGoogleCalendarEvent(
       location: event.placeName
         ? `${event.placeName}${event.placeAddress ? `, ${event.placeAddress}` : ''}`
         : undefined,
+      attendees: attendees.length > 0 ? attendees : undefined,
     };
 
     if (event.timeIsSet) {
@@ -214,6 +269,7 @@ export async function updateGoogleCalendarEvent(
     const response = await calendar.events.update({
       calendarId: link.calendarId,
       eventId: link.externalEventId,
+      sendUpdates: 'all',
       requestBody: googleEvent,
     });
 
@@ -263,6 +319,7 @@ export async function deleteGoogleCalendarEvent(
         await calendar.events.delete({
           calendarId: link.calendarId,
           eventId: link.externalEventId,
+          sendUpdates: 'all',
         });
       } catch (error) {
         // Log but don't fail - event might already be deleted on Google side

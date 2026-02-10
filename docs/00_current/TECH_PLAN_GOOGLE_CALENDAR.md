@@ -47,6 +47,8 @@ Behavior:
 ### Outbound event sync (Phase 2)
 Behavior:
 - Event creation supports "Add to Google Calendar"
+- Synced events include partner attendee emails from the space membership list
+- Google sends invitation/update/cancellation emails via `sendUpdates=all`
 - Idea-to-event scheduling supports same toggle
 - Linked external event metadata is persisted (`ExternalEventLink`)
 - Event detail surfaces sync status when link exists
