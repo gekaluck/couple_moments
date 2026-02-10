@@ -13,8 +13,28 @@ import TagInput from "@/components/ui/TagInput";
 type EventEditModalProps = {
   isOpen: boolean;
   onCloseHref: string;
-  onSubmit: (formData: FormData) => Promise<void>;
-  onDelete: () => Promise<void>;
+  onSubmit: (formData: FormData) => Promise<
+    | void
+    | {
+        googleSync?: {
+          attempted: boolean;
+          success: boolean;
+          message?: string;
+          info?: string;
+        };
+      }
+  >;
+  onDelete: () => Promise<
+    | void
+    | {
+        googleSync?: {
+          attempted: boolean;
+          success: boolean;
+          message?: string;
+          info?: string;
+        };
+      }
+  >;
   mapsApiKey?: string;
   title: string;
   dateValue: string;
@@ -85,8 +105,16 @@ export default function EventEditModal({
           const formData = new FormData(event.currentTarget);
           startTransition(async () => {
             try {
-              await onSubmit(formData);
+              const result = await onSubmit(formData);
               toast.success("Event updated!");
+              if (result?.googleSync?.attempted && !result.googleSync.success) {
+                toast.warning(
+                  result.googleSync.message ??
+                    "Updated in Duet, but Google Calendar sync failed.",
+                );
+              } else if (result?.googleSync?.info) {
+                toast.info(result.googleSync.info);
+              }
               router.push(onCloseHref);
               router.refresh();
             } catch {
@@ -207,8 +235,16 @@ export default function EventEditModal({
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={async () => {
-          await onDelete();
+          const result = await onDelete();
           toast.success("Event deleted");
+          if (result?.googleSync?.attempted && !result.googleSync.success) {
+            toast.warning(
+              result.googleSync.message ??
+                "Deleted in Duet, but Google Calendar cancellation failed.",
+            );
+          } else if (result?.googleSync?.info) {
+            toast.info(result.googleSync.info);
+          }
           router.push(onCloseHref.split("?")[0].replace(/\/events\/[^/]+$/, "/calendar"));
           router.refresh();
         }}

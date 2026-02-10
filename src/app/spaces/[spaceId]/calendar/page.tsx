@@ -54,6 +54,17 @@ type PageProps = {
   }>;
 };
 
+type GoogleSyncFeedback = {
+  attempted: boolean;
+  success: boolean;
+  message?: string;
+  info?: string;
+};
+
+type CalendarActionResult = {
+  googleSync?: GoogleSyncFeedback;
+};
+
 export default async function CalendarPage({ params, searchParams }: PageProps) {
   const cookieStore = await cookies();
   const calendarWeekStart =
@@ -107,7 +118,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
 
   const eventsByDay = buildEventsByDay(events);
 
-  async function handleCreate(formData: FormData) {
+  async function handleCreate(formData: FormData): Promise<CalendarActionResult | void> {
     "use server";
     const currentUserId = await requireUserId();
     const title = formData.get("title")?.toString().trim() ?? "";
@@ -161,7 +172,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
 
     // Sync to Google Calendar if requested
     if (addToGoogleCalendar) {
-      await createGoogleCalendarEvent(currentUserId, {
+      const syncResult = await createGoogleCalendarEvent(currentUserId, {
         id: event.id,
         title: event.title,
         description: event.description,
@@ -171,9 +182,24 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         placeName: event.placeName,
         placeAddress: event.placeAddress,
       });
+      return {
+        googleSync: {
+          attempted: true,
+          success: syncResult.success,
+          message: syncResult.success
+            ? undefined
+            : syncResult.error ??
+              "Event saved in Duet, but Google Calendar sync failed.",
+        },
+      };
     }
 
-    return;
+    return {
+      googleSync: {
+        attempted: false,
+        success: true,
+      },
+    };
   }
 
   async function handleCreateBlock(formData: FormData) {
@@ -274,7 +300,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
 
   }
 
-  async function handleScheduleIdea(formData: FormData) {
+  async function handleScheduleIdea(formData: FormData): Promise<CalendarActionResult | void> {
     "use server";
     const currentUserId = await requireUserId();
     const ideaId = formData.get("ideaId")?.toString();
@@ -323,7 +349,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
 
     // Sync to Google Calendar if requested
     if (addToGoogleCalendar) {
-      await createGoogleCalendarEvent(currentUserId, {
+      const syncResult = await createGoogleCalendarEvent(currentUserId, {
         id: event.id,
         title: event.title,
         description: event.description,
@@ -333,8 +359,24 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         placeName: event.placeName,
         placeAddress: event.placeAddress,
       });
+      return {
+        googleSync: {
+          attempted: true,
+          success: syncResult.success,
+          message: syncResult.success
+            ? undefined
+            : syncResult.error ??
+              "Event created in Duet, but Google Calendar sync failed.",
+        },
+      };
     }
 
+    return {
+      googleSync: {
+        attempted: false,
+        success: true,
+      },
+    };
   }
 
   async function handleIdeaComment(formData: FormData) {

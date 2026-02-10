@@ -40,7 +40,17 @@ type IdeasColumnProps = {
   mapsApiKey?: string;
   hasGoogleCalendar?: boolean;
   onCreateIdea: (formData: FormData) => Promise<void>;
-  onScheduleIdea: (formData: FormData) => Promise<void>;
+  onScheduleIdea: (formData: FormData) => Promise<
+    | void
+    | {
+        googleSync?: {
+          attempted: boolean;
+          success: boolean;
+          message?: string;
+          info?: string;
+        };
+      }
+  >;
   onAddComment: (formData: FormData) => Promise<void>;
   onDeleteIdea: (formData: FormData) => Promise<void>;
   onEditIdea: (formData: FormData) => Promise<void>;
