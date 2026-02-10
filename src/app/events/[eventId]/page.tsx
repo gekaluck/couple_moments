@@ -2,15 +2,14 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { createEventComment, createEventPhoto, deleteEvent, getEventForUser, listEventComments, updateEvent, updateEventRating } from "@/lib/events";
+import { createEventComment, createEventPhoto, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
 import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
 import { buildCreatorPalette, getCreatorInitials } from "@/lib/creator-colors";
-import { prisma } from "@/lib/prisma";
 import { normalizeTags, parseTags } from "@/lib/tags";
-import { getEventSyncStatus } from "@/lib/integrations/google/events";
 import { parseJsonStringArray } from "@/lib/parsers";
 
+import { loadEventBaseData, loadEventDetailData } from "./page-data";
 import EventComments from "./event-comments";
 import EventEditModal from "./event-edit-modal";
 import EventRating from "./event-rating";
@@ -119,13 +118,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const { eventId } = await params;
   const search = (await searchParams) ?? {};
   const isEditing = search.edit === "1";
-  const [event, currentUser] = await Promise.all([
-    getEventForUser(eventId, userId),
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true, email: true },
-    }),
-  ]);
+  const [event, currentUser] = await loadEventBaseData(eventId, userId);
 
   if (!event) {
     notFound();
@@ -133,35 +126,13 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   if (!currentUser) {
     redirect("/login");
   }
-  const [currentUserRating, photos, comments, creator, googleSyncStatus, members] =
-    await Promise.all([
-      prisma.rating.findUnique({
-        where: {
-          userId_eventId: {
-            userId,
-            eventId,
-          },
-        },
-        select: { value: true },
-      }),
-      prisma.photo.findMany({
-        where: { eventId },
-        orderBy: { createdAt: "asc" },
-      }),
-      listEventComments(eventId),
-      prisma.user.findUnique({
-        where: { id: event.createdByUserId },
-        select: { name: true, email: true },
-      }),
-      getEventSyncStatus(event.id),
-      prisma.membership.findMany({
-        where: { coupleSpaceId: event.coupleSpaceId },
-        select: {
-          userId: true,
-          user: { select: { name: true, email: true } },
-        },
-      }),
-    ]);
+  const { currentUserRating, photos, comments, creator, googleSyncStatus, members } =
+    await loadEventDetailData({
+      eventId,
+      userId,
+      coupleSpaceId: event.coupleSpaceId,
+      createdByUserId: event.createdByUserId,
+    });
   // Store event ID for use in server actions (avoids TypeScript narrowing issues)
   const eventIdForActions = event.id;
   const spaceIdForActions = event.coupleSpaceId;

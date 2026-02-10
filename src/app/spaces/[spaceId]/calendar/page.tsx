@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
+import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import {
   dateKey,
@@ -12,28 +12,28 @@ import {
 } from "@/lib/calendar";
 import {
   createAvailabilityBlock,
-  listAvailabilityBlocks,
   updateAvailabilityBlock,
 } from "@/lib/availability";
 import {
   createEventForSpace,
-  getEventForUser,
-  listEventCommentsForEvents,
-  listEventsForSpace,
 } from "@/lib/events";
 import {
   createIdeaComment,
   createIdeaForSpace,
   deleteIdea,
-  listIdeaCommentsForIdeas,
-  listIdeasForSpace,
   updateIdea,
 } from "@/lib/ideas";
 import { normalizeTags, parseTags } from "@/lib/tags";
-import { buildCreatorPalette } from "@/lib/creator-colors";
-import { hasGoogleCalendarWithEventsScope, createGoogleCalendarEvent } from "@/lib/integrations/google/events";
+import { createGoogleCalendarEvent } from "@/lib/integrations/google/events";
 import { parseJsonStringArray } from "@/lib/parsers";
 import CalendarAddControls from "./add-controls";
+import {
+  buildBlocksByDay,
+  buildEventCommentCounts,
+  buildEventsByDay,
+  buildIdeaCommentAggregates,
+  loadCalendarPageData,
+} from "./page-data";
 import PlanningSection from "@/components/planning/PlanningSection";
 import IdeasColumn from "@/components/planning/IdeasColumn";
 import UpcomingPlansColumn from "@/components/planning/UpcomingPlansColumn";
@@ -86,75 +86,26 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
   const actualToday = new Date();
-  const [
-    repeatEvent,
+  const {
     events,
-    members,
-    hasGoogleCalendar,
     blocks,
     ideas,
     upcomingEvents,
-  ] = await Promise.all([
-    repeatEventId ? getEventForUser(repeatEventId, userId) : Promise.resolve(null),
-    listEventsForSpace({
-      spaceId: space.id,
-      from: monthStart,
-      to: monthEnd,
-    }),
-    listSpaceMembers(space.id),
-    hasGoogleCalendarWithEventsScope(userId),
-    listAvailabilityBlocks({
-      spaceId: space.id,
-      from: monthStart,
-      to: monthEnd,
-    }),
-    listIdeasForSpace({ spaceId: space.id, status: "NEW" }),
-    // Use actual current date for upcoming plans, not the selected calendar month
-    listEventsForSpace({
-      spaceId: space.id,
-      from: actualToday,
-      timeframe: "upcoming",
-    }),
-  ]);
-  const creatorPalette = buildCreatorPalette(
-    members.map((member) => ({
-      id: member.userId,
-      name: member.user.name ?? null,
-      email: member.user.email,
-    })),
-  );
-  const [ideaComments, eventComments] = await Promise.all([
-    listIdeaCommentsForIdeas(ideas.map((idea) => idea.id)),
-    listEventCommentsForEvents(upcomingEvents.map((event) => event.id)),
-  ]);
-  const prefillData = repeatEvent
-    ? {
-      title: repeatEvent.title,
-      description: repeatEvent.description ?? "",
-      tags: parseTags(repeatEvent.tags).join(", "),
-      placeId: repeatEvent.placeId,
-      placeName: repeatEvent.placeName,
-      placeAddress: repeatEvent.placeAddress,
-      placeLat: repeatEvent.placeLat,
-      placeLng: repeatEvent.placeLng,
-      placeUrl: repeatEvent.placeUrl,
-      placeWebsite: repeatEvent.placeWebsite,
-      placeOpeningHours: Array.isArray(repeatEvent.placeOpeningHours)
-        ? (repeatEvent.placeOpeningHours as string[])
-        : null,
-      placePhotoUrls: Array.isArray(repeatEvent.placePhotoUrls)
-        ? (repeatEvent.placePhotoUrls as string[])
-        : null,
-    }
-    : null;
+    ideaComments,
+    eventComments,
+    hasGoogleCalendar,
+    creatorPalette,
+    prefillData,
+  } = await loadCalendarPageData({
+    spaceId: space.id,
+    userId,
+    monthStart,
+    monthEnd,
+    repeatEventId,
+    actualToday,
+  });
 
-  const eventsByDay = new Map<string, typeof events>();
-  for (const event of events) {
-    const key = dateKey(event.dateTimeStart);
-    const list = eventsByDay.get(key) ?? [];
-    list.push(event);
-    eventsByDay.set(key, list);
-  }
+  const eventsByDay = buildEventsByDay(events);
 
   async function handleCreate(formData: FormData) {
     "use server";
@@ -480,100 +431,11 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     return `/spaces/${space.id}/calendar?${params.toString()}`;
   };
 
-  const blocksByDay = new Map<string, Array<{ id: string; startAt: Date; endAt: Date; title: string; createdBy: { name: string | null; email: string }; createdByUserId?: string; source?: string }>>();
-  
-  // Add manual blocks
-  for (const block of blocks.manual) {
-    const cursor = new Date(block.startAt);
-    cursor.setHours(0, 0, 0, 0);
-    const end = new Date(block.endAt);
-    end.setHours(0, 0, 0, 0);
-    while (cursor <= end) {
-      const key = dateKey(cursor);
-      const list = blocksByDay.get(key) ?? [];
-      list.push({
-        id: block.id,
-        startAt: block.startAt,
-        endAt: block.endAt,
-        title: block.title,
-        createdBy: { name: block.createdBy.name, email: block.createdBy.email },
-        createdByUserId: block.createdByUserId,
-      });
-      blocksByDay.set(key, list);
-      cursor.setDate(cursor.getDate() + 1);
-    }
-  }
-  
-  // Add external blocks
-  for (const block of blocks.external) {
-    const cursor = new Date(block.startAt);
-    cursor.setHours(0, 0, 0, 0);
-    const end = new Date(block.endAt);
-    end.setHours(0, 0, 0, 0);
-    while (cursor <= end) {
-      const key = dateKey(cursor);
-      const list = blocksByDay.get(key) ?? [];
-      list.push({
-        id: block.id,
-        startAt: block.startAt,
-        endAt: block.endAt,
-        title: "Busy",
-        createdBy: { name: block.user.name, email: block.user.email },
-        createdByUserId: block.userId,
-        source: block.source,
-      });
-      blocksByDay.set(key, list);
-      cursor.setDate(cursor.getDate() + 1);
-    }
-  }
-
-  const ideaCommentCounts = ideaComments.reduce<Record<string, number>>(
-    (acc, comment) => {
-      if (!comment.parentId) {
-        return acc;
-      }
-      acc[comment.parentId] = (acc[comment.parentId] ?? 0) + 1;
-      return acc;
-    },
-    {},
+  const blocksByDay = buildBlocksByDay(blocks);
+  const { ideaCommentCounts, ideaCommentsByIdea } = buildIdeaCommentAggregates(
+    ideaComments,
   );
-  const ideaCommentsByIdea = ideaComments.reduce<
-    Record<
-      string,
-      Array<{
-        id: string;
-        body: string;
-        createdAt: string;
-        author: { id: string; name: string | null; email: string };
-      }>
-    >
-  >((acc, comment) => {
-    if (!comment.parentId) {
-      return acc;
-    }
-    acc[comment.parentId] = acc[comment.parentId] ?? [];
-    acc[comment.parentId].push({
-      id: comment.id,
-      body: comment.body,
-      createdAt: comment.createdAt.toISOString(),
-      author: {
-        id: comment.author.id,
-        name: comment.author.name,
-        email: comment.author.email,
-      },
-    });
-    return acc;
-  }, {});
-  const eventCommentCounts = eventComments.reduce<Record<string, number>>(
-    (acc, comment) => {
-      if (!comment.parentId) {
-        return acc;
-      }
-      acc[comment.parentId] = (acc[comment.parentId] ?? 0) + 1;
-      return acc;
-    },
-    {},
-  );
+  const eventCommentCounts = buildEventCommentCounts(eventComments);
   const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const ideasForPlanning = ideas.map((idea) => ({
