@@ -489,6 +489,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
             <CalendarAddControls
+              key={`add-controls-${initialEventDate ?? "none"}-${repeatEventId ?? "none"}-${openAction || "none"}`}
               onCreateEvent={handleCreate}
               onCreateBlock={handleCreateBlock}
               initialEventDate={initialEventDate}
@@ -630,6 +631,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       >
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <IdeasColumn
+            key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
             ideas={ideasForPlanning}
             commentCounts={ideaCommentCounts}
             commentsByIdea={ideaCommentsByIdea}

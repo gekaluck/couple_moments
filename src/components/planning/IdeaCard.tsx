@@ -93,8 +93,6 @@ export default function IdeaCard({
         }
       : null
   );
-  const [localComments, setLocalComments] = useState<IdeaComment[]>(comments);
-  const [localCount, setLocalCount] = useState(commentCount);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -104,11 +102,6 @@ export default function IdeaCard({
       inputRef.current?.focus();
     }
   }, [isCommentsOpen]);
-
-  useEffect(() => {
-    setLocalComments(comments);
-    setLocalCount(commentCount);
-  }, [comments, commentCount]);
 
   const hasOpenModal = isScheduleOpen || isEditOpen || isDeleteOpen;
 
@@ -178,14 +171,14 @@ export default function IdeaCard({
           </button>
           <button
             className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)]"
-            title={`Comments (${localCount})`}
+            title={`Comments (${commentCount})`}
             onClick={() => setIsCommentsOpen((prev) => !prev)}
             type="button"
           >
             <MessageSquare className="h-4 w-4" />
-            {localCount > 0 ? (
+            {commentCount > 0 ? (
               <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-semibold text-white">
-                {localCount}
+                {commentCount}
               </span>
             ) : null}
           </button>
@@ -203,12 +196,12 @@ export default function IdeaCard({
       {isCommentsOpen ? (
         <div className="mt-4 animate-slide-down rounded-lg bg-gray-50 p-4">
           <div className="flex flex-col">
-            {localComments.length === 0 ? (
+            {comments.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)]">
                 No comments yet.
               </p>
             ) : null}
-            {localComments.map((comment) => {
+            {comments.map((comment) => {
               const isCurrentUser = comment.author.id === currentUserId;
               const avatarGradient = isCurrentUser
                 ? "from-sky-500 to-indigo-600"
@@ -249,18 +242,11 @@ export default function IdeaCard({
               if (!content) {
                 return;
               }
-              const optimistic: IdeaComment = {
-                id: `temp-${Date.now()}`,
-                body: content,
-                createdAt: new Date().toISOString(),
-                author: { id: currentUserId, name: "You", email: "you" },
-              };
-              setLocalComments((prev) => [...prev, optimistic]);
-              setLocalCount((prev) => prev + 1);
               event.currentTarget.reset();
               startTransition(async () => {
                 try {
                   await onAddComment(formData);
+                  router.refresh();
                   toast.success("Comment added");
                 } catch {
                   toast.error("Failed to add comment");

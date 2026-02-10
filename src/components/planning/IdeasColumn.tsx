@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Lightbulb } from "lucide-react";
 
 import EmptyState from "./EmptyState";
@@ -61,13 +61,7 @@ export default function IdeasColumn({
   onEditIdea,
   autoOpen = false,
 }: IdeasColumnProps) {
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-
-  useEffect(() => {
-    if (autoOpen) {
-      setIsCreateOpen(true);
-    }
-  }, [autoOpen]);
+  const [isCreateOpen, setIsCreateOpen] = useState(autoOpen);
 
   const hasIdeas = ideas.length > 0;
 

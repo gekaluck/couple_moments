@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -44,8 +44,10 @@ export default function CalendarAddControls({
   prefillData,
   hasGoogleCalendar = false,
 }: CalendarAddControlsProps) {
-  const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(null);
-  const [eventDate, setEventDate] = useState<string | undefined>(undefined);
+  const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(() =>
+    initialEventDate || prefillData ? "event" : null,
+  );
+  const [eventDate, setEventDate] = useState<string | undefined>(() => initialEventDate ?? undefined);
   const todayStr = getTodayDateString();
   const [errors, setErrors] = useState<{
     eventTitle?: string;
@@ -65,24 +67,10 @@ export default function CalendarAddControls({
     router.replace(query ? `${pathname}?${query}` : pathname);
   };
 
-  useEffect(() => {
-    if (initialEventDate) {
-      setEventDate(initialEventDate);
-      setOpenPanel("event");
-    } else if (prefillData) {
-      // Open modal for "repeat event" flow
-      setOpenPanel("event");
-    } else {
-      // Close modal when URL param is removed (after form submission redirect)
-      setOpenPanel(null);
-    }
-  }, [initialEventDate, prefillData]);
-
-  useEffect(() => {
-    if (!openPanel) {
-      setErrors({});
-    }
-  }, [openPanel]);
+  const closePanel = () => {
+    setOpenPanel(null);
+    setErrors({});
+  };
 
   const modalTitle = prefillData ? "Do this again" : "New event";
 
@@ -93,6 +81,7 @@ export default function CalendarAddControls({
           className="button-hover inline-flex items-center gap-2 rounded-full border border-[var(--color-border-hover)] px-4 py-2 text-xs font-semibold text-[var(--color-primary)] shadow-[var(--shadow-sm)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-primary-hover)]"
           onClick={() => {
             setEventDate(undefined);
+            setErrors({});
             setOpenPanel("event");
           }}
           type="button"
@@ -104,7 +93,10 @@ export default function CalendarAddControls({
         </button>
         <button
           className="button-hover inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
-          onClick={() => setOpenPanel("block")}
+          onClick={() => {
+            setErrors({});
+            setOpenPanel("block");
+          }}
           type="button"
         >
           <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -116,7 +108,7 @@ export default function CalendarAddControls({
       </div>
       <Modal
         isOpen={openPanel === "event"}
-        onClose={() => setOpenPanel(null)}
+        onClose={closePanel}
         title={modalTitle}
       >
         <form
@@ -142,7 +134,7 @@ export default function CalendarAddControls({
               try {
                 await onCreateEvent(formData);
                 toast.success(prefillData ? "Event created!" : "Event saved!");
-                setOpenPanel(null);
+                closePanel();
                 clearModalParams();
                 router.refresh();
               } catch {
@@ -251,7 +243,7 @@ export default function CalendarAddControls({
           <div className="flex flex-wrap justify-end gap-2">
             <button
               className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
-              onClick={() => setOpenPanel(null)}
+              onClick={closePanel}
               type="button"
             >
               Cancel
@@ -268,7 +260,7 @@ export default function CalendarAddControls({
       </Modal>
       <Modal
         isOpen={openPanel === "block"}
-        onClose={() => setOpenPanel(null)}
+        onClose={closePanel}
         title="Block out unavailable time"
       >
         <form
@@ -295,7 +287,7 @@ export default function CalendarAddControls({
               try {
                 await onCreateBlock(formData);
                 toast.success("Availability blocked!");
-                setOpenPanel(null);
+                closePanel();
                 clearModalParams();
                 router.refresh();
               } catch {
@@ -348,7 +340,7 @@ export default function CalendarAddControls({
           <div className="flex flex-wrap justify-end gap-2">
             <button
               className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
-              onClick={() => setOpenPanel(null)}
+              onClick={closePanel}
               type="button"
             >
               Cancel

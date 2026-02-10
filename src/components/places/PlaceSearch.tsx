@@ -3,9 +3,49 @@
 import { useEffect, useRef, useState } from "react";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 
-declare const google: any;
-
 let mapsConfigured = false;
+
+type LatLng = { lat: () => number; lng: () => number };
+type AutocompletePlace = {
+  place_id?: string;
+  name?: string;
+  formatted_address?: string;
+  geometry?: { location?: LatLng };
+  url?: string;
+};
+type PlacePhoto = { getUrl: (options: { maxWidth: number; maxHeight: number }) => string };
+type PlaceDetails = {
+  website?: string;
+  opening_hours?: { weekday_text?: string[] };
+  photos?: PlacePhoto[];
+  url?: string;
+  name?: string;
+};
+type PlacesService = {
+  getDetails: (
+    request: { placeId: string; fields: string[] },
+    callback: (details: PlaceDetails | null, status: string) => void,
+  ) => void;
+};
+type AutocompleteService = {
+  addListener: (eventName: string, handler: () => void) => void;
+  getPlace: () => AutocompletePlace;
+};
+type GoogleMapsGlobal = {
+  maps: {
+    places: {
+      Autocomplete: new (
+        input: HTMLInputElement,
+        options: { fields: string[] },
+      ) => AutocompleteService;
+      PlacesService: new (container: HTMLDivElement | object) => PlacesService;
+      PlacesServiceStatus: { OK: string };
+    };
+    event: {
+      clearInstanceListeners: (instance: unknown) => void;
+    };
+  };
+};
 
 export type PlaceSelection = {
   placeId: string;
@@ -44,7 +84,7 @@ export default function PlaceSearch({
       return;
     }
 
-    let autocomplete: any = null;
+    let autocomplete: AutocompleteService | null = null;
 
     if (!mapsConfigured) {
       setOptions({ key } as Parameters<typeof setOptions>[0]);
@@ -55,10 +95,14 @@ export default function PlaceSearch({
       if (!inputRef.current) {
         return;
       }
-      const service = new google.maps.places.PlacesService(
+      const googleMaps = (globalThis as unknown as { google?: GoogleMapsGlobal }).google;
+      if (!googleMaps) {
+        return;
+      }
+      const service = new googleMaps.maps.places.PlacesService(
         document.createElement("div"),
       );
-      autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
+      autocomplete = new googleMaps.maps.places.Autocomplete(inputRef.current, {
         fields: ["place_id", "name", "formatted_address", "geometry", "url"],
       });
       autocomplete.addListener("place_changed", () => {
@@ -80,9 +124,9 @@ export default function PlaceSearch({
             placeId: place.place_id,
             fields: ["website", "opening_hours", "photos", "url", "name"],
           },
-          (details: any, status: any) => {
+          (details, status) => {
             if (
-              status !== google.maps.places.PlacesServiceStatus.OK ||
+              status !== googleMaps.maps.places.PlacesServiceStatus.OK ||
               !details
             ) {
               setValue(baseSelection.name);
@@ -96,7 +140,7 @@ export default function PlaceSearch({
               photoUrls: Array.isArray(details.photos)
                 ? details.photos
                     .slice(0, 3)
-                    .map((photo: any) =>
+                    .map((photo) =>
                       photo.getUrl({ maxWidth: 800, maxHeight: 600 }),
                     )
                 : [],
@@ -111,8 +155,9 @@ export default function PlaceSearch({
     });
 
     return () => {
-      if (autocomplete) {
-        google.maps.event.clearInstanceListeners(autocomplete);
+      const googleMaps = (globalThis as unknown as { google?: GoogleMapsGlobal }).google;
+      if (autocomplete && googleMaps) {
+        googleMaps.maps.event.clearInstanceListeners(autocomplete);
       }
     };
   }, [apiKey, onSelect]);
