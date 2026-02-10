@@ -1,163 +1,100 @@
 # Architecture
 
 ## Overview
-Duet is a Next.js 16 application built with the App Router. It uses
-server components and server actions for most data mutations, Prisma + PostgreSQL
-for persistence, and a session cookie with database-backed tokens for auth.
+Duet is a Next.js 16 App Router application for two users to plan time together, track ideas, and preserve memories.
 
-Primary goals:
-- Fast, low-latency user experience for planning and memories.
-- Simple, maintainable server-side data flows.
-- Clear separation between UI components and data access logic.
+Core stack:
+- Frontend/backend runtime: Next.js (server components + client components)
+- Persistence: PostgreSQL via Prisma
+- Auth: DB-backed session tokens (`cm_session` cookie)
 
-## System Context
-- Web client: Next.js App Router (React 19).
-- Backend: Next.js server runtime (API routes + server actions).
-- Database: PostgreSQL (Prisma with `@prisma/adapter-pg` + `pg`).
-- External services:
-  - Google Maps Places (search + place metadata).
-  - Cloudinary (photo uploads).
+## System context
+- Web client: React 19 via Next.js App Router
+- Server: Next.js route handlers + server actions
+- Database: PostgreSQL (`@prisma/client`, `@prisma/adapter-pg`, `pg`)
+- External integrations:
+  - Google Maps Places (place search and metadata)
+  - Cloudinary (photo uploads)
+  - Google Calendar (availability sync + outbound event sync)
 
-## High-Level Architecture
-```
+## High-level flow
+```text
 Browser
-  -> Next.js App Router (Server Components)
-    -> Server Actions / API Routes
-      -> Prisma Client (PostgreSQL)
-  -> Client Components
-    -> UI/UX feedback (toasts, modals, optimistic updates)
+  -> Next.js routes/pages
+    -> Server actions and API routes
+      -> Prisma -> PostgreSQL
+
+Client components
+  -> interactive UI, local state, optimistic feedback
 ```
 
-## Code Structure
-```
-src/
-  app/                         # App Router routes and layouts
-  components/                  # UI and feature components
-  lib/                         # Data access + business helpers
-prisma/                        # Prisma schema + migrations
-scripts/                       # Dev/seed scripts
-public/                        # Static assets
-```
+## Route surface
+- `src/app/spaces/[spaceId]/*`
+  - `calendar`: main planning surface (events, ideas, busy blocks)
+  - `memories`: memory timeline and retrospection
+  - `notes`: shared notes
+  - `activity`: activity feed
+  - `settings`: member/settings + Google calendar controls
+  - `planning`: redirect route to `calendar`
+- `src/app/events/[eventId]/*`: event detail, comments, ratings, photos
+- `src/app/api/*`:
+  - auth routes
+  - couple-space, event, and idea API routes
+  - Google integration routes
+  - ICS export route
 
-### App Layer (Routes)
-- `src/app/layout.tsx`: Global layout, fonts, Toaster.
-- `src/app/spaces/[spaceId]/...`: Primary surfaces (calendar, notes, memories,
-  activity, settings).
-- `src/app/events/[eventId]/...`: Event detail, comments, ratings, photos.
-- `src/app/api/...`: Auth, calendar export (ICS), and couple-space operations.
+## Data/domain layer
+Primary modules in `src/lib`:
+- Auth/session: `auth.ts`, `session.ts`, `current-user.ts`
+- Domain: `events.ts`, `ideas.ts`, `notes.ts`, `availability.ts`, `couple-spaces.ts`
+- Activity/audit: `activity.ts`, `change-log.ts`
+- Integrations/utilities: `ical.ts`, `tags.ts`, `formatters.ts`, `calendar.ts`, `request.ts`
 
-### Components
-UI is composed from reusable building blocks under `src/components/`:
-- UI primitives: buttons, badges, tag input, icon buttons, modals.
-- Feature modules: planning cards, onboarding, photo uploader.
-- Feedback helpers: toasts, confirm dialogs, loading states.
+## Data model highlights
+Main entities:
+- `User`, `Session`
+- `CoupleSpace`, `Membership`
+- `Event`, `Idea`, `Note`, `AvailabilityBlock`, `Photo`
+- `ExternalAccount`, `ExternalCalendar`, `ExternalAvailabilityBlock`, `ExternalEventLink`
+- `ChangeLogEntry`
+- `Notification` (kept for planned future implementation)
 
-### Data & Domain Layer
-`src/lib/` contains domain logic and Prisma queries:
-- Auth & session handling: `auth.ts`, `session.ts`, `current-user.ts`.
-- Core domains: `events.ts`, `ideas.ts`, `notes.ts`, `availability.ts`,
-  `couple-spaces.ts`, `activity.ts`, `change-log.ts`.
-- Utilities: `calendar.ts`, `tags.ts`, `formatters.ts`, `ical.ts`.
-
-## Data Model (Prisma)
-Key entities (see `prisma/schema.prisma`):
-- `User` and `Session` (token-based auth, DB-backed).
-- `CoupleSpace`, `Membership` (multi-user spaces).
-- `Event`, `Idea`, `Note`, `AvailabilityBlock`, `Photo`.
-- `ChangeLogEntry`, `Notification` (auditing and reminders).
-
-Indexes are added on high-traffic fields to support list views.
-
-## Key Patterns
-
-### Server Actions (preferred for mutations)
-```typescript
-async function handleCreate(formData: FormData) {
-  "use server";
-  const userId = await requireUserId();
-  // validate, create, redirect
-}
-```
+## Key behavior patterns
 
 ### Auth enforcement
-Every page starts with `await requireUserId()` - redirects to /login if no session.
+- Server pages call `requireUserId()` and redirect to `/login` when needed.
+- API routes use `getSessionUserId()` checks.
 
-### Tags stored as JSON string
-```typescript
-parseTags('["outdoor","food"]') -> ['outdoor', 'food']
-normalizeTags('outdoor, food') -> '["outdoor","food"]'
-```
+### Event and idea lifecycle
+- Ideas can be scheduled into events.
+- Event detail handles comments, ratings, place metadata, and photos.
 
-### Modal state via URL params
-`?new=2026-01-15` opens new event modal with date prefilled.
+### Photo uploads
+- Cloudinary upload path is supported when env vars are configured.
+- URL-based photo add fallback is also supported.
 
-## Auth & Sessions
-- Login/Register: API routes create a session token stored in `Session` table.
-- Session token stored in HTTP-only cookie `cm_session`.
-- Server-side checks use `requireUserId()` to enforce auth.
-- Logout deletes the session row and clears the cookie.
-- Expired sessions are cleaned up on read; add a scheduled cleanup if needed.
+### Calendar availability
+- Manual availability and external busy blocks are rendered together.
+- Google calendar busy sync is supported through selected calendars.
 
-## Core Flows
+### Google outbound sync
+- Event creation can optionally create a linked Google Calendar event.
+- Sync status is shown on event detail when link metadata exists.
 
-### Event Creation
-1) UI form in calendar or plan modal collects data.
-2) Server action validates input and calls `createEventForSpace`.
-3) User redirected or refreshed, toast confirms success.
+## Deployment/runtime notes
+- Build script runs `prisma generate`.
+- Production requires `DATABASE_URL`.
+- Additional env vars are required only for enabled integrations.
+- Deployment details and checklist are documented in `docs/00_current/DEPLOYMENT.md`.
 
-### Idea -> Event Scheduling
-1) User schedules an idea from the planning column.
-2) Server action reuses idea data to create a planned event.
-3) UI refreshes and shows the new plan.
+## Current risks / technical debt
+- Lint baseline has existing violations outside cleanup scope.
+- Large page modules (`calendar/page.tsx`, `events/[eventId]/page.tsx`) need decomposition.
+- API auth/validation patterns are still repetitive and targeted by cleanup phases.
 
-### Notes
-1) Notes page uses server actions for create/delete.
-2) Activity and notes list views are server-rendered.
-
-### Photo Uploads
-- UI support exists, but the upload flow is not fully implemented yet.
-- Storage integration (Cloudinary) is planned but not complete.
-
-## Integrations
-- Google Maps Places: `PlaceSearch` client component uses public API key.
-- Calendar export: `/api/spaces/[spaceId]/calendar.ics` generates ICS content.
-- Cloudinary uploads: planned integration; currently not fully implemented.
-
-## UI/UX Architecture
-- Tailwind CSS + CSS variables in `globals.css` for tokens.
-- `surface` and `surface-muted` containers define elevation and tone.
-- Shared animations for page transitions and staggered list entries.
-
-## Deployment & Runtime
-- Next.js server runtime (Node).
-- PostgreSQL required (Neon, Railway, or local).
-- `prisma generate` runs on install; migrations stored in `prisma/migrations`.
-- See `docs/00_current/DEPLOYMENT.md` for environment variables and hosting options.
-
-## Local Development
-```
-npm install
-npm run dev
-```
-Required environment variables:
-```
-DATABASE_URL=postgresql://...
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=...
-```
-
-## Operational Notes
-- Session cleanup for expired sessions should be scheduled if needed.
-- Large data sets may require further indexing or pagination.
-- If Cloudinary uploads are enabled, lock unsigned presets down to your domain.
-
-## Known Risks / TODO
-- Add automated tests for auth and server actions.
-- Implement email reminders (schema exists, job not implemented).
-- Consider rate limiting and audit logging for critical actions.
-
-## Links
-- CONTEXT.md
-- DECISIONS.md
-- rollout_plan.md
+## Related docs
+- `docs/00_current/CONTEXT.md`
+- `docs/00_current/DECISIONS.md`
+- `docs/00_current/rollout_plan.md`
+- `docs/00_current/CLEANUP_PLAN.md`
+- `docs/00_current/DEPLOYMENT.md`

@@ -80,9 +80,9 @@ Reference: `docs/00_current/DEPLOYMENT.md`
 Tracked in: `docs/00_current/CLEANUP_PLAN.md`
 
 Phase status:
-- [ ] Phase 0: stabilize and commit pending cleanup diff
-- [ ] Phase 1: dead code and CSS sweep
-- [ ] Phase 2: docs source-of-truth alignment
+- [x] Phase 0: stabilize and commit pending cleanup diff
+- [x] Phase 1: dead code and CSS sweep
+- [x] Phase 2: docs source-of-truth alignment
 - [ ] Phase 3: API auth/validation helper consolidation
 - [ ] Phase 4: page decomposition and data-loader refactor
 - [ ] Phase 5: schema/dependency governance
