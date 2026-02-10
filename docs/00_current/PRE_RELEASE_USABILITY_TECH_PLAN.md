@@ -1,5 +1,39 @@
 # Pre-Release Usability Technical Plan
 
+## Implementation Status (Updated February 10, 2026)
+
+- [x] Phase 1.1 Auth failure handling in login/register forms
+  - Implemented in `b350237`
+  - Files: `src/app/login/page.tsx`, `src/app/register/page.tsx`, `src/app/api/auth/login/route.ts`, `src/app/api/auth/register/route.ts`
+- [x] Phase 1.2 Event creation parity with place support
+  - Implemented in `b350237`
+  - Files: `src/app/spaces/[spaceId]/calendar/add-controls.tsx`, `src/app/spaces/[spaceId]/calendar/page.tsx`
+- [x] Phase 1.3 Activity feed deduplication for comments
+  - Implemented in `b350237`
+  - File: `src/lib/activity.ts`
+
+- [x] Phase 2.4 Ideas IA consistency (calendar-centric model)
+  - Model chosen: calendar-centric ideas
+  - Implemented in `b350237`
+  - Files: `src/app/spaces/[spaceId]/calendar/idea-card-list.tsx`, `src/app/spaces/[spaceId]/notes/page.tsx`, `src/lib/activity.ts`, `src/app/spaces/[spaceId]/ideas/page.tsx`
+- [x] Phase 2.5 Partner management controls in settings
+  - Policy chosen: creator-only partner removal
+  - Implemented in `b350237`
+  - Files: `src/app/spaces/[spaceId]/settings/page.tsx`, `src/lib/couple-spaces.ts`, `src/app/spaces/[spaceId]/settings/membership-actions.tsx`
+- [x] Phase 2.6 Consistent confirmation UX
+  - Initial pass implemented in `b350237`
+  - Global `ConfirmForm` modal refactor in `531a7be`
+  - Files include `src/app/events/[eventId]/event-comments.tsx`, `src/app/spaces/[spaceId]/ideas/[ideaId]/idea-comments.tsx`, `src/app/spaces/[spaceId]/settings/google-calendar-settings.tsx`, `src/components/ConfirmForm.tsx`
+
+- [x] Phase 3.7 Google integration status clarity
+  - Implemented in `bfa8892`
+  - File: `src/app/spaces/[spaceId]/settings/google-calendar-settings.tsx`
+
+- [x] Additional post-plan calendar usability fix
+  - Expanded day cell content (removed non-actionable `+N more`), moved unavailability above events, owner-color legend for unavailability
+  - Implemented in `d3989aa`
+  - Files: `src/app/spaces/[spaceId]/calendar/day-cell.tsx`, `src/app/spaces/[spaceId]/calendar/page.tsx`
+
 ## Goal
 Close the highest-risk usability gaps before production launch so first-time and returning users can reliably:
 - sign in/up and recover from errors
