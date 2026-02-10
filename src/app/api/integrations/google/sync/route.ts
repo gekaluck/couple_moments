@@ -1,44 +1,37 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getSessionUserId } from '@/lib/session';
-import { syncAvailabilityBlocks } from '@/lib/integrations/google/freebusy';
+import { NextResponse } from "next/server";
+
+import { forbidden, internalServerError, notFound, requireApiUserId } from "@/lib/api-utils";
+import { syncAvailabilityBlocks } from "@/lib/integrations/google/freebusy";
+import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/integrations/google/sync
  * Manually trigger a sync of Google Calendar availability
  */
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    const userId = await getSessionUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const auth = await requireApiUserId();
+    if (!auth.ok) {
+      return auth.response;
     }
+    const userId = auth.userId;
     
     // Get external account
     const externalAccount = await prisma.externalAccount.findUnique({
       where: {
         userId_provider: {
           userId: userId,
-          provider: 'GOOGLE',
+          provider: "GOOGLE",
         },
       },
     });
-    
+
     if (!externalAccount) {
-      return NextResponse.json(
-        { error: 'Google Calendar not connected' },
-        { status: 404 }
-      );
+      return notFound("Google Calendar not connected");
     }
-    
+
     if (externalAccount.revokedAt) {
-      return NextResponse.json(
-        { error: 'Google Calendar access has been revoked. Please reconnect.' },
-        { status: 403 }
-      );
+      return forbidden("Google Calendar access has been revoked. Please reconnect.");
     }
     
     // Perform sync
@@ -50,10 +43,10 @@ export async function POST(request: Request) {
       syncedAt: result.syncedAt,
     });
   } catch (error) {
-    console.error('Error syncing availability:', error);
-    return NextResponse.json(
-      { error: 'Failed to sync availability', message: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+    console.error("Error syncing availability:", error);
+    return internalServerError(
+      "Failed to sync availability",
+      error instanceof Error ? { message: error.message } : { message: "Unknown error" },
     );
   }
 }

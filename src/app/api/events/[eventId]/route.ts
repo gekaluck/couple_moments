@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { badRequest, notFound, parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { getEventForUser, updateEvent, deleteEvent } from "@/lib/events";
 import { parseJsonOrForm } from "@/lib/request";
-import { getSessionUserId } from "@/lib/session";
 import { normalizeTags } from "@/lib/tags";
 
 type PageProps = {
@@ -22,30 +22,32 @@ function parseDate(value: string | null | undefined) {
 }
 
 export async function GET(_request: Request, { params }: PageProps) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const { eventId } = await params;
   const event = await getEventForUser(eventId, userId);
   if (!event) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return notFound();
   }
 
   return NextResponse.json({ event });
 }
 
 export async function PUT(request: Request, { params }: PageProps) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const { eventId } = await params;
   const existing = await getEventForUser(eventId, userId);
   if (!existing) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return notFound();
   }
 
   const body = await parseJsonOrForm<Record<string, unknown>>(request);
@@ -56,19 +58,16 @@ export async function PUT(request: Request, { params }: PageProps) {
     dateTimeEnd: z.string().trim().optional().nullable(),
     tags: z.union([z.string(), z.array(z.string())]).optional().nullable(),
   });
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  const parsed = parseOrBadRequest(schema, body);
+  if (!parsed.data) {
+    return parsed.response;
   }
 
   let dateTimeStart: Date | undefined;
   if (parsed.data.dateTimeStart !== undefined) {
     const parsedDate = parseDate(parsed.data.dateTimeStart);
     if (!parsedDate) {
-      return NextResponse.json(
-        { error: "dateTimeStart must be a valid ISO date." },
-        { status: 400 },
-      );
+      return badRequest("dateTimeStart must be a valid ISO date.");
     }
     dateTimeStart = parsedDate;
   }
@@ -77,10 +76,7 @@ export async function PUT(request: Request, { params }: PageProps) {
   if (parsed.data.dateTimeEnd !== undefined) {
     const parsedDate = parseDate(parsed.data.dateTimeEnd);
     if (!parsedDate) {
-      return NextResponse.json(
-        { error: "dateTimeEnd must be a valid ISO date." },
-        { status: 400 },
-      );
+      return badRequest("dateTimeEnd must be a valid ISO date.");
     }
     dateTimeEnd = parsedDate;
   }
@@ -97,15 +93,16 @@ export async function PUT(request: Request, { params }: PageProps) {
 }
 
 export async function DELETE(_request: Request, { params }: PageProps) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const { eventId } = await params;
   const existing = await getEventForUser(eventId, userId);
   if (!existing) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return notFound();
   }
 
   const event = await deleteEvent(eventId, userId);

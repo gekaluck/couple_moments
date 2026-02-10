@@ -1,22 +1,23 @@
 import { NextResponse } from "next/server";
 
+import { notFound, requireApiUserId } from "@/lib/api-utils";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
-import { getSessionUserId } from "@/lib/session";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
 };
 
 export async function GET(request: Request, { params }: PageProps) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const { spaceId } = await params;
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return notFound();
   }
 
   const origin = new URL(request.url).origin;

@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { getSessionUserId } from '@/lib/session';
-import { parseJsonOrForm } from '@/lib/request';
-import { syncAvailabilityBlocks } from '@/lib/integrations/google/freebusy';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import { internalServerError, notFound, requireApiUserId } from "@/lib/api-utils";
+import { syncAvailabilityBlocks } from "@/lib/integrations/google/freebusy";
+import { prisma } from "@/lib/prisma";
+import { parseJsonOrForm } from "@/lib/request";
 
 const toggleSchema = z.object({
   calendarId: z.string(),
@@ -16,21 +17,19 @@ const toggleSchema = z.object({
  */
 export async function POST(request: Request) {
   try {
-    const userId = await getSessionUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const auth = await requireApiUserId();
+    if (!auth.ok) {
+      return auth.response;
     }
+    const userId = auth.userId;
     
     const body = await parseJsonOrForm<Record<string, unknown>>(request);
     const parsed = toggleSchema.safeParse(body);
     
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Invalid request data', details: parsed.error.flatten() },
-        { status: 400 }
+        { error: "Invalid request data", details: parsed.error.flatten() },
+        { status: 400 },
       );
     }
     
@@ -41,16 +40,13 @@ export async function POST(request: Request) {
       where: {
         userId_provider: {
           userId: userId,
-          provider: 'GOOGLE',
+          provider: "GOOGLE",
         },
       },
     });
-    
+
     if (!externalAccount) {
-      return NextResponse.json(
-        { error: 'Google Calendar not connected' },
-        { status: 404 }
-      );
+      return notFound("Google Calendar not connected");
     }
     
     // Update calendar selection
@@ -79,10 +75,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error toggling calendar:', error);
-    return NextResponse.json(
-      { error: 'Failed to toggle calendar' },
-      { status: 500 }
-    );
+    console.error("Error toggling calendar:", error);
+    return internalServerError("Failed to toggle calendar");
   }
 }

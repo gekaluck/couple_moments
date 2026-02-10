@@ -1,33 +1,35 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { createCoupleSpaceForUser, listCoupleSpacesForUser } from "@/lib/couple-spaces";
 import { parseJsonOrForm } from "@/lib/request";
-import { getSessionUserId } from "@/lib/session";
 
 export async function GET() {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const spaces = await listCoupleSpacesForUser(userId);
   return NextResponse.json({ spaces });
 }
 
 export async function POST(request: Request) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const body = await parseJsonOrForm<Record<string, unknown>>(request);
   const schema = z.object({
     name: z.string().trim().optional().nullable(),
   });
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  const parsed = parseOrBadRequest(schema, body);
+  if (!parsed.data) {
+    return parsed.response;
   }
 
   const name = parsed.data.name?.trim() || null;

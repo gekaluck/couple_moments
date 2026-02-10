@@ -1,35 +1,32 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import crypto from 'crypto';
-import { generateAuthUrl } from '@/lib/integrations/google/calendar';
-import { getSessionUserId } from '@/lib/session';
+import crypto from "crypto";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+
+import { internalServerError, requireApiUserId } from "@/lib/api-utils";
+import { generateAuthUrl } from "@/lib/integrations/google/calendar";
 
 /**
  * GET /api/integrations/google/start
  * Initiates Google OAuth flow
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // Verify user is authenticated
-    const userId = await getSessionUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const auth = await requireApiUserId();
+    if (!auth.ok) {
+      return auth.response;
     }
-    
     // Generate a random state parameter for CSRF protection
-    const state = crypto.randomBytes(32).toString('hex');
+    const state = crypto.randomBytes(32).toString("hex");
     
     // Store state in a signed cookie (expires in 10 minutes)
     const cookieStore = await cookies();
-    cookieStore.set('google_oauth_state', state, {
+    cookieStore.set("google_oauth_state", state, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: 10 * 60, // 10 minutes
-      path: '/',
+      path: "/",
     });
     
     // Generate OAuth URL
@@ -38,10 +35,7 @@ export async function GET(request: Request) {
     // Redirect to Google OAuth consent screen
     return NextResponse.redirect(authUrl);
   } catch (error) {
-    console.error('Error starting Google OAuth:', error);
-    return NextResponse.json(
-      { error: 'Failed to start authorization flow' },
-      { status: 500 }
-    );
+    console.error("Error starting Google OAuth:", error);
+    return internalServerError("Failed to start authorization flow");
   }
 }

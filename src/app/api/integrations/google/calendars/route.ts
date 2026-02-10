@@ -1,27 +1,26 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getSessionUserId } from '@/lib/session';
+import { NextResponse } from "next/server";
+
+import { internalServerError, notFound, requireApiUserId } from "@/lib/api-utils";
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/integrations/google/calendars
  * Get list of calendars for the current user's Google account
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const userId = await getSessionUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const auth = await requireApiUserId();
+    if (!auth.ok) {
+      return auth.response;
     }
+    const userId = auth.userId;
     
     // Get external account
     const externalAccount = await prisma.externalAccount.findUnique({
       where: {
         userId_provider: {
           userId: userId,
-          provider: 'GOOGLE',
+          provider: "GOOGLE",
         },
       },
       include: {
@@ -31,10 +30,7 @@ export async function GET(request: Request) {
     });
     
     if (!externalAccount) {
-      return NextResponse.json(
-        { error: 'Google Calendar not connected' },
-        { status: 404 }
-      );
+      return notFound("Google Calendar not connected");
     }
     
     return NextResponse.json({
@@ -43,7 +39,7 @@ export async function GET(request: Request) {
         email: externalAccount.providerAccountId,
         isRevoked: !!externalAccount.revokedAt,
       },
-      calendars: externalAccount.calendars.map((cal: any) => ({
+      calendars: externalAccount.calendars.map((cal) => ({
         id: cal.id,
         calendarId: cal.calendarId,
         summary: cal.summary,
@@ -58,10 +54,7 @@ export async function GET(request: Request) {
       } : null,
     });
   } catch (error) {
-    console.error('Error fetching calendars:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch calendars' },
-      { status: 500 }
-    );
+    console.error("Error fetching calendars:", error);
+    return internalServerError("Failed to fetch calendars");
   }
 }

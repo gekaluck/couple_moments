@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { notFound, parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { createIdeaForSpace, listIdeasForSpace } from "@/lib/ideas";
 import { parseJsonOrForm } from "@/lib/request";
-import { getSessionUserId } from "@/lib/session";
 import { normalizeTags } from "@/lib/tags";
 
 type PageProps = {
@@ -12,15 +12,16 @@ type PageProps = {
 };
 
 export async function GET(request: Request, { params }: PageProps) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const { spaceId } = await params;
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return notFound();
   }
 
   const { searchParams } = new URL(request.url);
@@ -37,15 +38,16 @@ export async function GET(request: Request, { params }: PageProps) {
 }
 
 export async function POST(request: Request, { params }: PageProps) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  const auth = await requireApiUserId();
+  if (!auth.ok) {
+    return auth.response;
   }
+  const userId = auth.userId;
 
   const { spaceId } = await params;
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return notFound();
   }
 
   const body = await parseJsonOrForm<Record<string, unknown>>(request);
@@ -54,9 +56,9 @@ export async function POST(request: Request, { params }: PageProps) {
     description: z.string().trim().optional().nullable(),
     tags: z.union([z.string(), z.array(z.string())]).optional().nullable(),
   });
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Title is required." }, { status: 400 });
+  const parsed = parseOrBadRequest(schema, body, "Title is required.");
+  if (!parsed.data) {
+    return parsed.response;
   }
 
   const title = parsed.data.title;
