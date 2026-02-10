@@ -65,7 +65,7 @@ Required for Google integration:
 ## Remaining backlog (Phase 3+)
 
 - [ ] Periodic sync trigger (cron/job)
-- [ ] Update/delete propagation when Duet events change
+- [x] Update/delete propagation when Duet events change
 - [ ] Webhook-based incremental sync strategy
 - [ ] Conflict handling policy and retry/backoff hardening
 - [ ] Provider abstraction for non-Google calendars

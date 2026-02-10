@@ -3,6 +3,10 @@ import { z } from "zod";
 
 import { badRequest, notFound, parseOrBadRequest, requireApiUserId } from "@/lib/api-utils";
 import { getEventForUser, updateEvent, deleteEvent } from "@/lib/events";
+import {
+  deleteGoogleCalendarEvent,
+  updateGoogleCalendarEvent,
+} from "@/lib/integrations/google/events";
 import { parseJsonOrForm } from "@/lib/request";
 import { normalizeTags } from "@/lib/tags";
 
@@ -88,6 +92,19 @@ export async function PUT(request: Request, { params }: PageProps) {
     dateTimeEnd,
     tags: parsed.data.tags !== undefined ? normalizeTags(parsed.data.tags) : undefined,
   });
+  const googleSyncResult = await updateGoogleCalendarEvent(event.id, {
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    dateTimeStart: event.dateTimeStart,
+    dateTimeEnd: event.dateTimeEnd,
+    timeIsSet: event.timeIsSet,
+    placeName: event.placeName,
+    placeAddress: event.placeAddress,
+  });
+  if (!googleSyncResult.success) {
+    console.warn("Google Calendar update sync skipped:", googleSyncResult.error);
+  }
 
   return NextResponse.json({ event });
 }
@@ -105,6 +122,10 @@ export async function DELETE(_request: Request, { params }: PageProps) {
     return notFound();
   }
 
+  const googleDeleteResult = await deleteGoogleCalendarEvent(eventId);
+  if (!googleDeleteResult.success) {
+    console.warn("Google Calendar delete sync skipped:", googleDeleteResult.error);
+  }
   const event = await deleteEvent(eventId, userId);
   return NextResponse.json({ event });
 }

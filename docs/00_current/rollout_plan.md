@@ -40,7 +40,7 @@ Outbound events:
 
 Future follow-ups:
 - [ ] Automatic periodic sync
-- [ ] Update/delete sync on event edits/deletes
+- [x] Update/delete sync on event edits/deletes
 - [ ] Additional provider support
 
 ---

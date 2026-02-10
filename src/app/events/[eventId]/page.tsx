@@ -3,6 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createEventComment, createEventPhoto, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
+import {
+  deleteGoogleCalendarEvent,
+  updateGoogleCalendarEvent,
+} from "@/lib/integrations/google/events";
 import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
 import { normalizeTags, parseTags } from "@/lib/tags";
@@ -172,7 +176,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       return;
     }
 
-    await updateEvent(eventIdForActions, currentUserId, {
+    const event = await updateEvent(eventIdForActions, currentUserId, {
       title,
       description: description || null,
       dateTimeStart,
@@ -188,6 +192,19 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       placeLng: Number.isNaN(placeLng) ? null : placeLng,
       placeUrl,
     });
+    const googleSyncResult = await updateGoogleCalendarEvent(event.id, {
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      dateTimeStart: event.dateTimeStart,
+      dateTimeEnd: event.dateTimeEnd,
+      timeIsSet: event.timeIsSet,
+      placeName: event.placeName,
+      placeAddress: event.placeAddress,
+    });
+    if (!googleSyncResult.success) {
+      console.warn("Google Calendar update sync skipped:", googleSyncResult.error);
+    }
 
     revalidatePath(`/events/${eventIdForActions}`);
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
@@ -196,6 +213,10 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   async function handleDelete() {
     "use server";
     const currentUserId = await requireUserId();
+    const googleDeleteResult = await deleteGoogleCalendarEvent(eventIdForActions);
+    if (!googleDeleteResult.success) {
+      console.warn("Google Calendar delete sync skipped:", googleDeleteResult.error);
+    }
     await deleteEvent(eventIdForActions, currentUserId);
     redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
