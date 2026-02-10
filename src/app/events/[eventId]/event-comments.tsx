@@ -82,7 +82,7 @@ export default function EventComments({
       });
       try {
         await onSubmit(formData);
-        setIsComposerOpen(true);
+        setIsComposerOpen(false);
         toast.success("Comment posted");
       } catch {
         toast.error("Failed to post comment");
