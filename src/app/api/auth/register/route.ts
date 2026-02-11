@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { formatZodFieldErrors } from "@/lib/api-utils";
+import {
+  buildAuthErrorResponse,
+  isFormSubmission,
+} from "@/lib/auth-error-response";
 import { hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -18,68 +22,35 @@ type RegisterErrorCode =
   | "ip-unavailable"
   | "rate-limited";
 
-function getRegisterErrorMessage(errorCode: RegisterErrorCode) {
-  if (errorCode === "duplicate-email") {
-    return "An account with that email already exists.";
-  }
-  if (errorCode === "invalid-input") {
-    return "Email and password are required.";
-  }
-  if (errorCode === "ip-unavailable") {
-    return "Unable to determine client IP.";
-  }
-  return "Too many signup attempts. Try again shortly.";
-}
-
-function isFormSubmission(request: Request) {
-  const contentType = request.headers.get("content-type") ?? "";
-  return (
-    contentType.includes("application/x-www-form-urlencoded") ||
-    contentType.includes("multipart/form-data")
-  );
-}
-
-function buildRegisterErrorResponse(
-  request: Request,
-  errorCode: RegisterErrorCode,
-  status: number,
-  options?: { email?: string; retryAfterSeconds?: number },
-) {
-  if (isFormSubmission(request)) {
-    const redirectUrl = new URL("/register", request.url);
-    redirectUrl.searchParams.set("error", errorCode);
-    if (options?.email) {
-      redirectUrl.searchParams.set("email", options.email);
-    }
-    if (options?.retryAfterSeconds) {
-      redirectUrl.searchParams.set(
-        "retryAfter",
-        options.retryAfterSeconds.toString(),
-      );
-    }
-    return NextResponse.redirect(redirectUrl, { status: 303 });
-  }
-
-  return NextResponse.json(
-    { error: getRegisterErrorMessage(errorCode) },
-    {
-      status,
-      headers: options?.retryAfterSeconds
-        ? { "Retry-After": options.retryAfterSeconds.toString() }
-        : undefined,
-    },
-  );
-}
+const REGISTER_ERROR_MESSAGES: Record<RegisterErrorCode, string> = {
+  "duplicate-email": "An account with that email already exists.",
+  "invalid-input": "Email and password are required.",
+  "ip-unavailable": "Unable to determine client IP.",
+  "rate-limited": "Too many signup attempts. Try again shortly.",
+};
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
   if (!ip) {
-    return buildRegisterErrorResponse(request, "ip-unavailable", 400);
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/register",
+      errorCode: "ip-unavailable",
+      status: 400,
+      errorMessages: REGISTER_ERROR_MESSAGES,
+    });
   }
   const rateLimit = checkRateLimit(`auth:register:${ip}`, 5, 60_000);
   if (!rateLimit.allowed) {
-    return buildRegisterErrorResponse(request, "rate-limited", 429, {
-      retryAfterSeconds: rateLimit.retryAfterSeconds,
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/register",
+      errorCode: "rate-limited",
+      status: 429,
+      errorMessages: REGISTER_ERROR_MESSAGES,
+      options: {
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
     });
   }
 
@@ -99,8 +70,15 @@ export async function POST(request: Request) {
       "Email and password are required.",
     );
     if (isFormSubmission(request)) {
-      return buildRegisterErrorResponse(request, "invalid-input", 400, {
-        email: rawEmail,
+      return buildAuthErrorResponse({
+        request,
+        formRedirectPath: "/register",
+        errorCode: "invalid-input",
+        status: 400,
+        errorMessages: REGISTER_ERROR_MESSAGES,
+        options: {
+          email: rawEmail,
+        },
       });
     }
     return NextResponse.json(
@@ -118,8 +96,15 @@ export async function POST(request: Request) {
   });
 
   if (existingUser) {
-    return buildRegisterErrorResponse(request, "duplicate-email", 409, {
-      email,
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/register",
+      errorCode: "duplicate-email",
+      status: 409,
+      errorMessages: REGISTER_ERROR_MESSAGES,
+      options: {
+        email,
+      },
     });
   }
 

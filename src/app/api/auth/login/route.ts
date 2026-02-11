@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { formatZodFieldErrors } from "@/lib/api-utils";
+import {
+  buildAuthErrorResponse,
+  isFormSubmission,
+} from "@/lib/auth-error-response";
 import { verifyPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -18,68 +22,35 @@ type LoginErrorCode =
   | "ip-unavailable"
   | "rate-limited";
 
-function getLoginErrorMessage(errorCode: LoginErrorCode) {
-  if (errorCode === "invalid-credentials") {
-    return "Invalid email or password.";
-  }
-  if (errorCode === "invalid-input") {
-    return "Email and password are required.";
-  }
-  if (errorCode === "ip-unavailable") {
-    return "Unable to determine client IP.";
-  }
-  return "Too many login attempts. Try again shortly.";
-}
-
-function isFormSubmission(request: Request) {
-  const contentType = request.headers.get("content-type") ?? "";
-  return (
-    contentType.includes("application/x-www-form-urlencoded") ||
-    contentType.includes("multipart/form-data")
-  );
-}
-
-function buildLoginErrorResponse(
-  request: Request,
-  errorCode: LoginErrorCode,
-  status: number,
-  options?: { email?: string; retryAfterSeconds?: number },
-) {
-  if (isFormSubmission(request)) {
-    const redirectUrl = new URL("/login", request.url);
-    redirectUrl.searchParams.set("error", errorCode);
-    if (options?.email) {
-      redirectUrl.searchParams.set("email", options.email);
-    }
-    if (options?.retryAfterSeconds) {
-      redirectUrl.searchParams.set(
-        "retryAfter",
-        options.retryAfterSeconds.toString(),
-      );
-    }
-    return NextResponse.redirect(redirectUrl, { status: 303 });
-  }
-
-  return NextResponse.json(
-    { error: getLoginErrorMessage(errorCode) },
-    {
-      status,
-      headers: options?.retryAfterSeconds
-        ? { "Retry-After": options.retryAfterSeconds.toString() }
-        : undefined,
-    },
-  );
-}
+const LOGIN_ERROR_MESSAGES: Record<LoginErrorCode, string> = {
+  "invalid-credentials": "Invalid email or password.",
+  "invalid-input": "Email and password are required.",
+  "ip-unavailable": "Unable to determine client IP.",
+  "rate-limited": "Too many login attempts. Try again shortly.",
+};
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
   if (!ip) {
-    return buildLoginErrorResponse(request, "ip-unavailable", 400);
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "ip-unavailable",
+      status: 400,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+    });
   }
   const rateLimit = checkRateLimit(`auth:login:${ip}`, 5, 60_000);
   if (!rateLimit.allowed) {
-    return buildLoginErrorResponse(request, "rate-limited", 429, {
-      retryAfterSeconds: rateLimit.retryAfterSeconds,
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "rate-limited",
+      status: 429,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+      options: {
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
     });
   }
 
@@ -98,8 +69,15 @@ export async function POST(request: Request) {
       "Email and password are required.",
     );
     if (isFormSubmission(request)) {
-      return buildLoginErrorResponse(request, "invalid-input", 400, {
-        email: rawEmail,
+      return buildAuthErrorResponse({
+        request,
+        formRedirectPath: "/login",
+        errorCode: "invalid-input",
+        status: 400,
+        errorMessages: LOGIN_ERROR_MESSAGES,
+        options: {
+          email: rawEmail,
+        },
       });
     }
     return NextResponse.json(
@@ -116,15 +94,29 @@ export async function POST(request: Request) {
   });
 
   if (!user) {
-    return buildLoginErrorResponse(request, "invalid-credentials", 401, {
-      email,
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "invalid-credentials",
+      status: 401,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+      options: {
+        email,
+      },
     });
   }
 
   const isValid = await verifyPassword(password, user.passwordHash);
   if (!isValid) {
-    return buildLoginErrorResponse(request, "invalid-credentials", 401, {
-      email,
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "invalid-credentials",
+      status: 401,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+      options: {
+        email,
+      },
     });
   }
 

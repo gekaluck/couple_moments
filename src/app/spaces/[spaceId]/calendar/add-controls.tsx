@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import Modal from "@/components/Modal";
+import PlaceHiddenInputs from "@/components/places/PlaceHiddenInputs";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
 
 type PrefillData = {
@@ -232,31 +233,17 @@ export default function CalendarAddControls({
             initialValue={activePlaceName}
             onSelect={(selection) => setPlace(selection)}
           />
-          <input type="hidden" name="placeId" value={activePlaceId} />
-          <input type="hidden" name="placeName" value={activePlaceName} />
-          <input type="hidden" name="placeAddress" value={activePlaceAddress} />
-          <input type="hidden" name="placeWebsite" value={activePlaceWebsite} />
-          <input
-            type="hidden"
-            name="placeOpeningHours"
-            value={activePlaceOpeningHours ? JSON.stringify(activePlaceOpeningHours) : ""}
+          <PlaceHiddenInputs
+            placeId={activePlaceId}
+            placeName={activePlaceName}
+            placeAddress={activePlaceAddress}
+            placeWebsite={activePlaceWebsite}
+            placeOpeningHours={activePlaceOpeningHours}
+            placePhotoUrls={activePlacePhotoUrls}
+            placeLat={activePlaceLat}
+            placeLng={activePlaceLng}
+            placeUrl={activePlaceUrl}
           />
-          <input
-            type="hidden"
-            name="placePhotoUrls"
-            value={activePlacePhotoUrls ? JSON.stringify(activePlacePhotoUrls) : ""}
-          />
-          <input
-            type="hidden"
-            name="placeLat"
-            value={activePlaceLat === null ? "" : activePlaceLat.toString()}
-          />
-          <input
-            type="hidden"
-            name="placeLng"
-            value={activePlaceLng === null ? "" : activePlaceLng.toString()}
-          />
-          <input type="hidden" name="placeUrl" value={activePlaceUrl} />
           <textarea
             className="min-h-[100px] rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
             name="description"

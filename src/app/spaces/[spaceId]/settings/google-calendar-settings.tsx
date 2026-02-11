@@ -95,13 +95,15 @@ export default function GoogleCalendarSettings() {
         router.refresh();
       } else {
         const json = await res.json();
-        const message = json.error || 'Failed to disconnect';
-        setError(message);
-        throw new Error(message);
+        throw new Error(json.error || 'Failed to disconnect');
       }
-    } catch {
-      setError('Failed to disconnect Google Calendar');
-      throw new Error('Failed to disconnect Google Calendar');
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to disconnect Google Calendar';
+      setError(message);
+      throw error;
     }
   }
 
