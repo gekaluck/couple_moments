@@ -122,6 +122,9 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
                 type="text"
               />
             </label>
+            <p className="text-xs text-[var(--text-tertiary)]">
+              You can rename your space later from Settings.
+            </p>
             <button
               className="mt-auto rounded-full bg-[var(--accent-strong)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[var(--accent)]"
               type="submit"
@@ -155,6 +158,9 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
                 defaultValue={invitePrefill}
               />
             </label>
+            <p className="text-xs text-[var(--text-tertiary)]">
+              Tip: invite codes are case-insensitive and safe to paste directly.
+            </p>
             <button
               className="mt-auto rounded-full border border-sky-500 bg-white/80 px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-sky-700 transition hover:bg-sky-50"
               type="submit"
@@ -162,6 +168,99 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
               Join space
             </button>
           </form>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <article className="surface border border-[var(--panel-border)] bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(245,242,255,0.74))] p-8">
+            <p className="section-kicker">How Duet Works</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
+              One shared home for planning and memory-keeping
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm text-[var(--text-muted)]">
+              Duet is calendar-centric: ideas become plans, plans become memories, and both of
+              you can add context as you go.
+            </p>
+
+            <ol className="mt-6 grid gap-3 text-sm">
+              <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">
+                  1. Calendar first
+                </p>
+                <p className="mt-1 text-[var(--text-secondary)]">
+                  Add events or unavailability blocks directly from the month view so both of you
+                  can see your shared rhythm at a glance.
+                </p>
+              </li>
+              <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
+                  2. Capture ideas
+                </p>
+                <p className="mt-1 text-[var(--text-secondary)]">
+                  Drop date ideas in the &quot;What&apos;s ahead&quot; lane, then schedule them when timing feels
+                  right.
+                </p>
+              </li>
+              <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
+                  3. Keep context
+                </p>
+                <p className="mt-1 text-[var(--text-secondary)]">
+                  Add place details, comments, and notes to plans so details stay attached to the
+                  right moment.
+                </p>
+              </li>
+              <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700">
+                  4. Build your memory map
+                </p>
+                <p className="mt-1 text-[var(--text-secondary)]">
+                  Past plans become memories where you can rate, reflect, and revisit favorite
+                  experiences.
+                </p>
+              </li>
+            </ol>
+          </article>
+
+          <aside className="surface border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.93),rgba(255,238,245,0.8),rgba(236,247,255,0.76))] p-8">
+            <p className="section-kicker">First 5 Minutes</p>
+            <h3 className="mt-1 text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+              Release-ready setup checklist
+            </h3>
+            <ul className="mt-4 space-y-3 text-sm text-[var(--text-secondary)]">
+              <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
+                Invite your partner and confirm both members appear in Settings.
+              </li>
+              <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
+                Connect Google Calendar to sync events and invitations.
+              </li>
+              <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
+                Add one idea, schedule one event, and create one unavailable block.
+              </li>
+              <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
+                Check Memories and Notes so the whole flow feels clear end-to-end.
+              </li>
+            </ul>
+
+            <div className="mt-5 rounded-2xl border border-white/90 bg-white/82 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+                Main Tabs
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-[var(--text-muted)]">
+                <span className="rounded-lg border border-rose-100 bg-rose-50/80 px-2 py-1">
+                  Calendar
+                </span>
+                <span className="rounded-lg border border-violet-100 bg-violet-50/80 px-2 py-1">
+                  Memories
+                </span>
+                <span className="rounded-lg border border-sky-100 bg-sky-50/80 px-2 py-1">
+                  Notes
+                </span>
+                <span className="rounded-lg border border-amber-100 bg-amber-50/80 px-2 py-1">
+                  Activity
+                </span>
+              </div>
+            </div>
+          </aside>
         </section>
       </main>
     </div>

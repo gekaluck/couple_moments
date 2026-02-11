@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HelpCircle, RotateCcw } from "lucide-react";
+import { HelpCircle, RotateCcw, CalendarDays, NotebookText, Camera, Settings2 } from "lucide-react";
 
 const STORAGE_KEY = "duet_onboarding_completed";
 
@@ -19,7 +19,11 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
     // Remove the onboarding completed flag
     localStorage.removeItem(`${STORAGE_KEY}_${spaceId}`);
     // Navigate to calendar to trigger the tour
-    router.push(`/spaces/${spaceId}/calendar`);
+    router.push(`/spaces/${spaceId}/calendar?tour=1&tourStep=0`);
+  };
+
+  const openGuideStep = (step: number) => {
+    router.push(`/spaces/${spaceId}/calendar?tour=1&tourStep=${step}`);
   };
 
   return (
@@ -51,10 +55,11 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
               Welcome Tour
             </p>
             <p className="text-xs text-[var(--text-muted)]">
-              Re-open the step-by-step walkthrough on calendar and planning.
+              Re-open the step-by-step walkthrough to refresh how the full app flow works.
             </p>
           </div>
           <button
+            type="button"
             onClick={handleRestartTour}
             disabled={isResetting}
             className="inline-flex items-center gap-2 rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:bg-[var(--action-primary-strong)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
@@ -64,15 +69,62 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
           </button>
         </div>
 
+        <div className="grid gap-2 md:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => openGuideStep(1)}
+            className="inline-flex items-center justify-between rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2 text-left text-xs text-[var(--text-tertiary)] transition hover:border-violet-300 hover:bg-violet-100/70"
+          >
+            <span className="inline-flex items-center gap-2">
+              <CalendarDays className="h-3.5 w-3.5 text-violet-700" />
+              Calendar and planning flow
+            </span>
+            <span>Step 2</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => openGuideStep(3)}
+            className="inline-flex items-center justify-between rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2 text-left text-xs text-[var(--text-tertiary)] transition hover:border-violet-300 hover:bg-violet-100/70"
+          >
+            <span className="inline-flex items-center gap-2">
+              <NotebookText className="h-3.5 w-3.5 text-violet-700" />
+              Notes workflow
+            </span>
+            <span>Step 4</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => openGuideStep(4)}
+            className="inline-flex items-center justify-between rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2 text-left text-xs text-[var(--text-tertiary)] transition hover:border-violet-300 hover:bg-violet-100/70"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Camera className="h-3.5 w-3.5 text-violet-700" />
+              Memories and ratings
+            </span>
+            <span>Step 5</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => openGuideStep(6)}
+            className="inline-flex items-center justify-between rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2 text-left text-xs text-[var(--text-tertiary)] transition hover:border-violet-300 hover:bg-violet-100/70"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Settings2 className="h-3.5 w-3.5 text-violet-700" />
+              Settings and integrations
+            </span>
+            <span>Step 7</span>
+          </button>
+        </div>
+
         <div className="grid gap-2 text-xs text-[var(--text-tertiary)] md:grid-cols-3">
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2">
-            Calendar cues
+            Calendar → Ideas → Events
           </div>
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2">
-            Planning flow
+            Notes + comments context
           </div>
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2">
-            Shared rituals
+            Memories + ratings
           </div>
         </div>
       </div>
