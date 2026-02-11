@@ -1,6 +1,39 @@
 import Image from "next/image";
 
-export default function RegisterPage() {
+type PageProps = {
+  searchParams?: Promise<{
+    error?: string;
+    email?: string;
+    retryAfter?: string;
+  }>;
+};
+
+function getRegisterErrorMessage(errorCode?: string, retryAfterSeconds?: number | null) {
+  if (errorCode === "duplicate-email") {
+    return "An account with that email already exists.";
+  }
+  if (errorCode === "invalid-input") {
+    return "Enter a valid email and password.";
+  }
+  if (errorCode === "rate-limited") {
+    if (retryAfterSeconds && retryAfterSeconds > 0) {
+      return `Too many signup attempts. Try again in ${retryAfterSeconds}s.`;
+    }
+    return "Too many signup attempts. Try again shortly.";
+  }
+  if (errorCode === "ip-unavailable") {
+    return "Could not verify your request. Please retry.";
+  }
+  return null;
+}
+
+export default async function RegisterPage({ searchParams }: PageProps) {
+  const query = (await searchParams) ?? {};
+  const parsedRetryAfter = Number.parseInt(query.retryAfter ?? "", 10);
+  const retryAfterSeconds = Number.isFinite(parsedRetryAfter) ? parsedRetryAfter : null;
+  const errorMessage = getRegisterErrorMessage(query.error, retryAfterSeconds);
+  const emailValue = query.email?.trim() ?? "";
+
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-16">
       <main className="surface w-full max-w-md p-10">
@@ -18,6 +51,13 @@ export default function RegisterPage() {
         <p className="mt-2 text-center text-sm text-[var(--text-muted)]">
           Start building your space in minutes.
         </p>
+        <div aria-live="polite" className="mt-4 min-h-6">
+          {errorMessage ? (
+            <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {errorMessage}
+            </p>
+          ) : null}
+        </div>
         <form
           className="mt-8 flex flex-col gap-4"
           method="post"
@@ -37,6 +77,7 @@ export default function RegisterPage() {
               className="rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
               name="email"
               type="email"
+              defaultValue={emailValue}
               required
             />
           </label>

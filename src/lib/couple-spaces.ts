@@ -232,3 +232,73 @@ export async function updateMembershipAppearance(params: {
     throw new Error("Membership not found.");
   }
 }
+
+export async function removePartnerMembership(params: {
+  coupleSpaceId: string;
+  actorUserId: string;
+  targetUserId: string;
+}) {
+  const { coupleSpaceId, actorUserId, targetUserId } = params;
+
+  if (actorUserId === targetUserId) {
+    throw new Error("You cannot remove yourself as partner.");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const memberships = await tx.membership.findMany({
+      where: { coupleSpaceId },
+      select: { id: true, userId: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const actorMembership = memberships.find((membership) => membership.userId === actorUserId);
+    if (!actorMembership) {
+      throw new Error("Not authorized.");
+    }
+
+    if (memberships.length < 2) {
+      throw new Error("No partner to remove.");
+    }
+
+    const creatorUserId = memberships[0]?.userId;
+    if (!creatorUserId || creatorUserId !== actorUserId) {
+      throw new Error("Only the space creator can remove a partner.");
+    }
+
+    const targetMembership = memberships.find((membership) => membership.userId === targetUserId);
+    if (!targetMembership) {
+      throw new Error("Partner not found.");
+    }
+
+    await tx.membership.delete({
+      where: { id: targetMembership.id },
+    });
+  });
+}
+
+export async function leaveCoupleSpace(params: {
+  coupleSpaceId: string;
+  userId: string;
+}) {
+  const { coupleSpaceId, userId } = params;
+
+  return prisma.$transaction(async (tx) => {
+    const memberships = await tx.membership.findMany({
+      where: { coupleSpaceId },
+      select: { id: true, userId: true },
+    });
+
+    const currentMembership = memberships.find((membership) => membership.userId === userId);
+    if (!currentMembership) {
+      throw new Error("Not authorized.");
+    }
+
+    if (memberships.length <= 1) {
+      throw new Error("You cannot leave while you are the only member.");
+    }
+
+    await tx.membership.delete({
+      where: { id: currentMembership.id },
+    });
+  });
+}

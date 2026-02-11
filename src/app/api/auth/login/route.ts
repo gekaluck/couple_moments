@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { formatZodFieldErrors } from "@/lib/api-utils";
+import {
+  buildAuthErrorResponse,
+  isFormSubmission,
+} from "@/lib/auth-error-response";
 import { verifyPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -12,28 +16,48 @@ import {
   SESSION_TTL_MS,
 } from "@/lib/session";
 
+type LoginErrorCode =
+  | "invalid-credentials"
+  | "invalid-input"
+  | "ip-unavailable"
+  | "rate-limited";
+
+const LOGIN_ERROR_MESSAGES: Record<LoginErrorCode, string> = {
+  "invalid-credentials": "Invalid email or password.",
+  "invalid-input": "Email and password are required.",
+  "ip-unavailable": "Unable to determine client IP.",
+  "rate-limited": "Too many login attempts. Try again shortly.",
+};
+
 export async function POST(request: Request) {
   const ip = getClientIp(request);
   if (!ip) {
-    return NextResponse.json(
-      { error: "Unable to determine client IP." },
-      { status: 400 },
-    );
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "ip-unavailable",
+      status: 400,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+    });
   }
   const rateLimit = checkRateLimit(`auth:login:${ip}`, 5, 60_000);
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: "Too many login attempts. Try again shortly." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": rateLimit.retryAfterSeconds.toString(),
-        },
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "rate-limited",
+      status: 429,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+      options: {
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
       },
-    );
+    });
   }
 
   const body = await parseJsonOrForm<Record<string, unknown>>(request);
+  const rawEmail =
+    typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+
   const schema = z.object({
     email: z.string().trim().email(),
     password: z.string().trim().min(1),
@@ -44,6 +68,18 @@ export async function POST(request: Request) {
       parsed.error,
       "Email and password are required.",
     );
+    if (isFormSubmission(request)) {
+      return buildAuthErrorResponse({
+        request,
+        formRedirectPath: "/login",
+        errorCode: "invalid-input",
+        status: 400,
+        errorMessages: LOGIN_ERROR_MESSAGES,
+        options: {
+          email: rawEmail,
+        },
+      });
+    }
     return NextResponse.json(
       { error: errorMessage },
       { status: 400 },
@@ -58,18 +94,30 @@ export async function POST(request: Request) {
   });
 
   if (!user) {
-    return NextResponse.json(
-      { error: "Invalid email or password." },
-      { status: 401 },
-    );
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "invalid-credentials",
+      status: 401,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+      options: {
+        email,
+      },
+    });
   }
 
   const isValid = await verifyPassword(password, user.passwordHash);
   if (!isValid) {
-    return NextResponse.json(
-      { error: "Invalid email or password." },
-      { status: 401 },
-    );
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "invalid-credentials",
+      status: 401,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+      options: {
+        email,
+      },
+    });
   }
 
   // Create signed session token

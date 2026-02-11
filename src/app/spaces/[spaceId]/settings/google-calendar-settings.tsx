@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, Link2, Link2Off, RefreshCw } from 'lucide-react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type Calendar = {
   id: string;
@@ -35,6 +36,24 @@ export default function GoogleCalendarSettings() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDisconnectOpen, setIsDisconnectOpen] = useState(false);
+
+  const selectedCalendarsCount = data
+    ? data.calendars.filter((calendar) => calendar.selected).length
+    : 0;
+  const hasSyncError = Boolean(data?.syncState?.lastSyncError);
+  const lastSuccessfulSync = data?.syncState?.lastSyncedAt
+    ? new Date(data.syncState.lastSyncedAt).toLocaleString()
+    : null;
+  const healthState = !data
+    ? "disconnected"
+    : hasSyncError
+      ? "error"
+      : selectedCalendarsCount === 0
+        ? "no-calendars"
+        : lastSuccessfulSync
+          ? "healthy"
+          : "pending";
 
   useEffect(() => {
     loadData();
@@ -65,10 +84,6 @@ export default function GoogleCalendarSettings() {
   }
 
   async function handleDisconnect() {
-    if (!confirm('Are you sure you want to disconnect Google Calendar?')) {
-      return;
-    }
-
     try {
       const res = await fetch('/api/integrations/google/disconnect', {
         method: 'DELETE',
@@ -76,13 +91,19 @@ export default function GoogleCalendarSettings() {
 
       if (res.ok) {
         setData(null);
+        setIsDisconnectOpen(false);
         router.refresh();
       } else {
         const json = await res.json();
-        setError(json.error || 'Failed to disconnect');
+        throw new Error(json.error || 'Failed to disconnect');
       }
-    } catch {
-      setError('Failed to disconnect Google Calendar');
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to disconnect Google Calendar';
+      setError(message);
+      throw error;
     }
   }
 
@@ -187,6 +208,52 @@ export default function GoogleCalendarSettings() {
         </div>
       ) : (
         <>
+          <div className="mt-5 rounded-2xl border border-white/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
+              Sync health
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.1em]">
+              <span
+                className={`rounded-full border px-2.5 py-1 ${
+                  healthState === "healthy"
+                    ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                    : healthState === "error"
+                      ? "border-red-200 bg-red-100 text-red-700"
+                      : "border-amber-200 bg-amber-100 text-amber-700"
+                }`}
+              >
+                {healthState === "healthy"
+                  ? "Healthy"
+                  : healthState === "error"
+                    ? "Needs attention"
+                    : healthState === "no-calendars"
+                      ? "No calendars selected"
+                      : "Pending first sync"}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-slate-600">
+                {selectedCalendarsCount} selected
+              </span>
+            </div>
+            <div className="mt-3 grid gap-2 text-sm text-[var(--text-secondary)]">
+              <p>
+                <span className="font-medium text-[var(--text-primary)]">Account:</span>{" "}
+                {data.account.email}
+              </p>
+              <p>
+                <span className="font-medium text-[var(--text-primary)]">
+                  Last successful sync:
+                </span>{" "}
+                {lastSuccessfulSync ?? "Never"}
+              </p>
+              <p>
+                <span className="font-medium text-[var(--text-primary)]">
+                  Latest sync error:
+                </span>{" "}
+                {data.syncState?.lastSyncError ?? "None"}
+              </p>
+            </div>
+          </div>
+
           <div className="mt-5 grid gap-3">
             <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
@@ -278,11 +345,20 @@ export default function GoogleCalendarSettings() {
           )}
 
           <button
-            onClick={handleDisconnect}
+            onClick={() => setIsDisconnectOpen(true)}
             className="mt-5 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
           >
             Disconnect Google Calendar
           </button>
+          <ConfirmDialog
+            isOpen={isDisconnectOpen}
+            onClose={() => setIsDisconnectOpen(false)}
+            onConfirm={handleDisconnect}
+            title="Disconnect Google Calendar?"
+            message="Duet will stop syncing availability from your Google calendars until you reconnect."
+            confirmLabel="Disconnect"
+            variant="danger"
+          />
         </>
       )}
     </section>
