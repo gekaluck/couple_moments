@@ -8,7 +8,6 @@ import {
 } from "@/lib/auth-error-response";
 import { hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { parseJsonOrForm } from "@/lib/request";
 import {
   createSession,
@@ -16,44 +15,14 @@ import {
   SESSION_TTL_MS,
 } from "@/lib/session";
 
-type RegisterErrorCode =
-  | "duplicate-email"
-  | "invalid-input"
-  | "ip-unavailable"
-  | "rate-limited";
+type RegisterErrorCode = "duplicate-email" | "invalid-input";
 
 const REGISTER_ERROR_MESSAGES: Record<RegisterErrorCode, string> = {
   "duplicate-email": "An account with that email already exists.",
   "invalid-input": "Email and password are required.",
-  "ip-unavailable": "Unable to determine client IP.",
-  "rate-limited": "Too many signup attempts. Try again shortly.",
 };
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request);
-  if (!ip) {
-    return buildAuthErrorResponse({
-      request,
-      formRedirectPath: "/register",
-      errorCode: "ip-unavailable",
-      status: 400,
-      errorMessages: REGISTER_ERROR_MESSAGES,
-    });
-  }
-  const rateLimit = checkRateLimit(`auth:register:${ip}`, 5, 60_000);
-  if (!rateLimit.allowed) {
-    return buildAuthErrorResponse({
-      request,
-      formRedirectPath: "/register",
-      errorCode: "rate-limited",
-      status: 429,
-      errorMessages: REGISTER_ERROR_MESSAGES,
-      options: {
-        retryAfterSeconds: rateLimit.retryAfterSeconds,
-      },
-    });
-  }
-
   const body = await parseJsonOrForm<Record<string, unknown>>(request);
   const rawEmail =
     typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -81,10 +50,7 @@ export async function POST(request: Request) {
         },
       });
     }
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 
   const email = parsed.data.email.toLowerCase();
