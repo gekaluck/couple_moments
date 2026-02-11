@@ -9,8 +9,20 @@ type BuildAuthErrorResponseParams<TCode extends string> = {
   options?: {
     email?: string;
     retryAfterSeconds?: number;
+    redirectTo?: string | null;
   };
 };
+
+export function normalizeAuthRedirectPath(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
+    return null;
+  }
+  return trimmed;
+}
 
 export function isFormSubmission(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
@@ -33,6 +45,9 @@ export function buildAuthErrorResponse<TCode extends string>({
     redirectUrl.searchParams.set("error", errorCode);
     if (options?.email) {
       redirectUrl.searchParams.set("email", options.email);
+    }
+    if (options?.redirectTo) {
+      redirectUrl.searchParams.set("redirect", options.redirectTo);
     }
     if (options?.retryAfterSeconds) {
       redirectUrl.searchParams.set(

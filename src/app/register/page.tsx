@@ -5,6 +5,7 @@ type PageProps = {
     error?: string;
     email?: string;
     retryAfter?: string;
+    redirect?: string;
   }>;
 };
 
@@ -33,6 +34,10 @@ export default async function RegisterPage({ searchParams }: PageProps) {
   const retryAfterSeconds = Number.isFinite(parsedRetryAfter) ? parsedRetryAfter : null;
   const errorMessage = getRegisterErrorMessage(query.error, retryAfterSeconds);
   const emailValue = query.email?.trim() ?? "";
+  const redirectTo =
+    query.redirect && query.redirect.startsWith("/") && !query.redirect.startsWith("//")
+      ? query.redirect
+      : "";
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-16">
@@ -63,6 +68,7 @@ export default async function RegisterPage({ searchParams }: PageProps) {
           method="post"
           action="/api/auth/register"
         >
+          <input type="hidden" name="redirectTo" value={redirectTo} />
           <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
             Name
             <input
@@ -99,7 +105,10 @@ export default async function RegisterPage({ searchParams }: PageProps) {
         </form>
         <p className="mt-6 text-sm text-[var(--text-muted)]">
           Already have an account?{" "}
-          <a className="font-semibold text-[var(--accent-strong)]" href="/login">
+          <a
+            className="font-semibold text-[var(--accent-strong)]"
+            href={redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login"}
+          >
             Log in
           </a>
           .

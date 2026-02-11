@@ -10,7 +10,7 @@ import type { NextRequest } from "next/server";
  */
 export function middleware(request: NextRequest) {
   const sessionToken = request.cookies.get("cm_session");
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
   // If no session cookie exists, block access
   if (!sessionToken) {
@@ -24,6 +24,8 @@ export function middleware(request: NextRequest) {
 
     // For page routes, redirect to login
     const loginUrl = new URL("/login", request.url);
+    const redirectTo = `${pathname}${search}`;
+    loginUrl.searchParams.set("redirect", redirectTo);
     return NextResponse.redirect(loginUrl);
   }
 
