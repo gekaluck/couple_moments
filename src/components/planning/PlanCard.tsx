@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Calendar,
   CalendarClock,
   MapPin,
   MessageSquare,
@@ -109,14 +108,6 @@ export default function PlanCard({
             </CardTitle>
           </div>
           <div className="flex flex-wrap items-center gap-2 md:justify-end">
-            <Link
-              className="inline-flex items-center gap-2 rounded-full border border-rose-200/90 bg-white/90 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 md:pointer-events-none md:opacity-0 md:group-hover/plan:pointer-events-auto md:group-hover/plan:opacity-100"
-              href={`/events/${id}`}
-              title="Open event"
-              aria-label={`Open event: ${title}`}
-            >
-              <Calendar className="h-4 w-4" />
-            </Link>
             <Link
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 md:pointer-events-none md:opacity-0 md:group-hover/plan:pointer-events-auto md:group-hover/plan:opacity-100"
               href={`/events/${id}?edit=1`}
