@@ -5,6 +5,7 @@ import { formatZodFieldErrors } from "@/lib/api-utils";
 import {
   buildAuthErrorResponse,
   isFormSubmission,
+  normalizeAuthRedirectPath,
 } from "@/lib/auth-error-response";
 import { verifyPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
   const body = await parseJsonOrForm<Record<string, unknown>>(request);
   const rawEmail =
     typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  const redirectTo = normalizeAuthRedirectPath(body.redirectTo);
 
   const schema = z.object({
     email: z.string().trim().email(),
@@ -50,6 +52,7 @@ export async function POST(request: Request) {
         errorMessages: LOGIN_ERROR_MESSAGES,
         options: {
           email: rawEmail,
+          redirectTo,
         },
       });
     }
@@ -72,6 +75,7 @@ export async function POST(request: Request) {
       errorMessages: LOGIN_ERROR_MESSAGES,
       options: {
         email,
+        redirectTo,
       },
     });
   }
@@ -86,13 +90,14 @@ export async function POST(request: Request) {
       errorMessages: LOGIN_ERROR_MESSAGES,
       options: {
         email,
+        redirectTo,
       },
     });
   }
 
   // Create signed session token
   const token = await createSession(user.id);
-  const redirectUrl = new URL("/", request.url);
+  const redirectUrl = new URL(redirectTo ?? "/", request.url);
   const response = NextResponse.redirect(redirectUrl, { status: 303 });
 
   response.cookies.set(SESSION_COOKIE_NAME, token, {

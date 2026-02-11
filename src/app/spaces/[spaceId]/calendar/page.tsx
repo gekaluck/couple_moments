@@ -185,6 +185,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       placeLng: Number.isNaN(placeLng) ? null : placeLng,
       placeUrl,
     });
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
 
     // Sync to Google Calendar if requested
     if (addToGoogleCalendar) {
@@ -242,6 +243,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       startAt,
       endAt,
     });
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
 
     return;
   }

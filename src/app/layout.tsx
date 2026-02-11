@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
+import Link from "next/link";
 import Script from "next/script";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -47,9 +48,22 @@ export default function RootLayout({
         ) : null}
       </head>
       <body
-        className={`${dmSans.variable} ${fraunces.variable} antialiased`}
+        className={`${dmSans.variable} ${fraunces.variable} antialiased min-h-screen flex flex-col`}
       >
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <ErrorBoundary>
+          <div className="flex-1">{children}</div>
+        </ErrorBoundary>
+        <footer className="mx-auto w-full max-w-[1220px] px-4 pb-6 pt-3 text-center text-xs text-[var(--text-tertiary)] md:px-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/70 px-3 py-1.5 backdrop-blur-sm">
+            <Link href="/privacy" className="link-hover hover:text-[var(--text-primary)]">
+              Privacy Policy
+            </Link>
+            <span aria-hidden="true">•</span>
+            <Link href="/terms" className="link-hover hover:text-[var(--text-primary)]">
+              Terms of Service
+            </Link>
+          </div>
+        </footer>
         <Toaster
           position="bottom-right"
           toastOptions={{

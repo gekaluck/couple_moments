@@ -66,6 +66,7 @@ export default function PlanCard({
   const dayDiff = getDayDiff(dateTimeStart);
   const proximityLabel =
     dayDiff === 0 ? "Today" : dayDiff === 1 ? "Tomorrow" : null;
+  const eventHref = `/events/${id}`;
 
   async function handleDelete() {
     if (!onDelete) {
@@ -92,9 +93,14 @@ export default function PlanCard({
         variant="rose"
         hover
         padding="sm"
-        className="group/plan card-hover animate-fade-in-up border-rose-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,238,244,0.74))]"
+        className="group/plan card-hover animate-fade-in-up relative border-rose-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,238,244,0.74))]"
       >
-        <CardHeader>
+        <Link
+          href={eventHref}
+          aria-label={`Open event: ${title}`}
+          className="absolute inset-0 z-0 rounded-xl"
+        />
+        <CardHeader className="relative z-10">
           <div className="min-w-0 flex-1 space-y-1">
             {proximityLabel ? (
               <span className="inline-flex rounded-full border border-rose-200/70 bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-700">
@@ -103,7 +109,7 @@ export default function PlanCard({
             ) : null}
             <CardTitle className="text-lg text-[var(--text-primary)]">
               <Link
-                href={`/events/${id}`}
+                href={eventHref}
                 className="transition hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60"
               >
                 {title}
@@ -144,11 +150,11 @@ export default function PlanCard({
           </div>
         </CardHeader>
         {description ? (
-          <CardDescription className="text-[var(--text-muted)]">
+          <CardDescription className="relative z-10 text-[var(--text-muted)]">
             {description}
           </CardDescription>
         ) : null}
-        <CardFooter className="flex-col items-start gap-2 pt-1">
+        <CardFooter className="relative z-10 flex-col items-start gap-2 pt-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
               <CalendarClock className="h-4 w-4 text-rose-500" />
