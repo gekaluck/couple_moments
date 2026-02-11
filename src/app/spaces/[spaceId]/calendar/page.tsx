@@ -16,6 +16,7 @@ import {
 } from "@/lib/availability";
 import {
   createEventForSpace,
+  deleteEvent,
 } from "@/lib/events";
 import {
   createIdeaComment,
@@ -24,7 +25,11 @@ import {
   updateIdea,
 } from "@/lib/ideas";
 import { normalizeTags, parseTags } from "@/lib/tags";
-import { createGoogleCalendarEvent } from "@/lib/integrations/google/events";
+import {
+  cancelGoogleCalendarEvent,
+  createGoogleCalendarEvent,
+  getGoogleEventDeleteContext,
+} from "@/lib/integrations/google/events";
 import { parseJsonStringArray } from "@/lib/parsers";
 import CalendarAddControls from "./add-controls";
 import {
@@ -447,6 +452,46 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
+  async function handleDeleteEvent(
+    formData: FormData,
+  ): Promise<CalendarActionResult | void> {
+    "use server";
+    const currentUserId = await requireUserId();
+    const eventId = formData.get("eventId")?.toString();
+    if (!eventId) {
+      return;
+    }
+
+    const googleDeleteContext = await getGoogleEventDeleteContext(eventId);
+    await deleteEvent(eventId, currentUserId);
+    const googleDeleteResult = await cancelGoogleCalendarEvent(googleDeleteContext);
+
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
+
+    if (googleDeleteResult.code === "NOT_SYNCED") {
+      return {
+        googleSync: {
+          attempted: false,
+          success: true,
+        },
+      };
+    }
+
+    return {
+      googleSync: {
+        attempted: true,
+        success: googleDeleteResult.success,
+        message: googleDeleteResult.success
+          ? undefined
+          : googleDeleteResult.error ??
+            "Deleted in Duet, but failed to cancel Google Calendar event.",
+        info: googleDeleteResult.recovered
+          ? "Linked Google event was already missing. Local sync link was cleaned up."
+          : undefined,
+      },
+    };
+  }
+
   const monthDays = getMonthGrid(now, weekStartsOn);
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -740,6 +785,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             }))}
             commentCounts={eventCommentCounts}
             newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
+            onDeleteEvent={handleDeleteEvent}
           />
         </div>
       </PlanningSection>

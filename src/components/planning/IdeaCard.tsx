@@ -192,7 +192,7 @@ export default function IdeaCard({
             <Pencil className="h-4 w-4" />
           </button>
           <button
-            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)]"
+            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)] md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title={`Comments (${commentCount})`}
             onClick={() => setIsCommentsOpen((prev) => !prev)}
             type="button"

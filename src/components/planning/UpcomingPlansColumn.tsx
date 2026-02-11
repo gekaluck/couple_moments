@@ -21,12 +21,24 @@ type UpcomingPlansColumnProps = {
   plans: Plan[];
   commentCounts: Record<string, number>;
   newEventHref?: string;
+  onDeleteEvent?: (formData: FormData) => Promise<
+    | void
+    | {
+        googleSync?: {
+          attempted: boolean;
+          success: boolean;
+          message?: string;
+          info?: string;
+        };
+      }
+  >;
 };
 
 export default function UpcomingPlansColumn({
   plans,
   commentCounts,
   newEventHref,
+  onDeleteEvent,
 }: UpcomingPlansColumnProps) {
   const [visibleCount, setVisibleCount] = useState(5);
   const visiblePlans = plans.slice(0, visibleCount);
@@ -78,6 +90,7 @@ export default function UpcomingPlansColumn({
               commentCount={commentCounts[plan.id] ?? 0}
               createdBy={plan.createdBy}
               placeName={plan.placeName}
+              onDelete={onDeleteEvent}
             />
           ))}
           {hasMore ? (

@@ -1,9 +1,32 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { CalendarClock, MapPin, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Calendar,
+  CalendarClock,
+  MapPin,
+  MessageSquare,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import ConfirmDialog from "@/components/ConfirmDialog";
 import Card, { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatEventDateTime } from "@/lib/formatters";
+
+type GoogleSyncFeedback = {
+  attempted: boolean;
+  success: boolean;
+  message?: string;
+  info?: string;
+};
+
+type PlanActionResult = {
+  googleSync?: GoogleSyncFeedback;
+};
 
 type PlanCardProps = {
   id: string;
@@ -14,6 +37,7 @@ type PlanCardProps = {
   commentCount?: number;
   createdBy?: { name: string | null; email: string };
   placeName?: string | null;
+  onDelete?: (formData: FormData) => Promise<void | PlanActionResult>;
 };
 
 function getDayDiff(date: Date) {
@@ -33,13 +57,35 @@ export default function PlanCard({
   commentCount = 0,
   createdBy,
   placeName,
+  onDelete,
 }: PlanCardProps) {
+  const router = useRouter();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const dayDiff = getDayDiff(dateTimeStart);
   const proximityLabel =
     dayDiff === 0 ? "Today" : dayDiff === 1 ? "Tomorrow" : null;
 
+  async function handleDelete() {
+    if (!onDelete) {
+      return;
+    }
+    const formData = new FormData();
+    formData.append("eventId", id);
+    const result = await onDelete(formData);
+    toast.success("Event deleted");
+    if (result?.googleSync?.attempted && !result.googleSync.success) {
+      toast.warning(
+        result.googleSync.message ??
+          "Deleted in Duet, but failed to cancel Google Calendar event.",
+      );
+    } else if (result?.googleSync?.info) {
+      toast.info(result.googleSync.info);
+    }
+    router.refresh();
+  }
+
   return (
-    <Link href={`/events/${id}`} className="block">
+    <>
       <Card
         variant="rose"
         hover
@@ -53,14 +99,55 @@ export default function PlanCard({
                 {proximityLabel}
               </span>
             ) : null}
-            <CardTitle className="text-lg text-[var(--text-primary)]">{title}</CardTitle>
+            <CardTitle className="text-lg text-[var(--text-primary)]">
+              <Link
+                href={`/events/${id}`}
+                className="transition hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60"
+              >
+                {title}
+              </Link>
+            </CardTitle>
           </div>
-          {commentCount > 0 ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200/70 bg-white/85 px-2 py-1 text-xs text-rose-700 shadow-sm">
-              <MessageSquare className="h-3.5 w-3.5" />
-              {commentCount}
-            </span>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2 md:justify-end">
+            <Link
+              className="inline-flex items-center gap-2 rounded-full border border-rose-200/90 bg-white/90 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 md:pointer-events-none md:opacity-0 md:group-hover/plan:pointer-events-auto md:group-hover/plan:opacity-100"
+              href={`/events/${id}`}
+              title="Open event"
+              aria-label={`Open event: ${title}`}
+            >
+              <Calendar className="h-4 w-4" />
+            </Link>
+            <Link
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 md:pointer-events-none md:opacity-0 md:group-hover/plan:pointer-events-auto md:group-hover/plan:opacity-100"
+              href={`/events/${id}?edit=1`}
+              title="Edit event"
+              aria-label={`Edit event: ${title}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </Link>
+            <Link
+              className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)] md:pointer-events-none md:opacity-0 md:group-hover/plan:pointer-events-auto md:group-hover/plan:opacity-100"
+              title={`Comments (${commentCount})`}
+              href={`/events/${id}#event-comments`}
+            >
+              <MessageSquare className="h-4 w-4" />
+              {commentCount > 0 ? (
+                <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                  {commentCount}
+                </span>
+              ) : null}
+            </Link>
+            <button
+              className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50/80 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 md:pointer-events-none md:opacity-0 md:group-hover/plan:pointer-events-auto md:group-hover/plan:opacity-100 disabled:opacity-50"
+              title="Delete event"
+              aria-label={`Delete event: ${title}`}
+              type="button"
+              onClick={() => setIsDeleteOpen(true)}
+              disabled={!onDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </CardHeader>
         {description ? (
           <CardDescription className="text-[var(--text-muted)]">
@@ -90,13 +177,20 @@ export default function PlanCard({
           {placeName ? (
             <div className="inline-flex items-center gap-2 rounded-full border border-rose-200/70 bg-white/75 px-3 py-1 text-xs text-[var(--text-tertiary)]">
               <MapPin className="h-3.5 w-3.5 text-rose-500" />
-              <span className="text-[var(--text-muted)]">
-                {placeName}
-              </span>
+              <span className="text-[var(--text-muted)]">{placeName}</span>
             </div>
           ) : null}
         </CardFooter>
       </Card>
-    </Link>
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete event"
+        message={`Are you sure you want to delete "${title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="danger"
+      />
+    </>
   );
 }
