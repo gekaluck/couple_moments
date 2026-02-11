@@ -15,6 +15,10 @@ import {
   SESSION_TTL_MS,
 } from "@/lib/session";
 
+// Ensure route runs dynamically on Node.js runtime (not edge/static)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 type LoginErrorCode = "invalid-credentials" | "invalid-input";
 
 const LOGIN_ERROR_MESSAGES: Record<LoginErrorCode, string> = {

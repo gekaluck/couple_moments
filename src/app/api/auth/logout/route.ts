@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 
 import { deleteSession, SESSION_COOKIE_NAME } from "@/lib/session";
 
+// Ensure route runs dynamically on Node.js runtime (not edge/static)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;

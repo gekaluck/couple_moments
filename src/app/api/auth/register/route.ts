@@ -15,6 +15,10 @@ import {
   SESSION_TTL_MS,
 } from "@/lib/session";
 
+// Ensure route runs dynamically on Node.js runtime (not edge/static)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 type RegisterErrorCode = "duplicate-email" | "invalid-input";
 
 const REGISTER_ERROR_MESSAGES: Record<RegisterErrorCode, string> = {
