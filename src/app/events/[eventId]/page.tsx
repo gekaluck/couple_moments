@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 import { createEventComment, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
 import {
@@ -14,6 +15,7 @@ import { normalizeTags, parseTags } from "@/lib/tags";
 import { parseJsonStringArray } from "@/lib/parsers";
 import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
 import { getInitials } from "@/lib/formatters";
+import { formatEventTime, resolveCalendarTimeFormat } from "@/lib/calendar";
 
 import { loadEventBaseData, loadEventDetailData } from "./page-data";
 import EventComments from "./event-comments";
@@ -128,6 +130,10 @@ function isEventInPast(event: { dateTimeStart: Date; dateTimeEnd: Date | null })
 }
 
 export default async function EventPage({ params, searchParams }: PageProps) {
+  const cookieStore = await cookies();
+  const calendarTimeFormat = resolveCalendarTimeFormat(
+    cookieStore.get("cm_calendar_time_format")?.value,
+  );
   const userId = await requireUserId();
   const { eventId } = await params;
   const search = (await searchParams) ?? {};
@@ -337,15 +343,9 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     day: "numeric",
     year: "numeric",
   });
-  const startTimeLabel = event.dateTimeStart.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const startTimeLabel = formatEventTime(event.dateTimeStart, calendarTimeFormat);
   const endTimeLabel = event.dateTimeEnd
-    ? event.dateTimeEnd.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      })
+    ? formatEventTime(event.dateTimeEnd, calendarTimeFormat)
     : null;
   const eventTimeLabel = event.timeIsSet
     ? endTimeLabel && endTimeLabel !== startTimeLabel
@@ -723,6 +723,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             email: currentUser.email,
           }}
           memberVisuals={memberVisuals}
+          timeFormat={calendarTimeFormat}
           onSubmit={handleComment}
           onDelete={handleDeleteComment}
         />

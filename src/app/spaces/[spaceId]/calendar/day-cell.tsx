@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import EventBubble from "./event-bubble";
+import { CalendarTimeFormat, formatEventTime } from "@/lib/calendar";
 import { CreatorAccent, CreatorVisualMap, getCreatorInitials } from "@/lib/creator-colors";
 
 type EventSummary = {
@@ -29,6 +30,7 @@ type DayCellProps = {
   events: EventSummary[];
   blocks: BlockSummary[];
   nowLabel: string;
+  timeFormat: CalendarTimeFormat;
   addEventHref: string;
   currentUserId: string;
   creatorPalette: Map<string, CreatorAccent>;
@@ -36,12 +38,10 @@ type DayCellProps = {
   buildBlockEditHref: (blockId: string) => string;
 };
 
-function formatTimeLabel(value: Date) {
-  const hours = value.getHours();
-  const minutes = value.getMinutes();
-  const period = hours >= 12 ? "pm" : "am";
-  const hour = hours % 12 || 12;
-  return minutes === 0 ? `${hour}${period}` : `${hour}:${minutes.toString().padStart(2, "0")}${period}`;
+function formatTimeLabel(value: Date, timeFormat: CalendarTimeFormat) {
+  return formatEventTime(value, timeFormat)
+    .replace(/\s+/g, "")
+    .toLowerCase();
 }
 
 export default function DayCell({
@@ -54,6 +54,7 @@ export default function DayCell({
   events,
   blocks,
   nowLabel,
+  timeFormat,
   addEventHref,
   currentUserId,
   creatorPalette,
@@ -159,11 +160,11 @@ export default function DayCell({
 
           const timeLabel =
             isExternal && block.startAt && block.endAt
-              ? `${formatTimeLabel(new Date(block.startAt))}-${formatTimeLabel(new Date(block.endAt))}`
+              ? `${formatTimeLabel(new Date(block.startAt), timeFormat)}-${formatTimeLabel(new Date(block.endAt), timeFormat)}`
               : null;
 
           const tooltipText = isExternal && block.startAt && block.endAt
-            ? `Busy: ${formatTimeLabel(new Date(block.startAt))} - ${formatTimeLabel(new Date(block.endAt))}`
+            ? `Busy: ${formatTimeLabel(new Date(block.startAt), timeFormat)} - ${formatTimeLabel(new Date(block.endAt), timeFormat)}`
             : block.title;
           const creatorInitials =
             memberVisuals[createdByUserId]?.initials ??

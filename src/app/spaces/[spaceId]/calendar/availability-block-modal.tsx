@@ -44,6 +44,16 @@ export default function AvailabilityBlockModal({
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
+          const start = formData.get("start")?.toString() ?? "";
+          const end = formData.get("end")?.toString() ?? "";
+          if (
+            start &&
+            end &&
+            new Date(`${start}T00:00:00`) > new Date(`${end}T23:59:59`)
+          ) {
+            toast.error("Start date cannot be after end date.");
+            return;
+          }
           startTransition(async () => {
             try {
               await onSubmit(formData);

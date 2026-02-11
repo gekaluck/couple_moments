@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Card, { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatEventDateTime } from "@/lib/formatters";
+import { CalendarTimeFormat } from "@/lib/calendar";
 
 type GoogleSyncFeedback = {
   attempted: boolean;
@@ -36,6 +37,7 @@ type PlanCardProps = {
   commentCount?: number;
   createdBy?: { name: string | null; email: string };
   placeName?: string | null;
+  timeFormat?: CalendarTimeFormat;
   onDelete?: (formData: FormData) => Promise<void | PlanActionResult>;
 };
 
@@ -56,6 +58,7 @@ export default function PlanCard({
   commentCount = 0,
   createdBy,
   placeName,
+  timeFormat = "24h",
   onDelete,
 }: PlanCardProps) {
   const router = useRouter();
@@ -149,7 +152,7 @@ export default function PlanCard({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
               <CalendarClock className="h-4 w-4 text-rose-500" />
-              {formatEventDateTime(dateTimeStart, timeIsSet)}
+              {formatEventDateTime(dateTimeStart, timeIsSet, timeFormat)}
               {!timeIsSet ? (
                 <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
                   Anytime

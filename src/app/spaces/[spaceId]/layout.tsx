@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import { listEventsForSpace } from "@/lib/events";
+import { formatEventTime, resolveCalendarTimeFormat } from "@/lib/calendar";
 import SpaceNav from "./space-nav";
 
 type LayoutProps = {
@@ -12,6 +14,10 @@ type LayoutProps = {
 };
 
 export default async function SpaceLayout({ children, params }: LayoutProps) {
+  const cookieStore = await cookies();
+  const calendarTimeFormat = resolveCalendarTimeFormat(
+    cookieStore.get("cm_calendar_time_format")?.value,
+  );
   const userId = await requireUserId();
   const { spaceId } = await params;
   const space = await getCoupleSpaceForUser(spaceId, userId);
@@ -47,15 +53,21 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
     month: "short",
     day: "numeric",
   });
-  const formatEventTime = (date: Date) =>
-    date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  const truncate = (value: string, maxLength: number) =>
-    value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
+  const truncate = (value: string, maxLength: number) => {
+    if (value.length <= maxLength) {
+      return value;
+    }
+    return `${value.slice(0, maxLength - 1)}...`;
+  };
   const todaySummary = (() => {
     if (todayEvents.length === 1) {
       const event = todayEvents[0];
       return {
-        text: `${truncate(event.title, 24)}${event.timeIsSet ? ` at ${formatEventTime(event.dateTimeStart)}` : ""}`,
+        text: `${truncate(event.title, 24)}${
+          event.timeIsSet
+            ? ` at ${formatEventTime(event.dateTimeStart, calendarTimeFormat)}`
+            : ""
+        }`,
         href: `/events/${event.id}`,
         hasPlans: true,
       };
@@ -90,3 +102,4 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
     </div>
   );
 }
+

@@ -3,6 +3,14 @@ export type CalendarDay = {
   isCurrentMonth: boolean;
 };
 
+export type CalendarTimeFormat = "24h" | "12h";
+
+export function resolveCalendarTimeFormat(
+  value: string | null | undefined,
+): CalendarTimeFormat {
+  return value === "12h" ? "12h" : "24h";
+}
+
 export function getMonthGrid(date: Date, weekStartsOn: 0 | 1 = 0) {
   const year = date.getFullYear();
   const month = date.getMonth();
@@ -40,7 +48,7 @@ export function dateKey(date: Date) {
 
 export function formatEventTime(
   date: Date,
-  format: "24h" | "12h" = "24h",
+  format: CalendarTimeFormat = "24h",
 ) {
   return date.toLocaleTimeString("en-US", {
     hour: "numeric",

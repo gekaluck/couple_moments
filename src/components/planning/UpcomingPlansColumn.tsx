@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import EmptyState from "./EmptyState";
 import PlanCard from "./PlanCard";
+import { CalendarTimeFormat } from "@/lib/calendar";
 
 type Plan = {
   id: string;
@@ -21,6 +22,7 @@ type UpcomingPlansColumnProps = {
   plans: Plan[];
   commentCounts: Record<string, number>;
   newEventHref?: string;
+  timeFormat?: CalendarTimeFormat;
   onDeleteEvent?: (formData: FormData) => Promise<
     | void
     | {
@@ -38,6 +40,7 @@ export default function UpcomingPlansColumn({
   plans,
   commentCounts,
   newEventHref,
+  timeFormat = "24h",
   onDeleteEvent,
 }: UpcomingPlansColumnProps) {
   const [visibleCount, setVisibleCount] = useState(5);
@@ -90,6 +93,7 @@ export default function UpcomingPlansColumn({
               commentCount={commentCounts[plan.id] ?? 0}
               createdBy={plan.createdBy}
               placeName={plan.placeName}
+              timeFormat={timeFormat}
               onDelete={onDeleteEvent}
             />
           ))}

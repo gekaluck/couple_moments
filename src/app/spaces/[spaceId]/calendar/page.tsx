@@ -6,9 +6,11 @@ import { cookies } from "next/headers";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import {
+  formatEventTime,
   dateKey,
   formatMonthTitle,
   getMonthGrid,
+  resolveCalendarTimeFormat,
 } from "@/lib/calendar";
 import {
   createAvailabilityBlock,
@@ -76,6 +78,9 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     cookieStore.get("cm_calendar_week_start")?.value === "monday"
       ? "monday"
       : "sunday";
+  const calendarTimeFormat = resolveCalendarTimeFormat(
+    cookieStore.get("cm_calendar_time_format")?.value,
+  );
   const weekStartsOn = calendarWeekStart === "monday" ? 1 : 0;
   const userId = await requireUserId();
   const { spaceId } = await params;
@@ -499,10 +504,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const dayLabels = calendarWeekStart === "monday"
     ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const nowLabel = today.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const nowLabel = formatEventTime(today, calendarTimeFormat);
   const monthParam = (date: Date) =>
     `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, "0")}`;
   const buildCalendarHref = (monthValue: string, extra?: Record<string, string>) => {
@@ -734,6 +736,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     events={dayEvents}
                     blocks={dayBlocks}
                     nowLabel={nowLabel}
+                    timeFormat={calendarTimeFormat}
                     addEventHref={buildCalendarHref(monthParam(now), { new: key })}
                     currentUserId={userId}
                     creatorPalette={creatorPalette}
@@ -785,6 +788,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             }))}
             commentCounts={eventCommentCounts}
             newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
+            timeFormat={calendarTimeFormat}
             onDeleteEvent={handleDeleteEvent}
           />
         </div>

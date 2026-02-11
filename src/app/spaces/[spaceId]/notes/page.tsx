@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { getCoupleSpaceForUser, listSpaceMembers } from "@/lib/couple-spaces";
 import {
@@ -9,6 +10,7 @@ import {
 } from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
 import { formatTimestamp, getInitials } from "@/lib/formatters";
+import { resolveCalendarTimeFormat } from "@/lib/calendar";
 
 import ConfirmForm from "@/components/ConfirmForm";
 import EmptyState from "@/components/ui/EmptyState";
@@ -61,6 +63,10 @@ type PageProps = {
 };
 
 export default async function NotesPage({ params, searchParams }: PageProps) {
+  const cookieStore = await cookies();
+  const calendarTimeFormat = resolveCalendarTimeFormat(
+    cookieStore.get("cm_calendar_time_format")?.value,
+  );
   const userId = await requireUserId();
   const { spaceId } = await params;
   const search = (await searchParams) ?? {};
@@ -267,7 +273,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                         {authorName}
                       </span>
                       <span>/</span>
-                      <span>{formatTimestamp(note.createdAt)}</span>
+                      <span>{formatTimestamp(note.createdAt, calendarTimeFormat)}</span>
                       <span>/</span>
                       <span className={NOTE_BADGE_CLASS}>
                         {metadataLabel}
