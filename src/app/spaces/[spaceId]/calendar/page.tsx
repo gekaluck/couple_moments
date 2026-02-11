@@ -58,6 +58,8 @@ type PageProps = {
     repeat?: string;
     action?: string;
     density?: string;
+    tour?: string;
+    tourStep?: string;
   }>;
 };
 
@@ -97,6 +99,9 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const repeatEventId = search.repeat ?? null;
   const openAction = search.action ?? "";
   const autoOpenIdea = openAction === "idea";
+  const forceTourOpen = search.tour === "1";
+  const forcedTourStepRaw = Number.parseInt(search.tourStep ?? "", 10);
+  const forcedTourStep = Number.isFinite(forcedTourStepRaw) ? forcedTourStepRaw : 0;
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) {
     redirect("/spaces/onboarding");
@@ -809,7 +814,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             : null
         }
       />
-      <OnboardingTour spaceId={space.id} />
+      <OnboardingTour
+        key={`onboarding-tour-${forceTourOpen ? "forced" : "auto"}-${forcedTourStep}`}
+        spaceId={space.id}
+        forceOpen={forceTourOpen}
+        initialStep={forcedTourStep}
+      />
     </>
   );
 }
