@@ -25,10 +25,17 @@ export default function CreateIdeaModal({
   const [isPending, startTransition] = useTransition();
   const [place, setPlace] = useState<PlaceSelection | null>(null);
   const [errors, setErrors] = useState<{ title?: string }>({});
+  const hasMapsKey = Boolean(mapsApiKey);
+
+  const handleClose = () => {
+    setPlace(null);
+    setErrors({});
+    onClose();
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-[70]" onClose={onClose}>
+      <Dialog as="div" className="relative z-[70]" onClose={handleClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-200"
@@ -75,7 +82,7 @@ export default function CreateIdeaModal({
                         await onSubmit(formData);
                         toast.success("Idea saved!");
                         router.refresh();
-                        onClose();
+                        handleClose();
                       } catch {
                         toast.error("Failed to save idea");
                       }
@@ -104,12 +111,18 @@ export default function CreateIdeaModal({
                     placeholder="Notes, links, or vibe"
                   />
                   <TagInput name="tags" />
-                  <PlaceSearch
-                    label="Place"
-                    placeholder="Search a place"
-                    apiKey={mapsApiKey}
-                    onSelect={(selection) => setPlace(selection)}
-                  />
+                  {hasMapsKey ? (
+                    <PlaceSearch
+                      label="Place"
+                      placeholder="Search a place"
+                      apiKey={mapsApiKey}
+                      onSelect={(selection) => setPlace(selection)}
+                    />
+                  ) : (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                      Place search is unavailable because `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is not set.
+                    </p>
+                  )}
                   <input type="hidden" name="placeId" value={place?.placeId ?? ""} />
                   <input type="hidden" name="placeName" value={place?.name ?? ""} />
                   <input
@@ -152,7 +165,7 @@ export default function CreateIdeaModal({
                   <div className="flex flex-wrap justify-end gap-2">
                     <button
                       className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
-                      onClick={onClose}
+                      onClick={handleClose}
                       type="button"
                     >
                       Cancel

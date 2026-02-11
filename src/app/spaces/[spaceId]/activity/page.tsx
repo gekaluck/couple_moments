@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import { listActivityForSpace } from "@/lib/activity";
 import { formatTimestamp } from "@/lib/formatters";
+import { resolveCalendarTimeFormat } from "@/lib/calendar";
 import EmptyState from "@/components/ui/EmptyState";
 
 type PageProps = {
@@ -127,6 +129,10 @@ function getActivityTone(entityType: string) {
 }
 
 export default async function ActivityPage({ params }: PageProps) {
+  const cookieStore = await cookies();
+  const calendarTimeFormat = resolveCalendarTimeFormat(
+    cookieStore.get("cm_calendar_time_format")?.value,
+  );
   const userId = await requireUserId();
   const { spaceId } = await params;
   const space = await getCoupleSpaceForUser(spaceId, userId);
@@ -230,7 +236,7 @@ export default async function ActivityPage({ params }: PageProps) {
                         </div>
                       </div>
                       <span className="rounded-full border border-[var(--panel-border)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
-                        {formatTimestamp(entry.createdAt)}
+                        {formatTimestamp(entry.createdAt, calendarTimeFormat)}
                       </span>
                     </div>
                   </div>

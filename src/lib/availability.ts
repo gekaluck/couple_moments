@@ -62,6 +62,9 @@ export async function createAvailabilityBlock(
 ) {
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) throw new Error("Not authorized");
+  if (input.startAt > input.endAt) {
+    throw new Error("Start date must be on or before end date.");
+  }
 
   return prisma.availabilityBlock.create({
     data: {
@@ -94,6 +97,9 @@ export async function updateAvailabilityBlock(
   });
   if (!existing) {
     throw new Error("Not authorized");
+  }
+  if (input.startAt > input.endAt) {
+    throw new Error("Start date must be on or before end date.");
   }
 
   return prisma.availabilityBlock.update({

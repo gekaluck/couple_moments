@@ -74,6 +74,7 @@ export default function EventEditModal({
   placePhotoUrls,
 }: EventEditModalProps) {
   const router = useRouter();
+  const hasMapsKey = Boolean(mapsApiKey);
   const [isPending, startTransition] = useTransition();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [place, setPlace] = useState<PlaceSelection | null>(
@@ -164,13 +165,19 @@ export default function EventEditModal({
           />
         </label>
         <div className="md:col-span-2">
-          <PlaceSearch
-            label="Place"
-            placeholder="Search a place"
-            apiKey={mapsApiKey}
-            initialValue={place?.name ?? placeName ?? ""}
-            onSelect={(selection) => setPlace(selection)}
-          />
+          {hasMapsKey ? (
+            <PlaceSearch
+              label="Place"
+              placeholder="Search a place"
+              apiKey={mapsApiKey}
+              initialValue={place?.name ?? placeName ?? ""}
+              onSelect={(selection) => setPlace(selection)}
+            />
+          ) : (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              Place search is unavailable because `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is not set.
+            </p>
+          )}
         </div>
         <input type="hidden" name="placeId" value={place?.placeId ?? ""} />
         <input type="hidden" name="placeName" value={place?.name ?? ""} />

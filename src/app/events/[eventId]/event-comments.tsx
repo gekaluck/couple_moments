@@ -11,6 +11,7 @@ import {
   getAvatarGradient,
 } from "@/lib/creator-colors";
 import { formatTimestamp, getInitials } from "@/lib/formatters";
+import { CalendarTimeFormat } from "@/lib/calendar";
 
 type Comment = {
   id: string;
@@ -32,6 +33,7 @@ type EventCommentsProps = {
     email: string;
   };
   memberVisuals: CreatorVisualMap;
+  timeFormat?: CalendarTimeFormat;
   onSubmit: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
 };
@@ -42,6 +44,7 @@ export default function EventComments({
   currentUserId,
   currentUser,
   memberVisuals,
+  timeFormat = "24h",
   onSubmit,
   onDelete,
 }: EventCommentsProps) {
@@ -190,7 +193,7 @@ export default function EventComments({
                       <span className="font-semibold text-[var(--text-primary)]">
                         {authorName}
                       </span>
-                      <span>- {formatTimestamp(comment.createdAt)}</span>
+                      <span>- {formatTimestamp(comment.createdAt, timeFormat)}</span>
                     </div>
                     {isOwnComment && !isOptimistic ? (
                       <button

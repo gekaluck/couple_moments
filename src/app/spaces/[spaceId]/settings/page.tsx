@@ -20,6 +20,7 @@ import {
   sanitizeMemberInitials,
 } from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
+import MutationToast from "@/components/ui/MutationToast";
 
 import InviteCard from "./invite-card";
 import MembershipActions from "./membership-actions";
@@ -84,7 +85,9 @@ export default async function SettingsPage({ params }: PageProps) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 365,
     });
-    redirect(`/spaces/${spaceIdForActions}/settings`);
+    redirect(
+      `/spaces/${spaceIdForActions}/settings?toast=${encodeURIComponent("week-start-saved")}`,
+    );
   }
 
   async function handleCalendarTimeFormat(formData: FormData) {
@@ -99,7 +102,9 @@ export default async function SettingsPage({ params }: PageProps) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 365,
     });
-    redirect(`/spaces/${spaceIdForActions}/settings`);
+    redirect(
+      `/spaces/${spaceIdForActions}/settings?toast=${encodeURIComponent("time-format-saved")}`,
+    );
   }
 
   async function handleProfileAppearance(formData: FormData) {
@@ -117,7 +122,9 @@ export default async function SettingsPage({ params }: PageProps) {
       color,
     });
 
-    redirect(`/spaces/${spaceIdForActions}/settings`);
+    redirect(
+      `/spaces/${spaceIdForActions}/settings?toast=${encodeURIComponent("profile-style-saved")}`,
+    );
   }
 
   async function handleRemovePartner() {
@@ -171,6 +178,13 @@ export default async function SettingsPage({ params }: PageProps) {
 
   return (
     <>
+      <MutationToast
+        messages={{
+          "profile-style-saved": "Profile style updated.",
+          "week-start-saved": "Calendar week start updated.",
+          "time-format-saved": "Time format updated.",
+        }}
+      />
       <section className="surface p-6 md:p-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -199,7 +213,7 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-6 xl:grid-cols-2">
         <div className="space-y-6">
           <section className="surface border border-sky-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(236,248,255,0.78))] p-6 md:p-8">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -524,18 +538,21 @@ export default async function SettingsPage({ params }: PageProps) {
             </form>
           </section>
 
-          <GoogleCalendarSettings />
-          <MembershipActions
-            isCreator={isCreator}
-            canLeave={canLeave}
-            hasPartner={Boolean(partner)}
-            partnerLabel={partnerVisual?.displayName ?? partner?.user.name ?? "your partner"}
-            onRemovePartner={handleRemovePartner}
-            onLeaveSpace={handleLeaveSpace}
-          />
-          <OnboardingSettings spaceId={space.id} />
         </div>
       </div>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <GoogleCalendarSettings />
+        <MembershipActions
+          isCreator={isCreator}
+          canLeave={canLeave}
+          hasPartner={Boolean(partner)}
+          partnerLabel={partnerVisual?.displayName ?? partner?.user.name ?? "your partner"}
+          onRemovePartner={handleRemovePartner}
+          onLeaveSpace={handleLeaveSpace}
+        />
+      </div>
+      <OnboardingSettings spaceId={space.id} />
     </>
   );
 }
+

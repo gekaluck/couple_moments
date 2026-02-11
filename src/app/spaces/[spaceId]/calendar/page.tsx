@@ -6,9 +6,11 @@ import { cookies } from "next/headers";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import {
+  formatEventTime,
   dateKey,
   formatMonthTitle,
   getMonthGrid,
+  resolveCalendarTimeFormat,
 } from "@/lib/calendar";
 import {
   createAvailabilityBlock,
@@ -16,6 +18,7 @@ import {
 } from "@/lib/availability";
 import {
   createEventForSpace,
+  deleteEvent,
 } from "@/lib/events";
 import {
   createIdeaComment,
@@ -24,7 +27,11 @@ import {
   updateIdea,
 } from "@/lib/ideas";
 import { normalizeTags, parseTags } from "@/lib/tags";
-import { createGoogleCalendarEvent } from "@/lib/integrations/google/events";
+import {
+  cancelGoogleCalendarEvent,
+  createGoogleCalendarEvent,
+  getGoogleEventDeleteContext,
+} from "@/lib/integrations/google/events";
 import { parseJsonStringArray } from "@/lib/parsers";
 import CalendarAddControls from "./add-controls";
 import {
@@ -71,6 +78,9 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     cookieStore.get("cm_calendar_week_start")?.value === "monday"
       ? "monday"
       : "sunday";
+  const calendarTimeFormat = resolveCalendarTimeFormat(
+    cookieStore.get("cm_calendar_time_format")?.value,
+  );
   const weekStartsOn = calendarWeekStart === "monday" ? 1 : 0;
   const userId = await requireUserId();
   const { spaceId } = await params;
@@ -447,6 +457,46 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
+  async function handleDeleteEvent(
+    formData: FormData,
+  ): Promise<CalendarActionResult | void> {
+    "use server";
+    const currentUserId = await requireUserId();
+    const eventId = formData.get("eventId")?.toString();
+    if (!eventId) {
+      return;
+    }
+
+    const googleDeleteContext = await getGoogleEventDeleteContext(eventId);
+    await deleteEvent(eventId, currentUserId);
+    const googleDeleteResult = await cancelGoogleCalendarEvent(googleDeleteContext);
+
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
+
+    if (googleDeleteResult.code === "NOT_SYNCED") {
+      return {
+        googleSync: {
+          attempted: false,
+          success: true,
+        },
+      };
+    }
+
+    return {
+      googleSync: {
+        attempted: true,
+        success: googleDeleteResult.success,
+        message: googleDeleteResult.success
+          ? undefined
+          : googleDeleteResult.error ??
+            "Deleted in Duet, but failed to cancel Google Calendar event.",
+        info: googleDeleteResult.recovered
+          ? "Linked Google event was already missing. Local sync link was cleaned up."
+          : undefined,
+      },
+    };
+  }
+
   const monthDays = getMonthGrid(now, weekStartsOn);
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -454,10 +504,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const dayLabels = calendarWeekStart === "monday"
     ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const nowLabel = today.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const nowLabel = formatEventTime(today, calendarTimeFormat);
   const monthParam = (date: Date) =>
     `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, "0")}`;
   const buildCalendarHref = (monthValue: string, extra?: Record<string, string>) => {
@@ -689,6 +736,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     events={dayEvents}
                     blocks={dayBlocks}
                     nowLabel={nowLabel}
+                    timeFormat={calendarTimeFormat}
                     addEventHref={buildCalendarHref(monthParam(now), { new: key })}
                     currentUserId={userId}
                     creatorPalette={creatorPalette}
@@ -740,6 +788,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             }))}
             commentCounts={eventCommentCounts}
             newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
+            timeFormat={calendarTimeFormat}
+            onDeleteEvent={handleDeleteEvent}
           />
         </div>
       </PlanningSection>

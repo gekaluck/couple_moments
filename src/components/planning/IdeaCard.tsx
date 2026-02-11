@@ -91,6 +91,7 @@ export default function IdeaCard({
   onEdit,
 }: IdeaCardProps) {
   const router = useRouter();
+  const hasMapsKey = Boolean(mapsApiKey);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -192,7 +193,7 @@ export default function IdeaCard({
             <Pencil className="h-4 w-4" />
           </button>
           <button
-            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)]"
+            className="relative inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:shadow-[var(--shadow-sm)] md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title={`Comments (${commentCount})`}
             onClick={() => setIsCommentsOpen((prev) => !prev)}
             type="button"
@@ -503,13 +504,19 @@ export default function IdeaCard({
             <label className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">
               Place
             </label>
-            <PlaceSearch
-              label={null}
-              placeholder="Search a place"
-              apiKey={mapsApiKey}
-              initialValue={idea.placeName ?? undefined}
-              onSelect={(selection) => setEditPlace(selection)}
-            />
+            {hasMapsKey ? (
+              <PlaceSearch
+                label={null}
+                placeholder="Search a place"
+                apiKey={mapsApiKey}
+                initialValue={idea.placeName ?? undefined}
+                onSelect={(selection) => setEditPlace(selection)}
+              />
+            ) : (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                Place search is unavailable because `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is not set.
+              </p>
+            )}
           </div>
           <input type="hidden" name="placeId" value={editPlace?.placeId ?? ""} />
           <input type="hidden" name="placeName" value={editPlace?.name ?? ""} />

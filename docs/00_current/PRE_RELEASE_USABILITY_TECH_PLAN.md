@@ -14,8 +14,8 @@
 
 - [x] Phase 2.4 Ideas IA consistency (calendar-centric model)
   - Model chosen: calendar-centric ideas
-  - Implemented in `b350237`
-  - Files: `src/app/spaces/[spaceId]/calendar/idea-card-list.tsx`, `src/app/spaces/[spaceId]/notes/page.tsx`, `src/lib/activity.ts`, `src/app/spaces/[spaceId]/ideas/page.tsx`
+  - Implemented in `b350237`, finalized with detail-route alignment in `ecd45f6`
+  - Files: `src/app/spaces/[spaceId]/calendar/idea-card-list.tsx`, `src/app/spaces/[spaceId]/notes/page.tsx`, `src/lib/activity.ts`, `src/app/spaces/[spaceId]/ideas/page.tsx`, `src/app/spaces/[spaceId]/ideas/[ideaId]/page.tsx`
 - [x] Phase 2.5 Partner management controls in settings
   - Policy chosen: creator-only partner removal
   - Implemented in `b350237`

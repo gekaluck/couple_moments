@@ -1,6 +1,7 @@
 /**
  * Shared formatting utilities for consistent display across the app.
  */
+import { CalendarTimeFormat } from "@/lib/calendar";
 
 /**
  * Get initials from a user's name or email.
@@ -25,13 +26,17 @@ export function getInitials(name: string | null | undefined, email: string): str
  * Format a date/string as a human-readable timestamp.
  * Example: "Jan 15, 3:30 PM"
  */
-export function formatTimestamp(date: Date | string): string {
+export function formatTimestamp(
+  date: Date | string,
+  timeFormat: CalendarTimeFormat = "24h",
+): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    hour12: timeFormat === "12h",
   });
 }
 
@@ -66,10 +71,16 @@ export function formatTimeAgo(value: Date | string): string {
 /**
  * Format event date/time for planning and list surfaces.
  */
-export function formatEventDateTime(date: Date, timeIsSet = true): string {
+export function formatEventDateTime(
+  date: Date,
+  timeIsSet = true,
+  timeFormat: CalendarTimeFormat = "24h",
+): string {
   return date.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
-    ...(timeIsSet ? { hour: "numeric", minute: "2-digit" } : {}),
+    ...(timeIsSet
+      ? { hour: "numeric", minute: "2-digit", hour12: timeFormat === "12h" }
+      : {}),
   });
 }

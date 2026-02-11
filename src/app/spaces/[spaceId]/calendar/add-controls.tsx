@@ -58,10 +58,13 @@ export default function CalendarAddControls({
   hasGoogleCalendar = false,
   mapsApiKey,
 }: CalendarAddControlsProps) {
+  const hasMapsKey = Boolean(mapsApiKey);
   const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(() =>
     initialEventDate || prefillData ? "event" : null,
   );
-  const [eventDate, setEventDate] = useState<string | undefined>(() => initialEventDate ?? undefined);
+  const [eventDate, setEventDate] = useState<string | undefined>(
+    () => initialEventDate ?? undefined,
+  );
   const todayStr = getTodayDateString();
   const [errors, setErrors] = useState<{
     eventTitle?: string;
@@ -74,7 +77,7 @@ export default function CalendarAddControls({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const activeEventDate = initialEventDate ?? eventDate;
+  const activeEventDate = eventDate ?? initialEventDate ?? "";
   const activePlaceId = place?.placeId ?? prefillData?.placeId ?? "";
   const activePlaceName = place?.name ?? prefillData?.placeName ?? "";
   const activePlaceAddress = place?.address ?? prefillData?.placeAddress ?? "";
@@ -96,9 +99,14 @@ export default function CalendarAddControls({
   const closePanel = () => {
     setOpenPanel(null);
     setErrors({});
+    setPlace(null);
+    setEventDate(undefined);
   };
 
   const modalTitle = prefillData ? "Do this again" : "New event";
+  const isMemoryDate = Boolean(
+    activeEventDate && new Date(`${activeEventDate}T23:59:59`) < new Date(`${todayStr}T00:00:00`),
+  );
 
   return (
     <>
@@ -107,10 +115,10 @@ export default function CalendarAddControls({
           className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3.5 py-2 text-xs font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-medium)] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
           aria-label="Create a new event"
           onClick={() => {
+            setPlace(null);
             setEventDate(undefined);
             setErrors({});
             setOpenPanel("event");
-            setErrors({});
           }}
           type="button"
         >
@@ -205,8 +213,8 @@ export default function CalendarAddControls({
               className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
               name="date"
               type="date"
-              defaultValue={activeEventDate}
-              min={todayStr}
+              value={activeEventDate}
+              onChange={(inputEvent) => setEventDate(inputEvent.target.value)}
               required
             />
             <input
@@ -226,13 +234,19 @@ export default function CalendarAddControls({
             placeholder="tags (comma separated)"
             defaultValue={prefillData?.tags ?? ""}
           />
-          <PlaceSearch
-            label="Place"
-            placeholder="Search a place"
-            apiKey={mapsApiKey}
-            initialValue={activePlaceName}
-            onSelect={(selection) => setPlace(selection)}
-          />
+          {hasMapsKey ? (
+            <PlaceSearch
+              label="Place"
+              placeholder="Search a place"
+              apiKey={mapsApiKey}
+              initialValue={activePlaceName}
+              onSelect={(selection) => setPlace(selection)}
+            />
+          ) : (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              Place search is unavailable because `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is not set.
+            </p>
+          )}
           <PlaceHiddenInputs
             placeId={activePlaceId}
             placeName={activePlaceName}
@@ -276,6 +290,11 @@ export default function CalendarAddControls({
               {activePlaceAddress ? <span className="text-emerald-600"> - {activePlaceAddress}</span> : null}
             </div>
           ) : null}
+          {isMemoryDate ? (
+            <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-700">
+              This date is in the past. It will be saved as a memory.
+            </div>
+          ) : null}
           <div className="flex flex-wrap justify-end gap-2">
             <button
               className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
@@ -289,7 +308,7 @@ export default function CalendarAddControls({
               type="submit"
               disabled={isPending}
             >
-              {prefillData ? "Create event" : "Save event"}
+              {isMemoryDate ? "Save memory" : prefillData ? "Create event" : "Save event"}
             </button>
           </div>
         </form>
@@ -314,6 +333,13 @@ export default function CalendarAddControls({
               });
               return;
             }
+            if (new Date(`${start}T00:00:00`) > new Date(`${end}T23:59:59`)) {
+              setErrors({
+                blockTitle: undefined,
+                blockDate: "Start date cannot be after end date.",
+              });
+              return;
+            }
             setErrors((prev) => ({
               ...prev,
               blockTitle: undefined,
@@ -326,8 +352,10 @@ export default function CalendarAddControls({
                 closePanel();
                 clearModalParams();
                 router.refresh();
-              } catch {
-                toast.error("Failed to block time");
+              } catch (error) {
+                toast.error(
+                  error instanceof Error ? error.message : "Failed to block time",
+                );
               }
             });
           }}
