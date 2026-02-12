@@ -1,6 +1,6 @@
 import { dateKey } from "@/lib/calendar";
 import { listSpaceMembers } from "@/lib/couple-spaces";
-import { buildCreatorPalette, buildCreatorVisuals } from "@/lib/creator-colors";
+import { buildCreatorVisuals } from "@/lib/creator-colors";
 import { listAvailabilityBlocks } from "@/lib/availability";
 import {
   getEventForUser,
@@ -79,16 +79,6 @@ export async function loadCalendarPageData(params: {
     listEventCommentsForEvents(upcomingEvents.map((event) => event.id)),
   ]);
 
-  const creatorPalette = buildCreatorPalette(
-    members.map((member) => ({
-      id: member.userId,
-      name: member.user.name ?? null,
-      email: member.user.email,
-      alias: member.alias,
-      initials: member.initials,
-      color: member.color,
-    })),
-  );
   const memberVisuals = buildCreatorVisuals(
     members.map((member) => ({
       id: member.userId,
@@ -129,7 +119,6 @@ export async function loadCalendarPageData(params: {
     ideaComments,
     eventComments,
     hasGoogleCalendar,
-    creatorPalette,
     memberVisuals,
     prefillData,
   };

@@ -227,7 +227,7 @@ export default function EventEditModal({
       <div className="mt-6 rounded-2xl border border-[#e6c9c4] bg-[#f9e5e2] p-4">
         <h3 className="text-sm font-semibold text-[#a1493d]">Danger zone</h3>
         <p className="mt-2 text-sm text-[#a1493d]">
-          Deleting removes this event and its comments, photos, and reactions.
+          Deleting removes this event and its comments and ratings.
         </p>
         <button
           className="mt-4 rounded-full border border-[#a1493d] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#a1493d] transition hover:bg-[#f2d6d1]"
@@ -256,7 +256,7 @@ export default function EventEditModal({
           router.refresh();
         }}
         title="Delete event"
-        message="Are you sure you want to delete this event? All comments, photos, and reactions will be permanently removed."
+        message="Are you sure you want to delete this event? All comments and ratings will be permanently removed."
         confirmLabel="Delete"
         variant="danger"
       />

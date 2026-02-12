@@ -7,6 +7,7 @@ type HeartRatingProps = {
   onChange?: (rating: number) => void;
   readonly?: boolean;
   size?: "sm" | "md" | "lg";
+  showScore?: boolean;
 };
 
 const SIZES = {
@@ -38,6 +39,7 @@ export default function HeartRating({
   onChange,
   readonly = false,
   size = "md",
+  showScore = true,
 }: HeartRatingProps) {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
   const displayValue = hoverValue ?? value ?? 0;
@@ -53,10 +55,10 @@ export default function HeartRating({
           key={rating}
           type="button"
           disabled={readonly}
-          className={`transition-transform ${
+          className={`transition-transform duration-150 ease-out ${
             readonly
               ? "cursor-default"
-              : "hover:scale-110 focus:outline-none focus:scale-110"
+              : "hover:scale-[1.15] focus:outline-none focus:scale-[1.15] active:scale-95"
           } ${rating <= displayValue ? "text-rose-500" : "text-slate-300"}`}
           onMouseEnter={() => !readonly && setHoverValue(rating)}
           onClick={() => onChange?.(rating)}
@@ -65,11 +67,11 @@ export default function HeartRating({
           <HeartIcon filled={rating <= displayValue} className={sizeClass} />
         </button>
       ))}
-      {value !== null && !readonly && (
+      {showScore && value !== null ? (
         <span className="ml-2 text-xs text-[var(--text-tertiary)]">
           {value}/5
         </span>
-      )}
+      ) : null}
     </div>
   );
 }
