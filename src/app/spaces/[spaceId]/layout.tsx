@@ -6,6 +6,7 @@ import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import { listEventsForSpace } from "@/lib/events";
 import { formatEventTime, resolveCalendarTimeFormat } from "@/lib/calendar";
+import BetaNoticeBar from "@/components/beta/BetaNoticeBar";
 import SpaceNav from "./space-nav";
 
 type LayoutProps = {
@@ -96,6 +97,9 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
         todaySummaryHref={todaySummary.href}
         todayHasPlans={todaySummary.hasPlans}
       />
+      <div className="mx-auto mt-4 w-full max-w-[1220px] px-4 md:px-6">
+        <BetaNoticeBar spaceId={space.id} />
+      </div>
       <main className="mx-auto flex w-full max-w-[1220px] flex-col gap-10 px-4 pb-12 pt-8 md:px-6 md:pt-10">
         {children}
       </main>

@@ -1,8 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { HelpCircle, RotateCcw, CalendarDays, NotebookText, Camera, Settings2 } from "lucide-react";
+import {
+  HelpCircle,
+  RotateCcw,
+  CalendarDays,
+  NotebookText,
+  Camera,
+  Settings2,
+} from "lucide-react";
+
+import BetaChecklist from "@/components/beta/BetaChecklist";
 
 const STORAGE_KEY = "duet_onboarding_completed";
 
@@ -16,9 +26,7 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
 
   const handleRestartTour = () => {
     setIsResetting(true);
-    // Remove the onboarding completed flag
     localStorage.removeItem(`${STORAGE_KEY}_${spaceId}`);
-    // Navigate to calendar to trigger the tour
     router.push(`/spaces/${spaceId}/calendar?tour=1&tourStep=0`);
   };
 
@@ -51,22 +59,28 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
       <div className="mt-4 grid gap-3 rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[var(--shadow-sm)] backdrop-blur-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-[var(--text-primary)]">
-              Welcome Tour
-            </p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Welcome Tour</p>
             <p className="text-xs text-[var(--text-muted)]">
               Re-open the step-by-step walkthrough to refresh how the full app flow works.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleRestartTour}
-            disabled={isResetting}
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:bg-[var(--action-primary-strong)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
-          >
-            <RotateCcw className={`h-3.5 w-3.5 ${isResetting ? "animate-spin" : ""}`} />
-            {isResetting ? "Restarting..." : "Restart tour"}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/feedback?from=${encodeURIComponent(`/spaces/${spaceId}/settings`)}&spaceId=${spaceId}`}
+              className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/90 px-4 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-50"
+            >
+              Report issue
+            </Link>
+            <button
+              type="button"
+              onClick={handleRestartTour}
+              disabled={isResetting}
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:bg-[var(--action-primary-strong)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
+            >
+              <RotateCcw className={`h-3.5 w-3.5 ${isResetting ? "animate-spin" : ""}`} />
+              {isResetting ? "Restarting..." : "Restart tour"}
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-2 md:grid-cols-2">
@@ -118,7 +132,7 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
 
         <div className="grid gap-2 text-xs text-[var(--text-tertiary)] md:grid-cols-3">
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2">
-            Calendar → Ideas → Events
+            Calendar -&gt; Ideas -&gt; Events
           </div>
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2">
             Notes + comments context
@@ -127,6 +141,8 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
             Memories + ratings
           </div>
         </div>
+
+        <BetaChecklist spaceId={spaceId} />
       </div>
     </section>
   );
