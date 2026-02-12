@@ -38,6 +38,7 @@ export function middleware(request: NextRequest) {
  */
 export const config = {
   matcher: [
+    "/feedback",
     "/spaces/:path*",
     "/events/:path*",
     "/api/couple-spaces/:path*",
