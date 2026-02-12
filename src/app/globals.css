@@ -18,6 +18,7 @@
   --event-memory-light: #f8f4f1;
   --event-memory-border: #e4ddd7;
   --event-memory-text: #6e645d;
+  --calendar-memory-dot: #8b9daf;
 
   --idea-new: #d4944c;
   --idea-new-light: #fff8f0;
@@ -926,7 +927,7 @@ h3,
 }
 
 .legend-dot--memory {
-  background: #8b9daf;
+  background: var(--calendar-memory-dot);
 }
 
 .legend-dot--busy {

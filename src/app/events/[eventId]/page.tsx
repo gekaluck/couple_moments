@@ -12,7 +12,7 @@ import {
 import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
 import { normalizeTags, parseTags } from "@/lib/tags";
-import { parseJsonStringArray } from "@/lib/parsers";
+import { parseJsonStringArray, sanitizeHttpUrl } from "@/lib/parsers";
 import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
 import { getInitials } from "@/lib/formatters";
 import { formatEventTime, resolveCalendarTimeFormat } from "@/lib/calendar";
@@ -356,11 +356,11 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const hasPlace = Boolean(event.placeName || event.placeAddress);
   const placeLink =
-    event.placeUrl ||
+    sanitizeHttpUrl(event.placeUrl) ||
     (event.placeId
       ? `https://www.google.com/maps/place/?q=place_id:${event.placeId}`
       : null);
-  const placeWebsite = event.placeWebsite ?? null;
+  const placeWebsite = sanitizeHttpUrl(event.placeWebsite);
   const placeOpeningHours = Array.isArray(event.placeOpeningHours)
     ? (event.placeOpeningHours as string[])
     : null;

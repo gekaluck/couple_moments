@@ -13,6 +13,7 @@ import Button from "@/components/ui/Button";
 import Card, { CardDescription, CardFooter, CardTitle } from "@/components/ui/Card";
 
 import { formatTimeAgo, getInitials } from "@/lib/formatters";
+import { sanitizeHttpUrl } from "@/lib/parsers";
 import {
   CREATOR_ACCENTS,
   CreatorVisualMap,
@@ -123,6 +124,8 @@ export default function IdeaCard({
   }, [isCommentsOpen]);
 
   const hasOpenModal = isScheduleOpen || isEditOpen || isDeleteOpen;
+  const safePlaceLink =
+    sanitizeHttpUrl(idea.placeWebsite) ?? sanitizeHttpUrl(idea.placeUrl);
 
   return (
     <Card
@@ -143,10 +146,10 @@ export default function IdeaCard({
               <span className="text-[var(--text-muted)]">
                 {idea.placeName || idea.placeAddress}
               </span>
-              {idea.placeUrl || idea.placeWebsite ? (
+              {safePlaceLink ? (
                 <a
                   className="font-semibold text-amber-600 transition hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
-                  href={idea.placeWebsite || idea.placeUrl || "#"}
+                  href={safePlaceLink}
                   target="_blank"
                   rel="noreferrer"
                 >

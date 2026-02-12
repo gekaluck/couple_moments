@@ -4,6 +4,7 @@ import { createChangeLogEntry } from "@/lib/change-log";
 import { createNoteForSpace } from "@/lib/notes";
 import { serializeTags } from "@/lib/tags";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
+import { sanitizeHttpUrl } from "@/lib/parsers";
 
 type IdeaStatus = "NEW" | "PLANNED" | "DONE";
 
@@ -78,8 +79,8 @@ export async function createIdeaForSpace(
       placeAddress: input.placeAddress ?? null,
       placeLat: input.placeLat ?? null,
       placeLng: input.placeLng ?? null,
-      placeUrl: input.placeUrl ?? null,
-      placeWebsite: input.placeWebsite ?? null,
+      placeUrl: sanitizeHttpUrl(input.placeUrl),
+      placeWebsite: sanitizeHttpUrl(input.placeWebsite),
       placeOpeningHours: input.placeOpeningHours ?? Prisma.JsonNull,
       placePhotoUrls: input.placePhotoUrls ?? Prisma.JsonNull,
       status: "NEW",
@@ -154,10 +155,10 @@ export async function updateIdea(
     data.placeLng = updates.placeLng ?? null;
   }
   if (updates.placeUrl !== undefined) {
-    data.placeUrl = updates.placeUrl ?? null;
+    data.placeUrl = sanitizeHttpUrl(updates.placeUrl);
   }
   if (updates.placeWebsite !== undefined) {
-    data.placeWebsite = updates.placeWebsite ?? null;
+    data.placeWebsite = sanitizeHttpUrl(updates.placeWebsite);
   }
   if (updates.placeOpeningHours !== undefined) {
     data.placeOpeningHours = updates.placeOpeningHours ?? Prisma.JsonNull;

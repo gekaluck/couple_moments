@@ -50,7 +50,7 @@ export default function EventBubble({
     >
       <span
         className={`h-2 w-2 flex-shrink-0 rounded-full ${
-          isPast ? "bg-[#8b9daf]" : "bg-rose-500"
+          isPast ? "bg-[var(--calendar-memory-dot)]" : "bg-rose-500"
         }`}
       />
       <span ref={textRef} className="truncate text-[11px] font-medium leading-tight">

@@ -714,6 +714,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     addEventHref={buildCalendarHref(monthParam(now), { new: key })}
                     currentUserId={userId}
                     memberVisuals={memberVisuals}
+                    referenceNow={today}
                     buildBlockEditHref={(blockId) =>
                       buildCalendarHref(monthParam(now), { editBlock: blockId })
                     }

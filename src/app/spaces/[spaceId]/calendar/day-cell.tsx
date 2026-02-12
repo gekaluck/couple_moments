@@ -35,6 +35,7 @@ type DayCellProps = {
   currentUserId: string;
   memberVisuals: CreatorVisualMap;
   buildBlockEditHref: (blockId: string) => string;
+  referenceNow: Date;
 };
 
 function formatTimeLabel(value: Date, timeFormat: CalendarTimeFormat) {
@@ -58,15 +59,14 @@ export default function DayCell({
   currentUserId,
   memberVisuals,
   buildBlockEditHref,
+  referenceNow,
 }: DayCellProps) {
   const visibleEvents = events;
   const visibleBlocks = blocks;
   const dayCellBase = isCompact ? "min-h-[104px] p-2" : "min-h-[136px] p-2.5";
-  const today = new Date();
   const hasEvents = events.length > 0;
-  const now = new Date();
-  const hasUpcomingPlans = events.some((event) => event.dateTimeStart >= now);
-  const hasMemories = events.some((event) => event.dateTimeStart < now);
+  const hasUpcomingPlans = events.some((event) => event.dateTimeStart >= referenceNow);
+  const hasMemories = events.some((event) => event.dateTimeStart < referenceNow);
   const hasBusyTime = blocks.length > 0;
   const inMonthTone = isToday
     ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.96),rgba(255,236,244,0.82))]"
@@ -107,8 +107,8 @@ export default function DayCell({
                   className="h-2 w-2 rounded-full bg-rose-500"
                 />
               ) : null}
-              {hasMemories ? <span className="h-2 w-2 rounded-full bg-[#8b9daf]" /> : null}
-              {hasBusyTime ? <span className="h-2 w-2 rounded-full bg-amber-500" /> : null}
+              {hasMemories ? <span className="h-2 w-2 rounded-full bg-[var(--calendar-memory-dot)]" /> : null}
+              {hasBusyTime ? <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" /> : null}
             </span>
           ) : null}
         </div>
@@ -229,7 +229,7 @@ export default function DayCell({
             key={event.id}
             href={`/events/${event.id}`}
             title={event.title}
-            isPast={event.dateTimeStart < today}
+            isPast={event.dateTimeStart < referenceNow}
           />
         ))}
       </div>
