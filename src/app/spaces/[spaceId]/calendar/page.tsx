@@ -120,7 +120,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     ideaComments,
     eventComments,
     hasGoogleCalendar,
-    creatorPalette,
     memberVisuals,
     prefillData,
   } = await loadCalendarPageData({
@@ -528,26 +527,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     return `/spaces/${space.id}/calendar?${params.toString()}`;
   };
 
-  const blocksByDay = buildBlocksByDay(blocks);
-  const unavailableLegendEntries = Array.from(
-    new Set([
-      ...blocks.manual.map((block) => block.createdByUserId),
-      ...blocks.external.map((block) => block.userId),
-    ]),
-  )
-    .map((userIdValue) => {
-      if (!userIdValue) {
-        return null;
-      }
-      const accent = creatorPalette.get(userIdValue);
-      const visual = memberVisuals[userIdValue];
-      return {
-        userId: userIdValue,
-        color: accent?.accent ?? "#f59e0b",
-        label: visual?.displayName ?? "Unavailable",
-      };
-    })
-    .filter((entry): entry is { userId: string; color: string; label: string } => entry !== null);
+  const blocksByDay = buildBlocksByDay(blocks);
   const { ideaCommentCounts, ideaCommentsByIdea } = buildIdeaCommentAggregates(
     ideaComments,
   );
@@ -672,32 +652,19 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             </a>
           </div>
         </div>
-
-        {/* Calendar legend */}
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-[11px] text-[var(--text-muted)]">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-rose-400" />
-            <span>Events</span>
-          </div>
-          {unavailableLegendEntries.length > 0 ? (
-            unavailableLegendEntries.map((entry) => (
-              <div key={entry.userId} className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                <span>{entry.label} unavailable</span>
-              </div>
-            ))
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-400" />
-              <span>Unavailable</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--action-primary)] text-[8px] font-bold text-white">
-              •
-            </span>
-            <span>Today</span>
-          </div>
+        <div className="calendar-legend mt-3">
+          <span className="legend-item">
+            <span className="legend-dot legend-dot--plan" />
+            Your plans
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot legend-dot--memory" />
+            Memories
+          </span>
+          <span className="legend-item">
+            <span className="legend-dot legend-dot--busy" />
+            Busy time
+          </span>
         </div>
 
         {/* Check for empty state */}
@@ -746,7 +713,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     timeFormat={calendarTimeFormat}
                     addEventHref={buildCalendarHref(monthParam(now), { new: key })}
                     currentUserId={userId}
-                    creatorPalette={creatorPalette}
                     memberVisuals={memberVisuals}
                     buildBlockEditHref={(blockId) =>
                       buildCalendarHref(monthParam(now), { editBlock: blockId })
@@ -825,3 +791,5 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     </>
   );
 }
+
+

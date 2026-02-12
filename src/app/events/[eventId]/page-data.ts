@@ -22,7 +22,7 @@ export async function loadEventDetailData(params: {
 }) {
   const { eventId, userId, coupleSpaceId, createdByUserId } = params;
 
-  const [currentUserRating, allRatings, photos, comments, creator, googleSyncStatus, members] =
+  const [currentUserRating, allRatings, comments, creator, googleSyncStatus, members] =
     await Promise.all([
       prisma.rating.findUnique({
         where: {
@@ -36,10 +36,6 @@ export async function loadEventDetailData(params: {
       prisma.rating.findMany({
         where: { eventId },
         select: { userId: true, value: true },
-      }),
-      prisma.photo.findMany({
-        where: { eventId },
-        orderBy: { createdAt: "asc" },
       }),
       listEventComments(eventId),
       prisma.user.findUnique({
@@ -63,7 +59,6 @@ export async function loadEventDetailData(params: {
   return {
     currentUserRating,
     allRatings,
-    photos,
     comments,
     creator,
     googleSyncStatus,
