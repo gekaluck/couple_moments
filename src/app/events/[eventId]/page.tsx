@@ -12,7 +12,7 @@ import {
 import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
 import { normalizeTags, parseTags } from "@/lib/tags";
-import { parseJsonStringArray } from "@/lib/parsers";
+import { parseJsonStringArray, sanitizeHttpUrl } from "@/lib/parsers";
 import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
 import { getInitials } from "@/lib/formatters";
 import { formatEventTime, resolveCalendarTimeFormat } from "@/lib/calendar";
@@ -356,11 +356,11 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const hasPlace = Boolean(event.placeName || event.placeAddress);
   const placeLink =
-    event.placeUrl ||
+    sanitizeHttpUrl(event.placeUrl) ||
     (event.placeId
       ? `https://www.google.com/maps/place/?q=place_id:${event.placeId}`
       : null);
-  const placeWebsite = event.placeWebsite ?? null;
+  const placeWebsite = sanitizeHttpUrl(event.placeWebsite);
   const placeOpeningHours = Array.isArray(event.placeOpeningHours)
     ? (event.placeOpeningHours as string[])
     : null;
@@ -441,45 +441,51 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       </header>
 
       <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-6 py-8">
-        <section className="rounded-2xl border border-rose-200/60 bg-[linear-gradient(150deg,rgba(255,255,255,0.96),rgba(255,240,246,0.72))] p-6 shadow-[var(--shadow-sm)]">
-          <div className="flex items-center justify-between">
+        <section className="event-details-card rounded-2xl p-6 shadow-[var(--shadow-sm)]">
+          <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-              Event Details
+              Details
             </h3>
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                isPast
-                  ? "border border-slate-200 bg-slate-100 text-slate-600"
-                  : "border border-rose-200 bg-rose-50 text-rose-700"
-              }`}
-            >
-              <span className={`h-1.5 w-1.5 rounded-full ${isPast ? "bg-slate-400" : "bg-rose-500"}`} />
-              {statusLabel}
-            </span>
+            {googleSyncStatus?.synced ? (
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Google synced
+              </span>
+            ) : null}
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {/* Date & Time Card */}
-            <div className="rounded-xl border border-rose-100/80 bg-white/70 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{eventDateLabel}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{eventTimeLabel}</p>
-                </div>
-              </div>
+          <div className="mt-4 flex flex-col gap-1.5">
+            <div className="event-details-row">
+              <span className="event-details-label">Status</span>
+              <span
+                className={`event-details-value inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  isPast
+                    ? "border border-slate-200 bg-slate-100 text-slate-600"
+                    : "border border-rose-200 bg-rose-50 text-rose-700"
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${isPast ? "bg-slate-400" : "bg-rose-500"}`} />
+                {statusLabel}
+              </span>
             </div>
 
-            {/* Created By Card */}
-            <div className="rounded-xl border border-rose-100/80 bg-white/70 p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold text-white"
+            <div className="event-details-row">
+              <span className="event-details-label">Date</span>
+              <span className="event-details-value">{eventDateLabel}</span>
+            </div>
+
+            <div className="event-details-row">
+              <span className="event-details-label">Time</span>
+              <span className="event-details-value">{eventTimeLabel}</span>
+            </div>
+
+            <div className="event-details-row">
+              <span className="event-details-label">Created by</span>
+              <span className="event-details-value inline-flex items-center gap-2">
+                <span
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold text-white"
                   style={{
                     backgroundImage: creatorVisual
                       ? getAvatarGradient(creatorVisual.accent)
@@ -487,97 +493,71 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   }}
                 >
                   {creatorInitials}
-                </div>
-                <div>
-                  <p className="text-xs text-[var(--text-muted)]">Created by</p>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{creatorName}</p>
-                </div>
-              </div>
+                </span>
+                {creatorName}
+              </span>
             </div>
+
+            {tags.length > 0 ? (
+              <div className="event-details-row">
+                <span className="event-details-label">Tags</span>
+                <span className="event-details-value flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex rounded-full border border-rose-200/70 bg-white/85 px-2.5 py-0.5 text-xs font-medium text-rose-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            ) : null}
+
+            {isPast ? (
+              <div className="event-details-row">
+                <span className="event-details-label">Rating</span>
+                <span className="event-details-value">
+                  <EventRating
+                    eventId={event.id}
+                    currentRating={currentUserRating?.value ?? null}
+                    onRate={handleRate}
+                    compact
+                  />
+                </span>
+              </div>
+            ) : null}
           </div>
 
-          {/* Tags */}
-          {tags.length > 0 ? (
-            <div className="mt-4">
-              <p className="mb-2 text-xs font-medium text-[var(--text-tertiary)]">Tags</p>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex rounded-full border border-rose-200/70 bg-white/85 px-3 py-1 text-xs font-medium text-rose-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
+          {isPast && partnerMembers.length > 0 ? (
+            <div className="mt-3 rounded-xl border border-rose-100/80 bg-white/70 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                Partner ratings
+              </p>
+              <div className="mt-2 space-y-2">
+                {partnerMembers.map((partnerMember) => {
+                  const partnerVisual = memberVisuals[partnerMember.userId];
+                  const partnerName =
+                    partnerVisual?.displayName ||
+                    partnerMember.user.name ||
+                    partnerMember.user.email;
+                  const partnerRating = ratingsByUserId.get(partnerMember.userId) ?? null;
+
+                  return (
+                    <div
+                      key={partnerMember.userId}
+                      className="flex items-center justify-between gap-3 text-xs"
+                    >
+                      <span className="text-[var(--text-muted)]">{partnerName}</span>
+                      {partnerRating ? (
+                        <HeartRating value={partnerRating} readonly size="sm" showScore />
+                      ) : (
+                        <span className="text-[var(--text-tertiary)]">Not rated yet</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          ) : null}
-
-          {/* Rating (for past events) */}
-          {isPast ? (
-            <div className="mt-4 rounded-xl border border-rose-100/80 bg-white/70 p-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs text-[var(--text-muted)]">Ratings</p>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">How was this date?</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2 rounded-xl border border-rose-100/80 bg-white/80 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-medium text-[var(--text-muted)]">Your rating</p>
-                    <EventRating
-                      eventId={event.id}
-                      currentRating={currentUserRating?.value ?? null}
-                      onRate={handleRate}
-                      compact
-                    />
-                  </div>
-
-                  {partnerMembers.map((partnerMember) => {
-                    const partnerVisual = memberVisuals[partnerMember.userId];
-                    const partnerName =
-                      partnerVisual?.displayName ||
-                      partnerMember.user.name ||
-                      partnerMember.user.email;
-                    const partnerRating = ratingsByUserId.get(partnerMember.userId) ?? null;
-
-                    return (
-                      <div
-                        key={partnerMember.userId}
-                        className="flex items-center justify-between gap-3 border-t border-rose-100/80 pt-2"
-                      >
-                        <p className="text-xs font-medium text-[var(--text-muted)]">
-                          {partnerName}
-                        </p>
-                        {partnerRating ? (
-                          <HeartRating value={partnerRating} readonly size="sm" />
-                        ) : (
-                          <span className="text-xs text-[var(--text-tertiary)]">
-                            Not rated yet
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* Google Sync Status */}
-          {googleSyncStatus?.synced ? (
-            <div className="mt-4 flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Synced with Google Calendar
             </div>
           ) : null}
         </section>
@@ -601,14 +581,9 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             </div>
           ) : (
             <Link
-              className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-rose-200/80 bg-white/50 px-4 py-4 text-sm text-[var(--text-muted)] transition hover:border-rose-300 hover:bg-white/70"
+              className="empty-description-prompt mt-4 inline-flex items-center"
               href={`/events/${event.id}?edit=1`}
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-400">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                </svg>
-              </span>
               Add a note about this event...
             </Link>
           )}

@@ -26,3 +26,26 @@ export function parseStringArrayInput(
 
   return parseJsonStringArray(value);
 }
+
+const ALLOWED_URL_PROTOCOLS = new Set(["http:", "https:"]);
+
+/**
+ * Normalize and validate user-provided links used in href attributes.
+ * Returns null for empty, invalid, or non-http(s) URLs.
+ */
+export function sanitizeHttpUrl(value?: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (!ALLOWED_URL_PROTOCOLS.has(parsed.protocol)) {
+      return null;
+    }
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}

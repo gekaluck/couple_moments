@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import EventBubble from "./event-bubble";
 import { CalendarTimeFormat, formatEventTime } from "@/lib/calendar";
-import { CreatorAccent, CreatorVisualMap, getCreatorInitials } from "@/lib/creator-colors";
+import { CreatorVisualMap, getCreatorInitials } from "@/lib/creator-colors";
 
 type EventSummary = {
   id: string;
@@ -33,9 +33,9 @@ type DayCellProps = {
   timeFormat: CalendarTimeFormat;
   addEventHref: string;
   currentUserId: string;
-  creatorPalette: Map<string, CreatorAccent>;
   memberVisuals: CreatorVisualMap;
   buildBlockEditHref: (blockId: string) => string;
+  referenceNow: Date;
 };
 
 function formatTimeLabel(value: Date, timeFormat: CalendarTimeFormat) {
@@ -57,23 +57,17 @@ export default function DayCell({
   timeFormat,
   addEventHref,
   currentUserId,
-  creatorPalette,
   memberVisuals,
   buildBlockEditHref,
+  referenceNow,
 }: DayCellProps) {
   const visibleEvents = events;
   const visibleBlocks = blocks;
   const dayCellBase = isCompact ? "min-h-[104px] p-2" : "min-h-[136px] p-2.5";
-  const today = new Date();
   const hasEvents = events.length > 0;
-  const blockDotColors = Array.from(
-    new Set(
-      blocks.map((block) => {
-        const creatorAccent = creatorPalette.get(block.createdByUserId || "external");
-        return creatorAccent?.accent ?? "#f59e0b";
-      }),
-    ),
-  ).slice(0, 2);
+  const hasUpcomingPlans = events.some((event) => event.dateTimeStart >= referenceNow);
+  const hasMemories = events.some((event) => event.dateTimeStart < referenceNow);
+  const hasBusyTime = blocks.length > 0;
   const inMonthTone = isToday
     ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.96),rgba(255,236,244,0.82))]"
     : isWeekend
@@ -86,7 +80,7 @@ export default function DayCell({
     : isCurrentMonth
       ? "bg-white/90 text-[var(--text-primary)]"
       : "bg-white/60 text-[var(--text-tertiary)]";
-  const hasAnyDots = hasEvents || blockDotColors.length > 0;
+  const hasAnyDots = hasUpcomingPlans || hasMemories || hasBusyTime;
 
   return (
     <div
@@ -108,18 +102,13 @@ export default function DayCell({
         <div className="flex min-h-6 items-center">
           {hasAnyDots ? (
             <span className="inline-flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/85 px-1.5 py-1">
-              {hasEvents ? (
+              {hasUpcomingPlans ? (
                 <span
-                  className="h-2 w-2 rounded-full bg-rose-400"
+                  className="h-2 w-2 rounded-full bg-rose-500"
                 />
               ) : null}
-              {blockDotColors.map((color, index) => (
-                <span
-                  key={`busy-${index}-${color}`}
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
+              {hasMemories ? <span className="h-2 w-2 rounded-full bg-[var(--calendar-memory-dot)]" /> : null}
+              {hasBusyTime ? <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" /> : null}
             </span>
           ) : null}
         </div>
@@ -134,10 +123,9 @@ export default function DayCell({
         {visibleBlocks.map((block) => {
           const isExternal = block.source === "GOOGLE";
           const createdByUserId = block.createdByUserId || "external";
-          const creatorAccent = creatorPalette.get(createdByUserId);
-          const blockAccent = creatorAccent?.accent ?? "var(--color-secondary)";
-          const blockSoft = creatorAccent?.accentSoft ?? "var(--color-secondary-soft)";
-          const blockText = creatorAccent?.accentText ?? "var(--text-secondary)";
+          const blockAccent = "var(--color-secondary)";
+          const blockSoft = "var(--color-secondary-soft)";
+          const blockText = "var(--idea-new-text)";
 
           const currentDay = new Date(date);
           currentDay.setHours(0, 0, 0, 0);
@@ -241,7 +229,7 @@ export default function DayCell({
             key={event.id}
             href={`/events/${event.id}`}
             title={event.title}
-            isPast={event.dateTimeStart < today}
+            isPast={event.dateTimeStart < referenceNow}
           />
         ))}
       </div>
