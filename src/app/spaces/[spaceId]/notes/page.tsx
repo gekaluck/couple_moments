@@ -297,6 +297,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                     ) : null}
                   </div>
                 </div>
+                {note.authorUserId === userId ? (
                 <ConfirmForm action={handleDelete} message="Delete this note?">
                   <input type="hidden" name="noteId" value={note.id} />
                   <button
@@ -308,6 +309,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                     <TrashIcon />
                   </button>
                 </ConfirmForm>
+              ) : null}
               </div>
             </article>
           );
