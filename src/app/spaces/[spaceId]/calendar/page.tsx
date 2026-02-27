@@ -142,6 +142,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const rawTime = formData.get("time")?.toString() || "";
     const timeIsSet = rawTime.length > 0;
     const time = timeIsSet ? rawTime : "12:00";
+    const rawTimeEnd = formData.get("timeEnd")?.toString() || "";
     const tags = normalizeTags(formData.get("tags"));
     const addToGoogleCalendar = formData.get("addToGoogleCalendar") === "true";
     const placeId = formData.get("placeId")?.toString() || null;
@@ -166,12 +167,15 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     if (Number.isNaN(dateTimeStart.getTime())) {
       throw new Error("Invalid date. Please try again.");
     }
+    const dateTimeEnd = rawTimeEnd
+      ? new Date(`${date}T${rawTimeEnd}`)
+      : null;
 
     const event = await createEventForSpace(spaceIdForActions, currentUserId, {
       title,
       description: description || null,
       dateTimeStart,
-      dateTimeEnd: null,
+      dateTimeEnd: dateTimeEnd && !Number.isNaN(dateTimeEnd.getTime()) ? dateTimeEnd : null,
       timeIsSet,
       tags,
       placeId,
@@ -583,7 +587,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               {formatMonthTitle(now)}
             </h2>
             <p className="section-subtitle">
-              Tap any day to add something special or block time.
+              Click any day to add an event or block time.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
@@ -614,7 +618,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             >
               Next
             </Link>
-            <div className="flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+            <div className="hidden items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] sm:flex">
               <Link
                 className={`rounded-full px-3 py-1 transition ${isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
                   }`}
@@ -631,7 +635,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               </Link>
             </div>
             <a
-              className="pill-button button-hover inline-flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent-strong)]"
+              className="hidden items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent-strong)] sm:inline-flex pill-button button-hover"
               href={`/api/spaces/${space.id}/calendar.ics`}
               download
               title="Export to calendar app"
@@ -667,17 +671,18 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+        <div className="mt-4 grid grid-cols-7 gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] sm:gap-2">
           {dayLabels.map((day) => (
             <div
               key={day}
-              className="rounded-lg border border-white/80 bg-white/55 px-2 py-1.5 text-center"
+              className="rounded-lg border border-white/80 bg-white/55 px-1 py-1.5 text-center sm:px-2"
             >
-              {day}
+              <span className="sm:hidden">{day[0]}</span>
+              <span className="hidden sm:inline">{day}</span>
             </div>
           ))}
         </div>
-        <div className="mt-2 grid grid-cols-7 gap-2">
+        <div className="mt-1 grid grid-cols-7 gap-1 sm:mt-2 sm:gap-2">
           {monthDays.map((day) => {
             const key = dateKey(day.date);
             const dayEvents = eventsByDay.get(key) ?? [];
@@ -784,6 +789,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         spaceId={space.id}
         forceOpen={forceTourOpen}
         initialStep={forcedTourStep}
+        autoOpen={events.length === 0 && ideas.length === 0}
       />
     </>
   );

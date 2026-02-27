@@ -55,6 +55,12 @@ Private beta — testers have not yet onboarded. Primary goal before first user 
 
 ---
 
+## Pre-Login Landing Page
+
+**Status: completed** — Unauthenticated visitors at `/` now see a full landing page explaining what Duet is (hero, features, how-it-works, CTA). Authenticated users are still redirected to their space as before. This resolved real user confusion where people arrived at the app cold and saw a login form with no context.
+
+---
+
 ## P1 — High-Impact UX
 
 ### U-1 · Event end time on create and edit
@@ -217,19 +223,19 @@ Set up `playwright.config.ts`, base URL, auth helper (create and seed a test use
 | B-2 | Calendar empty state hides grid | completed |
 | B-3 | Server actions silent failures | completed |
 | B-4 | Delete button on partner notes | completed |
-| U-1 | Event end time on create/edit | pending |
-| U-2 | Broken idea anchor links | pending |
-| U-3 | Invite code post-partner | pending |
+| U-1 | Event end time on create/edit | completed |
+| U-2 | Broken idea anchor links | completed |
+| U-3 | Invite code post-partner | completed |
 | U-4 | Memories search + filter | pending |
 | U-5 | Activity feed filter | pending |
-| U-6 | Calendar subtitle copy | pending |
-| U-7 | Onboarding tour persistence | pending |
+| U-6 | Calendar subtitle copy | completed |
+| U-7 | Onboarding tour persistence | completed |
 | T-1 | Auth smoke tests | pending |
 | T-2 | Core planning flow tests | pending |
 | T-3 | Playwright config + helpers | pending |
-| I-1 | CI lint/type-check blocking | pending |
+| I-1 | CI lint/type-check blocking | completed |
 | I-2 | Vercel deployment config | pending |
-| I-3 | Remove prisma/dev.db | pending |
+| I-3 | Remove prisma/dev.db | completed |
 | D-1 | Extract place field parser | pending |
 | D-2 | Decompose calendar/page.tsx | pending |
 | D-3 | Decompose events/page.tsx | pending |

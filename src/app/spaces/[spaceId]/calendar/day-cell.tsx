@@ -63,7 +63,9 @@ export default function DayCell({
 }: DayCellProps) {
   const visibleEvents = events;
   const visibleBlocks = blocks;
-  const dayCellBase = isCompact ? "min-h-[104px] p-2" : "min-h-[136px] p-2.5";
+  const dayCellBase = isCompact
+    ? "min-h-[48px] p-1.5 sm:min-h-[104px] sm:p-2"
+    : "min-h-[48px] p-1.5 sm:min-h-[136px] sm:p-2.5";
   const hasEvents = events.length > 0;
   const hasUpcomingPlans = events.some((event) => event.dateTimeStart >= referenceNow);
   const hasMemories = events.some((event) => event.dateTimeStart < referenceNow);
@@ -114,12 +116,12 @@ export default function DayCell({
         </div>
       </div>
       {isToday ? (
-        <div className="relative z-10 mt-1 inline-flex items-center gap-1.5 text-[9px] font-medium text-[var(--text-tertiary)]">
+        <div className="relative z-10 mt-1 hidden items-center gap-1.5 text-[9px] font-medium text-[var(--text-tertiary)] sm:inline-flex">
           <span className="h-1 w-1 rounded-full bg-rose-400" />
           {nowLabel}
         </div>
       ) : null}
-      <div className="relative z-10 mt-2.5 flex flex-col gap-1.5">
+      <div className="relative z-10 mt-2.5 hidden flex-col gap-1.5 sm:flex">
         {visibleBlocks.map((block) => {
           const isExternal = block.source === "GOOGLE";
           const createdByUserId = block.createdByUserId || "external";

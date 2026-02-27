@@ -290,7 +290,7 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                     {note.parentType === "IDEA" && note.parentId ? (
                       <Link
                         className="mt-2 inline-flex text-xs text-[var(--accent-strong)] transition hover:text-[var(--accent)] hover:underline"
-                        href={`/spaces/${space.id}/calendar#idea-${note.parentId}`}
+                        href={`/spaces/${space.id}/ideas/${note.parentId}`}
                       >
                         Linked idea comment
                       </Link>

@@ -24,11 +24,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
-        continue-on-error: true # Advisory only
 
       - name: Type check
         run: npx tsc --noEmit
-        continue-on-error: true # Advisory only
 
       - name: Build
         run: npm run build
