@@ -91,7 +91,15 @@ export default async function LoginPage({ searchParams }: PageProps) {
             Log in
           </button>
         </form>
-        <p className="mt-6 text-sm text-[var(--text-muted)]">
+        <p className="mt-4 text-center text-sm text-[var(--text-muted)]">
+          <a
+            className="font-semibold text-[var(--accent-strong)]"
+            href="/forgot-password"
+          >
+            Forgot your password?
+          </a>
+        </p>
+        <p className="mt-3 text-sm text-[var(--text-muted)]">
           New here?{" "}
           <a
             className="font-semibold text-[var(--accent-strong)]"

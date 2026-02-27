@@ -36,6 +36,7 @@ model User {
   sessions                 Session[]
   externalAccounts         ExternalAccount[]
   externalAvailabilityBlocks ExternalAvailabilityBlock[]
+  passwordResetTokens      PasswordResetToken[]
 }
 
 model Session {
@@ -384,6 +385,20 @@ model ExternalSyncState {
   channelExpiration   DateTime?       // For webhook notifications
 
   externalAccount     ExternalAccount @relation(fields: [externalAccountId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
+  token     String    @unique
+  userId    String
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
 }
 
 model ExternalEventLink {

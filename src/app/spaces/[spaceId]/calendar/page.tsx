@@ -159,12 +159,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const placeUrl = formData.get("placeUrl")?.toString() || null;
 
     if (!title || !date) {
-      return;
+      throw new Error("Title and date are required.");
     }
 
     const dateTimeStart = new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
-      return;
+      throw new Error("Invalid date. Please try again.");
     }
 
     const event = await createEventForSpace(spaceIdForActions, currentUserId, {
@@ -227,13 +227,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const note = formData.get("note")?.toString().trim() ?? "";
 
     if (!title || !start || !end) {
-      return;
+      throw new Error("Title and start/end dates are required.");
     }
 
     const startAt = new Date(`${start}T00:00:00`);
     const endAt = new Date(`${end}T23:59:59`);
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-      return;
+      throw new Error("Invalid date range. Please try again.");
     }
 
     await createAvailabilityBlock(spaceIdForActions, currentUserId, {
@@ -257,13 +257,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const note = formData.get("note")?.toString().trim() ?? "";
 
     if (!blockId || !title || !start || !end) {
-      return;
+      throw new Error("Title and start/end dates are required.");
     }
 
     const startAt = new Date(`${start}T00:00:00`);
     const endAt = new Date(`${end}T23:59:59`);
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
-      return;
+      throw new Error("Invalid date range. Please try again.");
     }
 
     await updateAvailabilityBlock(blockId, currentUserId, {
@@ -667,63 +667,59 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </span>
         </div>
 
-        {/* Check for empty state */}
+        <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
+          {dayLabels.map((day) => (
+            <div
+              key={day}
+              className="rounded-lg border border-white/80 bg-white/55 px-2 py-1.5 text-center"
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 grid grid-cols-7 gap-2">
+          {monthDays.map((day) => {
+            const key = dateKey(day.date);
+            const dayEvents = eventsByDay.get(key) ?? [];
+            const dayBlocks = blocksByDay.get(key) ?? [];
+            const todayKey = dateKey(today);
+            const isToday = dateKey(day.date) === todayKey;
+            const isPast =
+              day.date <
+              new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+
+            return (
+              <DayCell
+                key={key}
+                date={day.date}
+                isCurrentMonth={day.isCurrentMonth}
+                isToday={isToday}
+                isPast={isPast}
+                isWeekend={isWeekend}
+                isCompact={isCompact}
+                events={dayEvents}
+                blocks={dayBlocks}
+                nowLabel={nowLabel}
+                timeFormat={calendarTimeFormat}
+                addEventHref={buildCalendarHref(monthParam(now), { new: key })}
+                currentUserId={userId}
+                memberVisuals={memberVisuals}
+                referenceNow={today}
+                buildBlockEditHref={(blockId) =>
+                  buildCalendarHref(monthParam(now), { editBlock: blockId })
+                }
+              />
+            );
+          })}
+        </div>
         {events.length === 0 && blocks.manual.length === 0 && blocks.external.length === 0 ? (
-          <div className="mt-8">
+          <div className="mt-6">
             <CalendarEmptyState
               actionHref={buildCalendarHref(monthParam(now), { new: dateKey(now) })}
             />
           </div>
-        ) : (
-          <>
-            <div className="mt-4 grid grid-cols-7 gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">
-              {dayLabels.map((day) => (
-                <div
-                  key={day}
-                  className="rounded-lg border border-white/80 bg-white/55 px-2 py-1.5 text-center"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-            <div className="mt-2 grid grid-cols-7 gap-2">
-              {monthDays.map((day) => {
-                const key = dateKey(day.date);
-                const dayEvents = eventsByDay.get(key) ?? [];
-                const dayBlocks = blocksByDay.get(key) ?? [];
-                const todayKey = dateKey(today);
-                const isToday = dateKey(day.date) === todayKey;
-                const isPast =
-                  day.date <
-                  new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
-
-                return (
-                  <DayCell
-                    key={key}
-                    date={day.date}
-                    isCurrentMonth={day.isCurrentMonth}
-                    isToday={isToday}
-                    isPast={isPast}
-                    isWeekend={isWeekend}
-                    isCompact={isCompact}
-                    events={dayEvents}
-                    blocks={dayBlocks}
-                    nowLabel={nowLabel}
-                    timeFormat={calendarTimeFormat}
-                    addEventHref={buildCalendarHref(monthParam(now), { new: key })}
-                    currentUserId={userId}
-                    memberVisuals={memberVisuals}
-                    referenceNow={today}
-                    buildBlockEditHref={(blockId) =>
-                      buildCalendarHref(monthParam(now), { editBlock: blockId })
-                    }
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
+        ) : null}
       </section>
       <PlanningSection>
         <div className="flex flex-col gap-8">

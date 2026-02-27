@@ -44,6 +44,12 @@ This file records high-level decisions and trade-offs. Add dated entries as they
   - Replace manual blocks entirely — rejected as users may want to mark busy time not in their calendar
 - Consequences: Users can connect Google Calendar once and see busy times automatically. Manual blocks remain for ad-hoc unavailability. Color-coded per user for multi-partner visibility. Requires additional env vars (TOKEN_ENCRYPTION_KEY, GOOGLE_* credentials).
 
+## 2026-02-17 - Password reset via signed token + Resend email
+- Context: No password recovery path existed. Beta testers who forget their password require manual DB intervention.
+- Decision: Token-based reset flow. `PasswordResetToken` table stores a 32-byte hex token with 1-hour expiry and single-use enforcement (`usedAt`). API routes at `/api/auth/forgot-password` and `/api/auth/reset-password`. Email sent via Resend API (fetch-based, no SDK). On reset: all existing sessions are deleted so the user must log in fresh. Email address is never leaked — the forgot-password endpoint always returns the same generic message regardless of whether the email exists.
+- Alternatives considered: Magic link login — rejected as it changes the login model. NextAuth credentials — rejected as we have a working custom auth system.
+- Consequences: Requires `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in production. Dev without API key logs the reset URL to the console. Requires `NEXT_PUBLIC_APP_URL` in production for correct link generation.
+
 ## ADR Index
 - ADR-2026-01-30-custom-session-auth.md
 - ADR-2026-01-30-tags-json-string.md
