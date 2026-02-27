@@ -136,12 +136,14 @@ type OnboardingTourProps = {
   spaceId: string;
   forceOpen?: boolean;
   initialStep?: number;
+  autoOpen?: boolean;
 };
 
 export default function OnboardingTour({
   spaceId,
   forceOpen = false,
   initialStep = 0,
+  autoOpen = true,
 }: OnboardingTourProps) {
   const clampedInitialStep = Math.max(0, Math.min(initialStep, steps.length - 1));
   const [isOpen, setIsOpen] = useState(forceOpen);
@@ -173,7 +175,7 @@ export default function OnboardingTour({
   }, [handleComplete]);
 
   useEffect(() => {
-    if (forceOpen) {
+    if (forceOpen || !autoOpen) {
       return;
     }
 
@@ -184,7 +186,7 @@ export default function OnboardingTour({
       const timer = setTimeout(() => setIsOpen(true), 500);
       return () => clearTimeout(timer);
     }
-  }, [forceOpen, spaceId]);
+  }, [forceOpen, spaceId, autoOpen]);
 
   useEffect(() => {
     if (!isOpen) {

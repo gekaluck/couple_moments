@@ -39,6 +39,7 @@ type EventEditModalProps = {
   title: string;
   dateValue: string;
   timeValue: string;
+  timeEndValue: string;
   tagsValue: string;
   descriptionValue: string;
   placeName?: string | null;
@@ -61,6 +62,7 @@ export default function EventEditModal({
   title,
   dateValue,
   timeValue,
+  timeEndValue,
   tagsValue,
   descriptionValue,
   placeName,
@@ -143,15 +145,25 @@ export default function EventEditModal({
             required
           />
         </label>
-        <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
+        <div className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
           Time (optional)
-          <input
-            className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
-            name="time"
-            type="time"
-            defaultValue={timeValue}
-          />
-        </label>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
+              name="time"
+              type="time"
+              defaultValue={timeValue}
+              aria-label="Start time"
+            />
+            <input
+              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
+              name="timeEnd"
+              type="time"
+              defaultValue={timeEndValue}
+              aria-label="End time (optional)"
+            />
+          </div>
+        </div>
         <div className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
           Tags
           <TagInput name="tags" defaultValue={tagsValue} />

@@ -217,11 +217,22 @@ export default function CalendarAddControls({
               onChange={(inputEvent) => setEventDate(inputEvent.target.value)}
               required
             />
-            <input
-              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
-              name="time"
-              type="time"
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+                name="time"
+                type="time"
+                placeholder="Start"
+                aria-label="Start time"
+              />
+              <input
+                className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+                name="timeEnd"
+                type="time"
+                placeholder="End"
+                aria-label="End time (optional)"
+              />
+            </div>
           </div>
           {errors.eventDate ? (
             <p className="text-xs text-[var(--status-warning-text)]" id="event-date-error">

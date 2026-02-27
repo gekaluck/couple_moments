@@ -156,7 +156,7 @@ export default function SpaceNav({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            <div className="flex flex-wrap items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 shadow-[var(--shadow-sm)]">
+            <div className="flex items-center gap-1 overflow-x-auto rounded-full border border-[var(--panel-border)] bg-white/80 p-1 shadow-[var(--shadow-sm)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {items.map((item) => {
                 const isActive = pathname === item.href;
                 return (

@@ -24,13 +24,11 @@ jobs:
 
       - name: Lint
         run: npm run lint
-        continue-on-error: true # Advisory only
 
       - name: Type check
         run: npx tsc --noEmit
-        continue-on-error: true # Advisory only
 
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@localhost:5432/ci' }}

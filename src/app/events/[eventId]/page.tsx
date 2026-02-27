@@ -178,6 +178,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     const rawTime = formData.get("time")?.toString() || "";
     const timeIsSet = rawTime.length > 0;
     const time = timeIsSet ? rawTime : "12:00";
+    const rawTimeEnd = formData.get("timeEnd")?.toString() || "";
     const tags = normalizeTags(formData.get("tags"));
     const placeId = formData.get("placeId")?.toString() || null;
     const placeName = formData.get("placeName")?.toString() || null;
@@ -202,10 +203,13 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       return;
     }
 
+    const dateTimeEnd = rawTimeEnd ? new Date(`${date}T${rawTimeEnd}`) : null;
+
     const event = await updateEvent(eventIdForActions, currentUserId, {
       title,
       description: description || null,
       dateTimeStart,
+      dateTimeEnd: dateTimeEnd && !Number.isNaN(dateTimeEnd.getTime()) ? dateTimeEnd : null,
       timeIsSet,
       tags,
       placeId,
@@ -712,6 +716,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         title={event.title}
         dateValue={formatDateInput(event.dateTimeStart)}
         timeValue={event.timeIsSet ? formatTimeInput(event.dateTimeStart) : ""}
+        timeEndValue={event.timeIsSet && event.dateTimeEnd ? formatTimeInput(event.dateTimeEnd) : ""}
         tagsValue={tagsValue}
         descriptionValue={event.description ?? ""}
         placeId={event.placeId}

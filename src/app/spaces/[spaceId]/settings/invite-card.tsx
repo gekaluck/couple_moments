@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 type InviteCardProps = {
   inviteCode: string;
+  isSpaceComplete?: boolean;
 };
 
 const CopyIcon = () => (
@@ -47,7 +48,7 @@ const ShareIcon = () => (
   </svg>
 );
 
-export default function InviteCard({ inviteCode }: InviteCardProps) {
+export default function InviteCard({ inviteCode, isSpaceComplete = false }: InviteCardProps) {
   const [copied, setCopied] = useState<"link" | "code" | null>(null);
 
   const inviteUrl =
@@ -100,10 +101,12 @@ export default function InviteCard({ inviteCode }: InviteCardProps) {
         </div>
         <div className="flex-1">
           <h3 className="text-base font-semibold text-[var(--text-primary)]">
-            Invite your partner
+            {isSpaceComplete ? "Invite code" : "Invite your partner"}
           </h3>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Share this link with your partner so they can join your space.
+            {isSpaceComplete
+              ? "Your space is full. Share this code if you ever need to re-invite."
+              : "Share this link with your partner so they can join your space."}
           </p>
         </div>
       </div>
