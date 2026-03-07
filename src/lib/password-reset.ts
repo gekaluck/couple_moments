@@ -9,7 +9,7 @@ const TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
  */
 export async function createPasswordResetToken(userId: string): Promise<string> {
   // Invalidate existing tokens for this user before creating a new one.
-  await prisma.passwordResetToken.deleteMany({ where: { userId } });
+  await prisma.passwordResetToken.deleteMany({ where: { userId, usedAt: null } });
 
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_MS);

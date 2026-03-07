@@ -96,5 +96,5 @@ Main entities:
 - `docs/00_current/CONTEXT.md`
 - `docs/00_current/DECISIONS.md`
 - `docs/00_current/rollout_plan.md`
-- `docs/00_current/CLEANUP_PLAN.md`
+- `docs/00_current/PRE_RELEASE_USABILITY_TECH_PLAN.md`
 - `docs/00_current/DEPLOYMENT.md`

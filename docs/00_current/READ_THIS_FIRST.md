@@ -7,7 +7,7 @@ This is the entry point for contributors and agents.
 2. [ARCHITECTURE.md](ARCHITECTURE.md) - boundaries, data flow, and integrations
 3. [DECISIONS.md](DECISIONS.md) - ADR index and decision history
 4. [rollout_plan.md](rollout_plan.md) - active delivery milestones
-5. [CLEANUP_PLAN.md](CLEANUP_PLAN.md) - active multi-phase cleanup/refactor plan
+5. [PRE_RELEASE_USABILITY_TECH_PLAN.md](PRE_RELEASE_USABILITY_TECH_PLAN.md) - pre-release implementation phases and status
 
 ## What each doc is for
 - `CONTEXT.md`: operational working memory for daily development
@@ -15,7 +15,7 @@ This is the entry point for contributors and agents.
 - `DECISIONS.md`: links to ADRs and rationale history
 - `DEPLOYMENT.md`: production setup and release checklist
 - `rollout_plan.md`: milestone progress and backlog status
-- `CLEANUP_PLAN.md`: cleanup scope, sequencing, and acceptance criteria
+- `PRE_RELEASE_USABILITY_TECH_PLAN.md`: implementation details for pre-release usability work
 
 Do not use `docs/90_archive` for current-state decisions unless explicitly requested.
 

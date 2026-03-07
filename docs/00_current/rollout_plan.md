@@ -1,6 +1,6 @@
 # Rollout Plan & Backlog
 
-Updated: 2026-02-17
+Updated: 2026-02-27
 
 ## Status
 
@@ -159,8 +159,8 @@ Set up `playwright.config.ts`, base URL, auth helper (create and seed a test use
 ---
 
 ### I-2 · Add Vercel deployment config
-**Problem:** Vercel is the target platform but no `vercel.json` or build/migration hooks are configured. Database migrations must be run manually before each release.
-**Files to create:** `vercel.json` (if needed for build overrides or regions), document a pre-deploy migration step.
+**Problem:** Vercel was the target platform but deployment defaults were not explicit in-repo.
+**Files touched:** `vercel.json`, `docs/00_current/DEPLOYMENT.md`.
 **Fix:** Consider a `postbuild` or deployment hook that runs `prisma migrate deploy`. Alternatively, document a release runbook in `DEPLOYMENT.md` for the Vercel-specific flow.
 **Acceptance:** Deployments are repeatable and migration step is not manual-only.
 
@@ -226,7 +226,7 @@ Set up `playwright.config.ts`, base URL, auth helper (create and seed a test use
 | U-1 | Event end time on create/edit | completed |
 | U-2 | Broken idea anchor links | completed |
 | U-3 | Invite code post-partner | completed |
-| U-4 | Memories search + filter | pending |
+| U-4 | Memories search + filter | completed |
 | U-5 | Activity feed filter | pending |
 | U-6 | Calendar subtitle copy | completed |
 | U-7 | Onboarding tour persistence | completed |
@@ -234,9 +234,9 @@ Set up `playwright.config.ts`, base URL, auth helper (create and seed a test use
 | T-2 | Core planning flow tests | pending |
 | T-3 | Playwright config + helpers | pending |
 | I-1 | CI lint/type-check blocking | completed |
-| I-2 | Vercel deployment config | pending |
+| I-2 | Vercel deployment config | completed |
 | I-3 | Remove prisma/dev.db | completed |
 | D-1 | Extract place field parser | pending |
 | D-2 | Decompose calendar/page.tsx | pending |
 | D-3 | Decompose events/page.tsx | pending |
-| D-4 | Audit SESSION_SECRET | pending |
+| D-4 | Audit SESSION_SECRET | completed |
