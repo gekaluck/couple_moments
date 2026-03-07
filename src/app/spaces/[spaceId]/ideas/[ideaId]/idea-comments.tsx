@@ -4,12 +4,12 @@ import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
+import LocalTime from "@/components/time/LocalTime";
 import {
   CREATOR_ACCENTS,
   CreatorVisualMap,
   getAvatarGradient,
 } from "@/lib/creator-colors";
-import { formatTimestamp } from "@/lib/formatters";
 
 type Comment = {
   id: string;
@@ -165,7 +165,18 @@ export default function IdeaComments({
                       <span className="font-semibold text-[var(--text-primary)]">
                         {authorName}
                       </span>
-                      <span>- {formatTimestamp(comment.createdAt)}</span>
+                      <span>
+                        -{" "}
+                        <LocalTime
+                          options={{
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          }}
+                          value={comment.createdAt}
+                        />
+                      </span>
                     </div>
                     {isOwnComment && !isOptimistic ? (
                       <button

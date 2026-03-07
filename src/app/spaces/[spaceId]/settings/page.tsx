@@ -7,6 +7,7 @@ import {
   leaveCoupleSpace,
   listSpaceMembers,
   removePartnerMembership,
+  updateCoupleSpaceName,
   updateMembershipAppearance,
 } from "@/lib/couple-spaces";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
 import MutationToast from "@/components/ui/MutationToast";
+import LocalTime from "@/components/time/LocalTime";
 
 import InviteCard from "./invite-card";
 import MembershipActions from "./membership-actions";
@@ -127,6 +129,22 @@ export default async function SettingsPage({ params }: PageProps) {
     );
   }
 
+  async function handleSpaceName(formData: FormData) {
+    "use server";
+    const currentUserId = await requireUserId();
+    const name = formData.get("spaceName")?.toString().trim() ?? "";
+
+    if (!name) {
+      return;
+    }
+
+    await updateCoupleSpaceName(spaceIdForActions, currentUserId, name);
+    revalidatePath(`/spaces/${spaceIdForActions}`, "layout");
+    redirect(
+      `/spaces/${spaceIdForActions}/settings?toast=${encodeURIComponent("space-name-saved")}`,
+    );
+  }
+
   async function handleRemovePartner() {
     "use server";
     const currentUserId = await requireUserId();
@@ -181,6 +199,7 @@ export default async function SettingsPage({ params }: PageProps) {
       <MutationToast
         messages={{
           "profile-style-saved": "Profile style updated.",
+          "space-name-saved": "Space name updated.",
           "week-start-saved": "Calendar week start updated.",
           "time-format-saved": "Time format updated.",
         }}
@@ -347,21 +366,35 @@ export default async function SettingsPage({ params }: PageProps) {
                 <span className="block text-xs uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
                   Space name
                 </span>
-                <span className="mt-1 block font-semibold text-[var(--text-primary)]">
-                  {space.name || "Our Space"}
-                </span>
+                <form action={handleSpaceName} className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <input
+                    type="text"
+                    name="spaceName"
+                    defaultValue={space.name || "Our Space"}
+                    maxLength={80}
+                    className="w-full rounded-xl border border-[var(--panel-border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--text-primary)] outline-none transition focus:border-[var(--action-primary)]"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--action-primary-strong)]"
+                  >
+                    Save name
+                  </button>
+                </form>
               </div>
               <div className="rounded-xl border border-[var(--panel-border)] bg-white/80 px-4 py-3">
                 <span className="block text-xs uppercase tracking-[0.1em] text-[var(--text-tertiary)]">
                   Created
                 </span>
-                <span className="mt-1 block font-semibold text-[var(--text-primary)]">
-                  {space.createdAt.toLocaleDateString("en-US", {
+                <LocalTime
+                  className="mt-1 block font-semibold text-[var(--text-primary)]"
+                  options={{
                     month: "long",
                     day: "numeric",
                     year: "numeric",
-                  })}
-                </span>
+                  }}
+                  value={space.createdAt}
+                />
               </div>
               <div className="rounded-xl border border-[var(--panel-border)] bg-white/80 px-4 py-3">
                 <span className="block text-xs uppercase tracking-[0.1em] text-[var(--text-tertiary)]">

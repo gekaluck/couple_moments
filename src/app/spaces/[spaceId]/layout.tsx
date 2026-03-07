@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import { listEventsForSpace } from "@/lib/events";
-import { formatEventTime, resolveCalendarTimeFormat } from "@/lib/calendar";
+import { resolveCalendarTimeFormat } from "@/lib/calendar";
 import BetaNoticeBar from "@/components/beta/BetaNoticeBar";
 import SpaceNav from "./space-nav";
 
@@ -50,10 +50,6 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
     to: endOfToday,
   });
   const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
-  const todayDateLabel = today.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
   const truncate = (value: string, maxLength: number) => {
     if (value.length <= maxLength) {
       return value;
@@ -64,26 +60,25 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
     if (todayEvents.length === 1) {
       const event = todayEvents[0];
       return {
-        text: `${truncate(event.title, 24)}${
-          event.timeIsSet
-            ? ` at ${formatEventTime(event.dateTimeStart, calendarTimeFormat)}`
-            : ""
-        }`,
+        label: truncate(event.title, 24),
         href: `/events/${event.id}`,
         hasPlans: true,
+        eventStartAt: event.timeIsSet ? event.dateTimeStart.toISOString() : null,
       };
     }
     if (todayEvents.length > 1) {
       return {
-        text: `${todayEvents.length} plans today`,
+        label: `${todayEvents.length} plans today`,
         href: `/spaces/${space.id}/calendar?month=${monthParam}`,
         hasPlans: true,
+        eventStartAt: null,
       };
     }
     return {
-      text: "Nothing planned",
+      label: "Nothing planned",
       href: `/spaces/${space.id}/calendar?month=${monthParam}`,
       hasPlans: false,
+      eventStartAt: null,
     };
   })();
 
@@ -92,10 +87,12 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
       <SpaceNav
         spaceId={space.id}
         spaceName={space.name || "Your space"}
-        todayDateLabel={todayDateLabel}
-        todaySummaryText={todaySummary.text}
+        todayDateIso={today.toISOString()}
+        todaySummaryLabel={todaySummary.label}
         todaySummaryHref={todaySummary.href}
         todayHasPlans={todaySummary.hasPlans}
+        todaySummaryEventStartIso={todaySummary.eventStartAt}
+        timeFormat={calendarTimeFormat}
       />
       <div className="mx-auto mt-4 w-full max-w-[1220px] px-4 md:px-6">
         <BetaNoticeBar spaceId={space.id} />

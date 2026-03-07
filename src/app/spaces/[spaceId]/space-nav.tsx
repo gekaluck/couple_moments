@@ -1,9 +1,12 @@
-"use client";
+﻿"use client";
 
 import { type FocusEventHandler, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import type { CalendarTimeFormat } from "@/lib/calendar";
+import LocalTime from "@/components/time/LocalTime";
 
 type NavItem = {
   id: string;
@@ -14,10 +17,12 @@ type NavItem = {
 type SpaceNavProps = {
   spaceId: string;
   spaceName: string;
-  todayDateLabel: string;
-  todaySummaryText: string;
+  todayDateIso: string;
+  todaySummaryLabel: string;
   todaySummaryHref: string;
   todayHasPlans?: boolean;
+  todaySummaryEventStartIso?: string | null;
+  timeFormat?: CalendarTimeFormat;
 };
 
 const navItems = (spaceId: string): NavItem[] => [
@@ -31,10 +36,12 @@ const navItems = (spaceId: string): NavItem[] => [
 export default function SpaceNav({
   spaceId,
   spaceName,
-  todayDateLabel,
-  todaySummaryText,
+  todayDateIso,
+  todaySummaryLabel,
   todaySummaryHref,
   todayHasPlans = false,
+  todaySummaryEventStartIso = null,
+  timeFormat = "24h",
 }: SpaceNavProps) {
   const pathname = usePathname();
   const items = navItems(spaceId);
@@ -141,14 +148,28 @@ export default function SpaceNav({
                   href={todaySummaryHref}
                   className="inline-flex max-w-[280px] items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 px-2 py-0.5 normal-case tracking-normal text-[11px] transition hover:border-rose-300"
                 >
-                  <span className="text-[var(--text-muted)]">{todayDateLabel}</span>
+                  <LocalTime
+                    className="text-[var(--text-muted)]"
+                    options={{ month: "short", day: "numeric" }}
+                    value={todayDateIso}
+                  />
                   <span className="text-[var(--text-tertiary)]">·</span>
                   <span
                     className={`truncate ${
                       todayHasPlans ? "text-[var(--action-primary)]" : "text-[var(--text-secondary)]"
                     }`}
                   >
-                    {todaySummaryText}
+                    {todaySummaryLabel}
+                    {todaySummaryEventStartIso ? (
+                      <>
+                        {" at "}
+                        <LocalTime
+                          options={{ hour: "numeric", minute: "2-digit" }}
+                          timeFormat={timeFormat}
+                          value={todaySummaryEventStartIso}
+                        />
+                      </>
+                    ) : null}
                   </span>
                 </Link>
               </div>
@@ -175,89 +196,95 @@ export default function SpaceNav({
               })}
             </div>
 
-            <div className="relative" ref={createMenuRef} onBlur={handleCreateBlur}>
-              <button
-                ref={createButtonRef}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                  isCreateOpen
-                    ? "border-[var(--action-primary)] bg-[var(--accent-soft)] text-[var(--accent-strong)] shadow-[var(--shadow-sm)]"
-                    : "border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] hover:border-[var(--border-medium)] hover:bg-white"
-                }`}
-                type="button"
-                aria-label="Create new item"
-                aria-expanded={isCreateOpen}
-                aria-haspopup="menu"
-                aria-controls="create-nav-menu"
-                onClick={() => setIsCreateOpen((prev) => !prev)}
-                onKeyDown={(event) => {
-                  if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    setIsCreateOpen(true);
-                  }
-                }}
-              >
-                + Create
-              </button>
-              {isCreateOpen ? (
-                <div
-                  id="create-nav-menu"
-                  role="menu"
-                  aria-label="Create options"
-                  className="animate-scale-in absolute right-0 top-[calc(100%+10px)] z-[70] w-44 origin-top-right rounded-2xl border border-[var(--panel-border)] bg-white/95 p-2 shadow-[var(--shadow-md)] backdrop-blur-xl"
+            <div className="flex items-center gap-2 lg:gap-3">
+              <div className="relative" ref={createMenuRef} onBlur={handleCreateBlur}>
+                <button
+                  ref={createButtonRef}
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    isCreateOpen
+                      ? "border-[var(--action-primary)] bg-[var(--accent-soft)] text-[var(--accent-strong)] shadow-[var(--shadow-sm)]"
+                      : "border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] hover:border-[var(--border-medium)] hover:bg-white"
+                  }`}
+                  type="button"
+                  aria-label="Create new item"
+                  aria-expanded={isCreateOpen}
+                  aria-haspopup="menu"
+                  aria-controls="create-nav-menu"
+                  onClick={() => setIsCreateOpen((prev) => !prev)}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setIsCreateOpen(true);
+                    }
+                  }}
                 >
-                  {createItems.map((item, index) => (
-                    <Link
-                      key={item.id}
-                      ref={(element) => {
-                        createItemRefs.current[index] = element;
-                      }}
-                      role="menuitem"
-                      className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/30 ${item.textClassName} ${index > 0 ? "mt-1" : ""}`}
-                      href={item.href}
-                      onClick={() => setIsCreateOpen(false)}
-                      onKeyDown={(event) => {
-                        if (event.key === "ArrowDown") {
-                          event.preventDefault();
-                          focusCreateItem(index + 1);
-                        }
-                        if (event.key === "ArrowUp") {
-                          event.preventDefault();
-                          focusCreateItem(index - 1);
-                        }
-                        if (event.key === "Home") {
-                          event.preventDefault();
-                          focusCreateItem(0);
-                        }
-                        if (event.key === "End") {
-                          event.preventDefault();
-                          focusCreateItem(createItems.length - 1);
-                        }
-                        if (event.key === "Escape") {
-                          event.preventDefault();
-                          setIsCreateOpen(false);
-                          createButtonRef.current?.focus();
-                        }
-                      }}
-                    >
-                      <span>{item.label}</span>
-                      <span className={`h-2 w-2 rounded-full ${item.dotClassName}`} />
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+                  + Create
+                </button>
+                {isCreateOpen ? (
+                  <div
+                    id="create-nav-menu"
+                    role="menu"
+                    aria-label="Create options"
+                    className="animate-scale-in absolute right-0 top-[calc(100%+10px)] z-[70] w-44 origin-top-right rounded-2xl border border-[var(--panel-border)] bg-white/95 p-2 shadow-[var(--shadow-md)] backdrop-blur-xl"
+                  >
+                    {createItems.map((item, index) => (
+                      <Link
+                        key={item.id}
+                        ref={(element) => {
+                          createItemRefs.current[index] = element;
+                        }}
+                        role="menuitem"
+                        className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/30 ${item.textClassName} ${index > 0 ? "mt-1" : ""}`}
+                        href={item.href}
+                        onClick={() => setIsCreateOpen(false)}
+                        onKeyDown={(event) => {
+                          if (event.key === "ArrowDown") {
+                            event.preventDefault();
+                            focusCreateItem(index + 1);
+                          }
+                          if (event.key === "ArrowUp") {
+                            event.preventDefault();
+                            focusCreateItem(index - 1);
+                          }
+                          if (event.key === "Home") {
+                            event.preventDefault();
+                            focusCreateItem(0);
+                          }
+                          if (event.key === "End") {
+                            event.preventDefault();
+                            focusCreateItem(createItems.length - 1);
+                          }
+                          if (event.key === "Escape") {
+                            event.preventDefault();
+                            setIsCreateOpen(false);
+                            createButtonRef.current?.focus();
+                          }
+                        }}
+                      >
+                        <span>{item.label}</span>
+                        <span className={`h-2 w-2 rounded-full ${item.dotClassName}`} />
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
 
-            <form action="/api/auth/logout" method="post">
-              <button
-                className="rounded-full border border-[var(--border-medium)] bg-white/65 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)]"
-                type="submit"
-              >
-                Log out
-              </button>
-            </form>
+              <div className="hidden h-7 w-px bg-[var(--panel-border)] lg:block" />
+
+              <form action="/api/auth/logout" method="post" className="lg:ml-1">
+                <button
+                  className="rounded-full border border-[var(--border-medium)] bg-white/65 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)]"
+                  type="submit"
+                >
+                  Log out
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </nav>
   );
 }
+
+

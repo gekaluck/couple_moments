@@ -6,7 +6,6 @@ import { cookies } from "next/headers";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import {
-  formatEventTime,
   dateKey,
   formatMonthTitle,
   getMonthGrid,
@@ -14,6 +13,7 @@ import {
 } from "@/lib/calendar";
 import {
   createAvailabilityBlock,
+  deleteAvailabilityBlock,
   updateAvailabilityBlock,
 } from "@/lib/availability";
 import {
@@ -280,6 +280,18 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
   }
 
+  async function handleDeleteBlock(blockId: string) {
+    "use server";
+    const currentUserId = await requireUserId();
+
+    if (!blockId) {
+      throw new Error("Missing availability block.");
+    }
+
+    await deleteAvailabilityBlock(blockId, currentUserId);
+    revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
+  }
+
   async function handleCreateIdea(formData: FormData) {
     "use server";
     const currentUserId = await requireUserId();
@@ -514,7 +526,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const dayLabels = calendarWeekStart === "monday"
     ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const nowLabel = formatEventTime(today, calendarTimeFormat);
   const monthParam = (date: Date) =>
     `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, "0")}`;
   const buildCalendarHref = (monthValue: string, extra?: Record<string, string>) => {
@@ -656,18 +667,22 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             </a>
           </div>
         </div>
-        <div className="calendar-legend mt-3">
-          <span className="legend-item">
-            <span className="legend-dot legend-dot--plan" />
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-rose-500" />
             Your plans
           </span>
-          <span className="legend-item">
-            <span className="legend-dot legend-dot--memory" />
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[var(--calendar-memory-dot)]" />
             Memories
           </span>
-          <span className="legend-item">
-            <span className="legend-dot legend-dot--busy" />
-            Busy time
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" />
+            Manual busy
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[var(--panel-border)] px-2 py-1">
+            <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" />
+            Google busy
           </span>
         </div>
 
@@ -705,7 +720,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                 isCompact={isCompact}
                 events={dayEvents}
                 blocks={dayBlocks}
-                nowLabel={nowLabel}
                 timeFormat={calendarTimeFormat}
                 addEventHref={buildCalendarHref(monthParam(now), { new: key })}
                 currentUserId={userId}
@@ -772,6 +786,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         isOpen={Boolean(editBlock)}
         onCloseHref={buildCalendarHref(monthParam(now))}
         onSubmit={handleUpdateBlock}
+        onDelete={handleDeleteBlock}
         block={
           editBlock
             ? {

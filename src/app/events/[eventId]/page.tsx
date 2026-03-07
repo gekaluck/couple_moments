@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -15,7 +15,7 @@ import { normalizeTags, parseTags } from "@/lib/tags";
 import { parseJsonStringArray, sanitizeHttpUrl } from "@/lib/parsers";
 import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
 import { getInitials } from "@/lib/formatters";
-import { formatEventTime, resolveCalendarTimeFormat } from "@/lib/calendar";
+import { resolveCalendarTimeFormat } from "@/lib/calendar";
 
 import { loadEventBaseData, loadEventDetailData } from "./page-data";
 import EventComments from "./event-comments";
@@ -24,6 +24,7 @@ import EventRating from "./event-rating";
 import HeartRating from "@/components/ui/HeartRating";
 import ConfirmForm from "@/components/ConfirmForm";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
+import LocalTime from "@/components/time/LocalTime";
 
 const PencilIcon = () => (
   <svg
@@ -341,21 +342,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     creatorVisual?.initials || getInitials(creator?.name ?? null, creator?.email ?? creatorName);
   const ratingsByUserId = new Map(allRatings.map((rating) => [rating.userId, rating.value]));
   const partnerMembers = members.filter((member) => member.userId !== userId);
-  const eventDateLabel = event.dateTimeStart.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-  const startTimeLabel = formatEventTime(event.dateTimeStart, calendarTimeFormat);
-  const endTimeLabel = event.dateTimeEnd
-    ? formatEventTime(event.dateTimeEnd, calendarTimeFormat)
-    : null;
-  const eventTimeLabel = event.timeIsSet
-    ? endTimeLabel && endTimeLabel !== startTimeLabel
-      ? `${startTimeLabel} - ${endTimeLabel}`
-      : startTimeLabel
-    : "Anytime";
   const statusLabel = isPast ? "Past" : "Upcoming";
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const hasPlace = Boolean(event.placeName || event.placeAddress);
@@ -402,7 +388,37 @@ export default async function EventPage({ params, searchParams }: PageProps) {
               {event.title}
             </h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              {eventDateLabel} · {eventTimeLabel}
+              <LocalTime
+                options={{
+                  weekday: "short",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                }}
+                value={event.dateTimeStart}
+              />
+              <span> · </span>
+              {event.timeIsSet ? (
+                <>
+                  <LocalTime
+                    options={{ hour: "numeric", minute: "2-digit" }}
+                    timeFormat={calendarTimeFormat}
+                    value={event.dateTimeStart}
+                  />
+                  {event.dateTimeEnd ? (
+                    <>
+                      <span> - </span>
+                      <LocalTime
+                        options={{ hour: "numeric", minute: "2-digit" }}
+                        timeFormat={calendarTimeFormat}
+                        value={event.dateTimeEnd}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "Anytime"
+              )}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -477,12 +493,43 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
             <div className="event-details-row">
               <span className="event-details-label">Date</span>
-              <span className="event-details-value">{eventDateLabel}</span>
+              <LocalTime
+                className="event-details-value"
+                options={{
+                  weekday: "short",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                }}
+                value={event.dateTimeStart}
+              />
             </div>
 
             <div className="event-details-row">
               <span className="event-details-label">Time</span>
-              <span className="event-details-value">{eventTimeLabel}</span>
+              <span className="event-details-value">
+                {event.timeIsSet ? (
+                  <>
+                    <LocalTime
+                      options={{ hour: "numeric", minute: "2-digit" }}
+                      timeFormat={calendarTimeFormat}
+                      value={event.dateTimeStart}
+                    />
+                    {event.dateTimeEnd ? (
+                      <>
+                        <span> - </span>
+                        <LocalTime
+                          options={{ hour: "numeric", minute: "2-digit" }}
+                          timeFormat={calendarTimeFormat}
+                          value={event.dateTimeEnd}
+                        />
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  "Anytime"
+                )}
+              </span>
             </div>
 
             <div className="event-details-row">
@@ -740,5 +787,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     </div>
   );
 }
+
+
 
 

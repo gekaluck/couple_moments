@@ -101,6 +101,7 @@ export default function CalendarAddControls({
     setErrors({});
     setPlace(null);
     setEventDate(undefined);
+    clearModalParams();
   };
 
   const modalTitle = prefillData ? "Do this again" : "New event";
@@ -179,7 +180,6 @@ export default function CalendarAddControls({
                   toast.info(result.googleSync.info);
                 }
                 closePanel();
-                clearModalParams();
                 router.refresh();
               } catch {
                 toast.error("Failed to save event");
@@ -361,7 +361,6 @@ export default function CalendarAddControls({
                 await onCreateBlock(formData);
                 toast.success("Availability blocked!");
                 closePanel();
-                clearModalParams();
                 router.refresh();
               } catch (error) {
                 toast.error(

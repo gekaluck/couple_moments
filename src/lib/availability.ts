@@ -112,3 +112,21 @@ export async function updateAvailabilityBlock(
     },
   });
 }
+
+export async function deleteAvailabilityBlock(blockId: string, userId: string) {
+  const existing = await prisma.availabilityBlock.findFirst({
+    where: {
+      id: blockId,
+      createdByUserId: userId,
+    },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    throw new Error("Not authorized");
+  }
+
+  await prisma.availabilityBlock.delete({
+    where: { id: blockId },
+  });
+}

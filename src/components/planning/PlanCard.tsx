@@ -13,8 +13,8 @@ import {
 import { toast } from "sonner";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
+import LocalTime from "@/components/time/LocalTime";
 import Card, { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
-import { formatEventDateTime } from "@/lib/formatters";
 import { CalendarTimeFormat } from "@/lib/calendar";
 
 type GoogleSyncFeedback = {
@@ -158,7 +158,23 @@ export default function PlanCard({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
               <CalendarClock className="h-4 w-4 text-rose-500" />
-              {formatEventDateTime(dateTimeStart, timeIsSet, timeFormat)}
+              <LocalTime
+                options={
+                  timeIsSet
+                    ? {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      }
+                    : {
+                        month: "short",
+                        day: "numeric",
+                      }
+                }
+                timeFormat={timeFormat}
+                value={dateTimeStart}
+              />
               {!timeIsSet ? (
                 <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
                   Anytime

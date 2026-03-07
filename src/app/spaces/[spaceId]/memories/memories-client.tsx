@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import EmptyState from "@/components/ui/EmptyState";
+import LocalTime from "@/components/time/LocalTime";
 
 const CalendarIcon = () => (
   <svg
@@ -136,15 +137,6 @@ function MemoryCover({ coverUrl, fallbackCoverUrl, title, gradient }: MemoryCove
       )}
     </div>
   );
-}
-
-function formatDate(value: string) {
-  const date = new Date(value);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 const TAG_GRADIENTS: Record<string, string> = {
@@ -350,9 +342,15 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                     {event.title}
                   </h2>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] shadow-sm">
-                      {formatDate(event.dateTimeStart)}
-                    </span>
+                    <LocalTime
+                      className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] shadow-sm"
+                      options={{
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }}
+                      value={event.dateTimeStart}
+                    />
                   </div>
                 </div>
                 {event.description ? (
