@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
-import { listActivityForSpace } from "@/lib/activity";
+import { countActivityForSpace, listActivityForSpace } from "@/lib/activity";
 import { resolveCalendarTimeFormat } from "@/lib/calendar";
 import EmptyState from "@/components/ui/EmptyState";
 import ActivityFeed from "./activity-feed";
@@ -30,14 +30,17 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
     redirect("/spaces/onboarding");
   }
 
-  const activity = await listActivityForSpace(space.id);
-  const totalPages = Math.max(1, Math.ceil(activity.length / pageSize));
+  const totalCount = await countActivityForSpace(space.id);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const currentPage = Math.min(page, totalPages);
   const startIndex = (currentPage - 1) * pageSize;
-  const pageActivity = activity.slice(startIndex, startIndex + pageSize);
+  const pageActivity = await listActivityForSpace(space.id, {
+    skip: startIndex,
+    take: pageSize,
+  });
   const hasNextPage = currentPage < totalPages;
-  const pageStartLabel = activity.length === 0 ? 0 : startIndex + 1;
-  const pageEndLabel = Math.min(startIndex + pageSize, activity.length);
+  const pageStartLabel = totalCount === 0 ? 0 : startIndex + 1;
+  const pageEndLabel = Math.min(startIndex + pageSize, totalCount);
 
   return (
     <>
@@ -51,7 +54,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
           <span className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1">
-            {activity.length} actions
+            {totalCount} actions
           </span>
           <span className="rounded-full border border-[var(--panel-border)] bg-white/90 px-2.5 py-1">
             Page {currentPage} / {totalPages}
@@ -59,7 +62,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
           <span className="rounded-full border border-rose-200 bg-rose-100 px-2.5 py-1 text-rose-700">
             Shared timeline
           </span>
-          {activity.length > 0 ? (
+          {totalCount > 0 ? (
             <span className="rounded-full border border-[var(--panel-border)] bg-white/90 px-2.5 py-1 normal-case tracking-normal">
               Showing {pageStartLabel}-{pageEndLabel}
             </span>
@@ -67,7 +70,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
         </div>
       </section>
       <section className="flex flex-col gap-6">
-        {activity.length === 0 ? (
+        {totalCount === 0 ? (
           <div className="surface p-6">
             <EmptyState
               variant="activity"
@@ -91,7 +94,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
           }))}
           timeFormat={calendarTimeFormat}
         />
-        {activity.length > 0 ? (
+        {totalCount > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-xs text-[var(--text-tertiary)]">
               Page {currentPage} of {totalPages}

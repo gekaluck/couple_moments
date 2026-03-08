@@ -366,6 +366,28 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     mapsKey && event.placeLat && event.placeLng
       ? `https://maps.googleapis.com/maps/api/staticmap?center=${event.placeLat},${event.placeLng}&zoom=14&size=700x320&markers=color:0xdb2777%7C${event.placeLat},${event.placeLng}&key=${mapsKey}`
       : null;
+  const renderEventTime = () =>
+    event.timeIsSet ? (
+      <>
+        <LocalTime
+          options={{ hour: "numeric", minute: "2-digit" }}
+          timeFormat={calendarTimeFormat}
+          value={event.dateTimeStart}
+        />
+        {event.dateTimeEnd ? (
+          <>
+            <span> - </span>
+            <LocalTime
+              options={{ hour: "numeric", minute: "2-digit" }}
+              timeFormat={calendarTimeFormat}
+              value={event.dateTimeEnd}
+            />
+          </>
+        ) : null}
+      </>
+    ) : (
+      "Anytime"
+    );
 
   return (
     <div className="min-h-screen page-enter">
@@ -398,27 +420,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                 value={event.dateTimeStart}
               />
               <span> · </span>
-              {event.timeIsSet ? (
-                <>
-                  <LocalTime
-                    options={{ hour: "numeric", minute: "2-digit" }}
-                    timeFormat={calendarTimeFormat}
-                    value={event.dateTimeStart}
-                  />
-                  {event.dateTimeEnd ? (
-                    <>
-                      <span> - </span>
-                      <LocalTime
-                        options={{ hour: "numeric", minute: "2-digit" }}
-                        timeFormat={calendarTimeFormat}
-                        value={event.dateTimeEnd}
-                      />
-                    </>
-                  ) : null}
-                </>
-              ) : (
-                "Anytime"
-              )}
+              {renderEventTime()}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -507,29 +509,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
             <div className="event-details-row">
               <span className="event-details-label">Time</span>
-              <span className="event-details-value">
-                {event.timeIsSet ? (
-                  <>
-                    <LocalTime
-                      options={{ hour: "numeric", minute: "2-digit" }}
-                      timeFormat={calendarTimeFormat}
-                      value={event.dateTimeStart}
-                    />
-                    {event.dateTimeEnd ? (
-                      <>
-                        <span> - </span>
-                        <LocalTime
-                          options={{ hour: "numeric", minute: "2-digit" }}
-                          timeFormat={calendarTimeFormat}
-                          value={event.dateTimeEnd}
-                        />
-                      </>
-                    ) : null}
-                  </>
-                ) : (
-                  "Anytime"
-                )}
-              </span>
+              <span className="event-details-value">{renderEventTime()}</span>
             </div>
 
             <div className="event-details-row">
