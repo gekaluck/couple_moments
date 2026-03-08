@@ -1,16 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
 import Modal from "@/components/Modal";
 
 type AvailabilityBlockModalProps = {
   isOpen: boolean;
   onCloseHref: string;
   onSubmit: (formData: FormData) => Promise<void>;
+  onDelete: (blockId: string) => Promise<void>;
   block: {
     id: string;
     title: string;
@@ -24,10 +26,12 @@ export default function AvailabilityBlockModal({
   isOpen,
   onCloseHref,
   onSubmit,
+  onDelete,
   block,
 }: AvailabilityBlockModalProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   if (!block) {
     return null;
@@ -113,6 +117,38 @@ export default function AvailabilityBlockModal({
           </button>
         </div>
       </form>
+      <div className="mt-6 rounded-2xl border border-[#e6c9c4] bg-[#f9e5e2] p-4">
+        <h3 className="text-sm font-semibold text-[#a1493d]">Danger zone</h3>
+        <p className="mt-2 text-sm text-[#a1493d]">
+          Deleting removes this unavailable block from your shared calendar.
+        </p>
+        <button
+          className="mt-4 rounded-full border border-[#a1493d] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#a1493d] transition hover:bg-[#f2d6d1]"
+          type="button"
+          onClick={() => setIsDeleteOpen(true)}
+        >
+          Delete block
+        </button>
+      </div>
+
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={async () => {
+          try {
+            await onDelete(block.id);
+            toast.success("Unavailable time deleted.");
+            router.push(onCloseHref);
+            router.refresh();
+          } catch {
+            toast.error("Failed to delete unavailable time");
+          }
+        }}
+        title="Delete unavailable time"
+        message="Are you sure you want to delete this unavailable time block?"
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </Modal>
   );
 }

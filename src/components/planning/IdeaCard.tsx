@@ -11,8 +11,9 @@ import { toast } from "sonner";
 import TagBadge from "@/components/ui/TagBadge";
 import Button from "@/components/ui/Button";
 import Card, { CardDescription, CardFooter, CardTitle } from "@/components/ui/Card";
+import { LocalTimeAgo } from "@/components/time/LocalTime";
 
-import { formatTimeAgo, getInitials } from "@/lib/formatters";
+import { getInitials } from "@/lib/formatters";
 import { sanitizeHttpUrl } from "@/lib/parsers";
 import {
   CREATOR_ACCENTS,
@@ -167,7 +168,7 @@ export default function IdeaCard({
           ) : null}
           <CardFooter className="mt-3 justify-start text-xs text-[var(--text-tertiary)]">
             <span>
-              Created {formatTimeAgo(idea.createdAt)} by{" "}
+              Created <LocalTimeAgo value={idea.createdAt} /> by{" "}
               <span className="font-semibold text-[var(--text-primary)]">
                 {memberVisuals[idea.createdByUserId]?.displayName ||
                   idea.createdBy.name ||
@@ -257,7 +258,7 @@ export default function IdeaCard({
                         {authorName}
                       </span>
                       <span className="mx-2">/</span>
-                      {formatTimeAgo(comment.createdAt)}
+                      <LocalTimeAgo value={comment.createdAt} />
                     </p>
                     <p className="mt-1 text-sm text-[var(--text-primary)]">
                       {comment.body}

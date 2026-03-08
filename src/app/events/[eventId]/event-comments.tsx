@@ -5,12 +5,13 @@ import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
+import LocalTime from "@/components/time/LocalTime";
 import {
   CREATOR_ACCENTS,
   CreatorVisualMap,
   getAvatarGradient,
 } from "@/lib/creator-colors";
-import { formatTimestamp, getInitials } from "@/lib/formatters";
+import { getInitials } from "@/lib/formatters";
 import { CalendarTimeFormat } from "@/lib/calendar";
 
 type Comment = {
@@ -193,7 +194,19 @@ export default function EventComments({
                       <span className="font-semibold text-[var(--text-primary)]">
                         {authorName}
                       </span>
-                      <span>- {formatTimestamp(comment.createdAt, timeFormat)}</span>
+                      <span>
+                        -{" "}
+                        <LocalTime
+                          options={{
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          }}
+                          timeFormat={timeFormat}
+                          value={comment.createdAt}
+                        />
+                      </span>
                     </div>
                     {isOwnComment && !isOptimistic ? (
                       <button

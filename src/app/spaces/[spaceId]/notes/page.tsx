@@ -9,31 +9,20 @@ import {
   getAvatarGradient,
 } from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
-import { formatTimestamp, getInitials } from "@/lib/formatters";
+import { getInitials } from "@/lib/formatters";
 import { resolveCalendarTimeFormat } from "@/lib/calendar";
 
 import ConfirmForm from "@/components/ConfirmForm";
 import EmptyState from "@/components/ui/EmptyState";
 import MutationToast from "@/components/ui/MutationToast";
+import NotesFilters from "./notes-filters";
 import {
   countNotesForSpace,
   createNoteForSpace,
   deleteNote,
   listNotesForSpace,
 } from "@/lib/notes";
-
-const SearchIcon = () => (
-  <svg
-    aria-hidden="true"
-    className="h-4 w-4"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <circle cx="11" cy="11" r="7" strokeWidth="1.5" />
-    <path d="m20 20-3.5-3.5" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
+import LocalTime from "@/components/time/LocalTime";
 
 const TrashIcon = () => (
   <svg
@@ -170,37 +159,10 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
               </span>
             </div>
           </div>
-          <form
-            className="grid w-full max-w-xl gap-2 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-2 md:grid-cols-[minmax(160px,auto),1fr]"
-            method="get"
-          >
-            <input type="hidden" name="page" value="1" />
-            <div className="relative flex h-10 min-w-[150px] items-center">
-              <select
-                className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white px-4 text-sm font-medium leading-none text-[var(--text-primary)] shadow-sm outline-none transition focus:border-[var(--accent)]"
-                name="type"
-                defaultValue={filter}
-              >
-                <option value="all">All</option>
-                <option value="free">Free notes</option>
-                <option value="event">Linked to events</option>
-              </select>
-            </div>
-            <div className="relative flex h-10 flex-1 items-center">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
-                <SearchIcon />
-              </span>
-              <input
-                className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white pl-9 pr-4 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none transition focus:border-[var(--accent)]"
-                name="q"
-                placeholder="Search notes..."
-                defaultValue={query}
-              />
-            </div>
-            <button type="submit" className="sr-only">
-              Search
-            </button>
-          </form>
+          <NotesFilters
+            initialQuery={query}
+            initialFilter={filter === "free" || filter === "event" ? filter : "all"}
+          />
         </div>
         <form className="mt-4 flex flex-col gap-3 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3" action={handleCreate}>
           <div className="rounded-2xl bg-[var(--panel-border)] p-px transition focus-within:bg-[var(--action-primary)]">
@@ -273,7 +235,16 @@ export default async function NotesPage({ params, searchParams }: PageProps) {
                         {authorName}
                       </span>
                       <span>/</span>
-                      <span>{formatTimestamp(note.createdAt, calendarTimeFormat)}</span>
+                      <LocalTime
+                        options={{
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        }}
+                        timeFormat={calendarTimeFormat}
+                        value={note.createdAt}
+                      />
                       <span>/</span>
                       <span className={NOTE_BADGE_CLASS}>
                         {metadataLabel}

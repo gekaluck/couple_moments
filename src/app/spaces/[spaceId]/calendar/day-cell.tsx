@@ -1,8 +1,10 @@
 import Link from "next/link";
 
-import EventBubble from "./event-bubble";
-import { CalendarTimeFormat, formatEventTime } from "@/lib/calendar";
+import { CalendarTimeFormat } from "@/lib/calendar";
 import { CreatorVisualMap, getCreatorInitials } from "@/lib/creator-colors";
+import LocalTime from "@/components/time/LocalTime";
+
+import EventBubble from "./event-bubble";
 
 type EventSummary = {
   id: string;
@@ -29,7 +31,6 @@ type DayCellProps = {
   isCompact: boolean;
   events: EventSummary[];
   blocks: BlockSummary[];
-  nowLabel: string;
   timeFormat: CalendarTimeFormat;
   addEventHref: string;
   currentUserId: string;
@@ -37,12 +38,6 @@ type DayCellProps = {
   buildBlockEditHref: (blockId: string) => string;
   referenceNow: Date;
 };
-
-function formatTimeLabel(value: Date, timeFormat: CalendarTimeFormat) {
-  return formatEventTime(value, timeFormat)
-    .replace(/\s+/g, "")
-    .toLowerCase();
-}
 
 export default function DayCell({
   date,
@@ -53,7 +48,6 @@ export default function DayCell({
   isCompact,
   events,
   blocks,
-  nowLabel,
   timeFormat,
   addEventHref,
   currentUserId,
@@ -110,7 +104,7 @@ export default function DayCell({
                 />
               ) : null}
               {hasMemories ? <span className="h-2 w-2 rounded-full bg-[var(--calendar-memory-dot)]" /> : null}
-              {hasBusyTime ? <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" /> : null}
+              {hasBusyTime ? <span className="h-2 w-2 rounded-full bg-slate-400" /> : null}
             </span>
           ) : null}
         </div>
@@ -118,16 +112,21 @@ export default function DayCell({
       {isToday ? (
         <div className="relative z-10 mt-1 hidden items-center gap-1.5 text-[9px] font-medium text-[var(--text-tertiary)] sm:inline-flex">
           <span className="h-1 w-1 rounded-full bg-rose-400" />
-          {nowLabel}
+          <LocalTime
+            options={{ hour: "numeric", minute: "2-digit" }}
+            timeFormat={timeFormat}
+            value={referenceNow}
+          />
         </div>
       ) : null}
       <div className="relative z-10 mt-2.5 hidden flex-col gap-1.5 sm:flex">
         {visibleBlocks.map((block) => {
           const isExternal = block.source === "GOOGLE";
           const createdByUserId = block.createdByUserId || "external";
-          const blockAccent = "var(--color-secondary)";
-          const blockSoft = "var(--color-secondary-soft)";
-          const blockText = "var(--idea-new-text)";
+          const creatorAccent = memberVisuals[createdByUserId]?.accent;
+          const blockAccent = creatorAccent?.accent ?? "var(--color-secondary)";
+          const blockSoft = creatorAccent?.accentSoft ?? "var(--color-secondary-soft)";
+          const blockText = creatorAccent?.accentText ?? "var(--idea-new-text)";
 
           const currentDay = new Date(date);
           currentDay.setHours(0, 0, 0, 0);
@@ -147,14 +146,8 @@ export default function DayCell({
           );
           const isContinuation = isMultiDay && !isStartDay;
           const useThinBar = (isExternal && isMultiDay) || isContinuation;
-
-          const timeLabel =
-            isExternal && block.startAt && block.endAt
-              ? `${formatTimeLabel(new Date(block.startAt), timeFormat)}-${formatTimeLabel(new Date(block.endAt), timeFormat)}`
-              : null;
-
-          const tooltipText = isExternal && block.startAt && block.endAt
-            ? `Busy: ${formatTimeLabel(new Date(block.startAt), timeFormat)} - ${formatTimeLabel(new Date(block.endAt), timeFormat)}`
+          const tooltipText = isExternal
+            ? "Google Calendar busy time"
             : block.title;
           const creatorInitials =
             memberVisuals[createdByUserId]?.initials ??
@@ -167,6 +160,11 @@ export default function DayCell({
           const blockContent = useThinBar ? (
             <div className="flex min-w-0 items-center gap-1.5">
               <div className="h-1.5 flex-1 rounded-full" style={{ backgroundColor: blockAccent }} />
+              {isExternal ? (
+                <span className="rounded-full border border-white/80 bg-white/70 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                  Google
+                </span>
+              ) : null}
               <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
                 {creatorInitials}
               </span>
@@ -178,8 +176,29 @@ export default function DayCell({
                 style={{ backgroundColor: blockAccent }}
               />
               <span className="truncate text-[10px] font-medium">
-                {isExternal ? timeLabel ?? "Busy" : block.title}
+                {isExternal && block.startAt && block.endAt ? (
+                  <>
+                    <LocalTime
+                      options={{ hour: "numeric", minute: "2-digit" }}
+                      timeFormat={timeFormat}
+                      value={block.startAt}
+                    />
+                    <span>-</span>
+                    <LocalTime
+                      options={{ hour: "numeric", minute: "2-digit" }}
+                      timeFormat={timeFormat}
+                      value={block.endAt}
+                    />
+                  </>
+                ) : (
+                  block.title
+                )}
               </span>
+              {isExternal ? (
+                <span className="rounded-full border border-white/80 bg-white/70 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                  Google
+                </span>
+              ) : null}
               <span className="ml-auto text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
                 {creatorInitials}
               </span>
@@ -189,7 +208,7 @@ export default function DayCell({
           return isExternal ? (
             <div
               key={block.id}
-              className={`relative rounded-lg px-2 py-1 ${isContinuation ? "pt-1.5" : ""}`}
+              className={`relative rounded-lg border border-dashed border-white/80 px-2 py-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)] ${isContinuation ? "pt-1.5" : ""}`}
               style={{
                 backgroundColor: blockSoft,
                 color: blockText,

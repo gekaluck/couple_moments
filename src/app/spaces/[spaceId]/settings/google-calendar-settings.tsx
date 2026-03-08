@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, Link2, Link2Off, RefreshCw } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import LocalTime from '@/components/time/LocalTime';
 
 type Calendar = {
   id: string;
@@ -42,16 +43,14 @@ export default function GoogleCalendarSettings() {
     ? data.calendars.filter((calendar) => calendar.selected).length
     : 0;
   const hasSyncError = Boolean(data?.syncState?.lastSyncError);
-  const lastSuccessfulSync = data?.syncState?.lastSyncedAt
-    ? new Date(data.syncState.lastSyncedAt).toLocaleString()
-    : null;
+  const hasSuccessfulSync = Boolean(data?.syncState?.lastSyncedAt);
   const healthState = !data
     ? "disconnected"
     : hasSyncError
       ? "error"
       : selectedCalendarsCount === 0
         ? "no-calendars"
-        : lastSuccessfulSync
+        : hasSuccessfulSync
           ? "healthy"
           : "pending";
 
@@ -243,7 +242,20 @@ export default function GoogleCalendarSettings() {
                 <span className="font-medium text-[var(--text-primary)]">
                   Last successful sync:
                 </span>{" "}
-                {lastSuccessfulSync ?? "Never"}
+                {data.syncState?.lastSyncedAt ? (
+                  <LocalTime
+                    options={{
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    }}
+                    value={data.syncState.lastSyncedAt}
+                  />
+                ) : (
+                  'Never'
+                )}
               </p>
               <p>
                 <span className="font-medium text-[var(--text-primary)]">
@@ -277,7 +289,18 @@ export default function GoogleCalendarSettings() {
                   </p>
                   <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">
                     {data.syncState?.lastSyncedAt
-                      ? new Date(data.syncState.lastSyncedAt).toLocaleString()
+                      ? (
+                        <LocalTime
+                          options={{
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          }}
+                          value={data.syncState.lastSyncedAt}
+                        />
+                      )
                       : 'Never synced'}
                   </p>
                   {data.syncState?.lastSyncError ? (

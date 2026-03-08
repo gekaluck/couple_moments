@@ -103,6 +103,27 @@ export async function getCoupleSpaceForUser(spaceId: string, userId: string) {
   });
 }
 
+export async function updateCoupleSpaceName(
+  spaceId: string,
+  userId: string,
+  name: string,
+) {
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    throw new Error("Space name is required.");
+  }
+
+  const space = await getCoupleSpaceForUser(spaceId, userId);
+  if (!space) {
+    throw new Error("Not authorized");
+  }
+
+  return prisma.coupleSpace.update({
+    where: { id: spaceId },
+    data: { name: trimmedName },
+  });
+}
+
 export async function listSpaceMembers(spaceId: string) {
   let rows: SpaceMemberRow[];
   try {
