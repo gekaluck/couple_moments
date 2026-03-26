@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import type { CalendarTimeFormat } from "@/lib/calendar";
 import LocalTime from "@/components/time/LocalTime";
+import { isSameLocalCalendarDay } from "@/lib/date-time";
 
 type NavItem = {
   id: string;
@@ -18,10 +19,12 @@ type SpaceNavProps = {
   spaceId: string;
   spaceName: string;
   todayDateIso: string;
-  todaySummaryLabel: string;
-  todaySummaryHref: string;
-  todayHasPlans?: boolean;
-  todaySummaryEventStartIso?: string | null;
+  todaySummaryEvents: Array<{
+    id: string;
+    title: string;
+    dateTimeStartIso: string;
+    timeIsSet: boolean;
+  }>;
   timeFormat?: CalendarTimeFormat;
 };
 
@@ -37,10 +40,7 @@ export default function SpaceNav({
   spaceId,
   spaceName,
   todayDateIso,
-  todaySummaryLabel,
-  todaySummaryHref,
-  todayHasPlans = false,
-  todaySummaryEventStartIso = null,
+  todaySummaryEvents,
   timeFormat = "24h",
 }: SpaceNavProps) {
   const pathname = usePathname();
@@ -52,6 +52,36 @@ export default function SpaceNav({
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-${`${today.getDate()}`.padStart(2, "0")}`;
   const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
+  const truncate = (value: string, maxLength: number) =>
+    value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}...`;
+  const todaysEvents = todaySummaryEvents.filter((event) =>
+    isSameLocalCalendarDay(new Date(event.dateTimeStartIso), today),
+  );
+  const todaySummary = (() => {
+    if (todaysEvents.length === 1) {
+      const event = todaysEvents[0];
+      return {
+        label: truncate(event.title, 24),
+        href: `/events/${event.id}`,
+        hasPlans: true,
+        eventStartAt: event.timeIsSet ? event.dateTimeStartIso : null,
+      };
+    }
+    if (todaysEvents.length > 1) {
+      return {
+        label: `${todaysEvents.length} plans today`,
+        href: `/spaces/${spaceId}/calendar?month=${monthParam}`,
+        hasPlans: true,
+        eventStartAt: null,
+      };
+    }
+    return {
+      label: "Nothing planned",
+      href: `/spaces/${spaceId}/calendar?month=${monthParam}`,
+      hasPlans: false,
+      eventStartAt: null,
+    };
+  })();
   const createItems = [
     {
       id: "event",
@@ -145,7 +175,7 @@ export default function SpaceNav({
                   Cozy space
                 </span>
                 <Link
-                  href={todaySummaryHref}
+                  href={todaySummary.href}
                   className="inline-flex max-w-[280px] items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 px-2 py-0.5 normal-case tracking-normal text-[11px] transition hover:border-rose-300"
                 >
                   <LocalTime
@@ -156,17 +186,19 @@ export default function SpaceNav({
                   <span className="text-[var(--text-tertiary)]">·</span>
                   <span
                     className={`truncate ${
-                      todayHasPlans ? "text-[var(--action-primary)]" : "text-[var(--text-secondary)]"
+                      todaySummary.hasPlans
+                        ? "text-[var(--action-primary)]"
+                        : "text-[var(--text-secondary)]"
                     }`}
                   >
-                    {todaySummaryLabel}
-                    {todaySummaryEventStartIso ? (
+                    {todaySummary.label}
+                    {todaySummary.eventStartAt ? (
                       <>
                         {" at "}
                         <LocalTime
                           options={{ hour: "numeric", minute: "2-digit" }}
                           timeFormat={timeFormat}
-                          value={todaySummaryEventStartIso}
+                          value={todaySummary.eventStartAt}
                         />
                       </>
                     ) : null}

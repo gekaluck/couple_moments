@@ -9,6 +9,11 @@ import Modal from "@/components/Modal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
 import TagInput from "@/components/ui/TagInput";
+import {
+  formatDateInputValue,
+  formatTimeInputValue,
+  getOffsetMinutesForLocalDateTime,
+} from "@/lib/date-time";
 
 type EventEditModalProps = {
   isOpen: boolean;
@@ -37,9 +42,9 @@ type EventEditModalProps = {
   >;
   mapsApiKey?: string;
   title: string;
-  dateValue: string;
-  timeValue: string;
-  timeEndValue: string;
+  dateTimeStartIso: string;
+  dateTimeEndIso?: string | null;
+  timeIsSet: boolean;
   tagsValue: string;
   descriptionValue: string;
   placeName?: string | null;
@@ -60,9 +65,9 @@ export default function EventEditModal({
   onDelete,
   mapsApiKey,
   title,
-  dateValue,
-  timeValue,
-  timeEndValue,
+  dateTimeStartIso,
+  dateTimeEndIso,
+  timeIsSet,
   tagsValue,
   descriptionValue,
   placeName,
@@ -79,6 +84,17 @@ export default function EventEditModal({
   const hasMapsKey = Boolean(mapsApiKey);
   const [isPending, startTransition] = useTransition();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const startDate = new Date(dateTimeStartIso);
+  const endDate = dateTimeEndIso ? new Date(dateTimeEndIso) : null;
+  const startDateValue = formatDateInputValue(startDate);
+  const endDateValue = endDate ? formatDateInputValue(endDate) : "";
+  const startTimeValue = timeIsSet ? formatTimeInputValue(startDate) : "";
+  const endTimeValue = timeIsSet && endDate ? formatTimeInputValue(endDate) : "";
+  const [eventDate, setEventDate] = useState(startDateValue);
+  const [eventEndDate, setEventEndDate] = useState(endDateValue || startDateValue);
+  const [isMultiDay, setIsMultiDay] = useState(
+    Boolean(endDateValue && endDateValue !== startDateValue),
+  );
   const [place, setPlace] = useState<PlaceSelection | null>(
     placeId && placeName && placeLat && placeLng
       ? {
@@ -106,6 +122,37 @@ export default function EventEditModal({
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
+          const startDate = formData.get("date")?.toString().trim() ?? "";
+          const endDate = formData.get("endDate")?.toString().trim() ?? "";
+          const rawTime = formData.get("time")?.toString().trim() ?? "";
+          const rawTimeEnd = formData.get("timeEnd")?.toString().trim() ?? "";
+          const startDateTime = new Date(`${startDate}T${rawTime || "12:00"}`);
+          const hasMultiDayRange = Boolean(endDate && endDate !== startDate);
+          const effectiveEndDate = hasMultiDayRange ? endDate : startDate;
+          const startOffsetMinutes = getOffsetMinutesForLocalDateTime(
+            startDate,
+            rawTime || "12:00",
+          );
+          const endOffsetMinutes = getOffsetMinutesForLocalDateTime(
+            effectiveEndDate,
+            rawTimeEnd || rawTime || "12:00",
+          );
+          if (startOffsetMinutes !== null) {
+            formData.set("timeZoneOffsetStart", startOffsetMinutes.toString());
+          }
+          if (endOffsetMinutes !== null) {
+            formData.set("timeZoneOffsetEnd", endOffsetMinutes.toString());
+          }
+          const endDateTime =
+            rawTimeEnd || hasMultiDayRange
+              ? new Date(
+                  `${effectiveEndDate}T${rawTimeEnd || rawTime || "12:00"}`,
+                )
+              : null;
+          if (endDateTime && endDateTime < startDateTime) {
+            toast.error("End date cannot be before the start date");
+            return;
+          }
           startTransition(async () => {
             try {
               const result = await onSubmit(formData);
@@ -136,15 +183,51 @@ export default function EventEditModal({
           />
         </label>
         <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
-          Date
+          Start date
           <input
             className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
             name="date"
             type="date"
-            defaultValue={dateValue}
+            value={eventDate}
+            onChange={(event) => {
+              const nextDate = event.target.value;
+              setEventDate(nextDate);
+              if (!isMultiDay) {
+                setEventEndDate(nextDate);
+              }
+            }}
             required
           />
         </label>
+        <label className="flex items-center gap-2 rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-sm font-medium text-[var(--text-muted)]">
+          <input
+            checked={isMultiDay}
+            className="h-4 w-4 rounded border-[var(--panel-border)] text-rose-500 focus:ring-rose-500"
+            onChange={(event) => {
+              const checked = event.target.checked;
+              setIsMultiDay(checked);
+              if (!checked) {
+                setEventEndDate(eventDate);
+              }
+            }}
+            type="checkbox"
+          />
+          Multi-day event
+        </label>
+        {isMultiDay ? (
+          <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
+            End date
+            <input
+              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
+              name="endDate"
+              type="date"
+              value={eventEndDate}
+              onChange={(event) => setEventEndDate(event.target.value)}
+            />
+          </label>
+        ) : (
+          <input type="hidden" name="endDate" value="" />
+        )}
         <div className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
           Time (optional)
           <div className="grid grid-cols-2 gap-2">
@@ -152,18 +235,23 @@ export default function EventEditModal({
               className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
               name="time"
               type="time"
-              defaultValue={timeValue}
+              defaultValue={startTimeValue}
               aria-label="Start time"
             />
             <input
               className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
               name="timeEnd"
               type="time"
-              defaultValue={timeEndValue}
+              defaultValue={endTimeValue}
               aria-label="End time (optional)"
             />
           </div>
         </div>
+        {isMultiDay ? (
+          <p className="text-xs text-[var(--text-tertiary)] md:col-span-2">
+            Leave the end time blank to keep the same start time on the final day.
+          </p>
+        ) : null}
         <div className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)]">
           Tags
           <TagInput name="tags" defaultValue={tagsValue} />

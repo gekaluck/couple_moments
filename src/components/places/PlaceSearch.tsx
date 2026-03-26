@@ -167,7 +167,7 @@ export default function PlaceSearch({
       {label ? <span>{label}</span> : null}
       <input
         ref={inputRef}
-        className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
+        className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white sm:text-sm"
         placeholder={placeholder}
         value={value}
         onChange={(event) => setValue(event.target.value)}

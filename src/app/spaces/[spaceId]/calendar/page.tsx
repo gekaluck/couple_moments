@@ -33,6 +33,7 @@ import {
   getGoogleEventDeleteContext,
 } from "@/lib/integrations/google/events";
 import { parseJsonStringArray } from "@/lib/parsers";
+import { parseLocalDateTime, parseOffsetMinutes } from "@/lib/date-time";
 import CalendarAddControls from "./add-controls";
 import {
   buildBlocksByDay,
@@ -139,6 +140,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const title = formData.get("title")?.toString().trim() ?? "";
     const description = formData.get("description")?.toString().trim() ?? "";
     const date = formData.get("date")?.toString();
+    const endDate = formData.get("endDate")?.toString().trim() ?? "";
     const rawTime = formData.get("time")?.toString() || "";
     const timeIsSet = rawTime.length > 0;
     const time = timeIsSet ? rawTime : "12:00";
@@ -163,19 +165,43 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       throw new Error("Title and date are required.");
     }
 
-    const dateTimeStart = new Date(`${date}T${time}`);
+    const startOffsetMinutes = parseOffsetMinutes(formData.get("timeZoneOffsetStart"));
+    const endOffsetMinutes = parseOffsetMinutes(
+      formData.get("timeZoneOffsetEnd"),
+    );
+    const dateTimeStart =
+      parseLocalDateTime({
+        date,
+        time,
+        offsetMinutes: startOffsetMinutes,
+      }) ?? new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
       throw new Error("Invalid date. Please try again.");
     }
-    const dateTimeEnd = rawTimeEnd
-      ? new Date(`${date}T${rawTimeEnd}`)
-      : null;
+    const hasMultiDayRange = Boolean(endDate && endDate !== date);
+    const effectiveEndDate = hasMultiDayRange ? endDate : date;
+    const rawDateTimeEnd =
+      rawTimeEnd || hasMultiDayRange
+        ? parseLocalDateTime({
+            date: effectiveEndDate,
+            time: rawTimeEnd || rawTime || "12:00",
+            offsetMinutes: endOffsetMinutes ?? startOffsetMinutes,
+          }) ?? new Date(`${effectiveEndDate}T${rawTimeEnd || rawTime || "12:00"}`)
+        : null;
+    const dateTimeEnd =
+      rawDateTimeEnd && !Number.isNaN(rawDateTimeEnd.getTime())
+        ? rawDateTimeEnd
+        : null;
+
+    if (dateTimeEnd && dateTimeEnd < dateTimeStart) {
+      throw new Error("End date cannot be before the start date.");
+    }
 
     const event = await createEventForSpace(spaceIdForActions, currentUserId, {
       title,
       description: description || null,
       dateTimeStart,
-      dateTimeEnd: dateTimeEnd && !Number.isNaN(dateTimeEnd.getTime()) ? dateTimeEnd : null,
+      dateTimeEnd,
       timeIsSet,
       tags,
       placeId,

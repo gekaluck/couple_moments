@@ -28,59 +28,27 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
   }
 
   const today = new Date();
-  const startOfToday = new Date(
+  const summaryWindowStart = new Date(
     today.getFullYear(),
     today.getMonth(),
-    today.getDate(),
+    today.getDate() - 1,
     0,
     0,
     0,
   );
-  const endOfToday = new Date(
+  const summaryWindowEnd = new Date(
     today.getFullYear(),
     today.getMonth(),
-    today.getDate(),
+    today.getDate() + 1,
     23,
     59,
     59,
   );
-  const todayEvents = await listEventsForSpace({
+  const todaySummaryEvents = await listEventsForSpace({
     spaceId: space.id,
-    from: startOfToday,
-    to: endOfToday,
+    from: summaryWindowStart,
+    to: summaryWindowEnd,
   });
-  const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
-  const truncate = (value: string, maxLength: number) => {
-    if (value.length <= maxLength) {
-      return value;
-    }
-    return `${value.slice(0, maxLength - 1)}...`;
-  };
-  const todaySummary = (() => {
-    if (todayEvents.length === 1) {
-      const event = todayEvents[0];
-      return {
-        label: truncate(event.title, 24),
-        href: `/events/${event.id}`,
-        hasPlans: true,
-        eventStartAt: event.timeIsSet ? event.dateTimeStart.toISOString() : null,
-      };
-    }
-    if (todayEvents.length > 1) {
-      return {
-        label: `${todayEvents.length} plans today`,
-        href: `/spaces/${space.id}/calendar?month=${monthParam}`,
-        hasPlans: true,
-        eventStartAt: null,
-      };
-    }
-    return {
-      label: "Nothing planned",
-      href: `/spaces/${space.id}/calendar?month=${monthParam}`,
-      hasPlans: false,
-      eventStartAt: null,
-    };
-  })();
 
   return (
     <div className="min-h-screen">
@@ -88,10 +56,12 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
         spaceId={space.id}
         spaceName={space.name || "Your space"}
         todayDateIso={today.toISOString()}
-        todaySummaryLabel={todaySummary.label}
-        todaySummaryHref={todaySummary.href}
-        todayHasPlans={todaySummary.hasPlans}
-        todaySummaryEventStartIso={todaySummary.eventStartAt}
+        todaySummaryEvents={todaySummaryEvents.map((event) => ({
+          id: event.id,
+          title: event.title,
+          dateTimeStartIso: event.dateTimeStart.toISOString(),
+          timeIsSet: event.timeIsSet,
+        }))}
         timeFormat={calendarTimeFormat}
       />
       <div className="mx-auto mt-4 w-full max-w-[1220px] px-4 md:px-6">
