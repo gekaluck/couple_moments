@@ -8,6 +8,7 @@ import Modal from "@/components/Modal";
 import PlaceHiddenInputs from "@/components/places/PlaceHiddenInputs";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
 import TagInput from "@/components/ui/TagInput";
+import Button from "@/components/ui/Button";
 import { getOffsetMinutesForLocalDateTime } from "@/lib/date-time";
 
 type PrefillData = {
@@ -381,20 +382,17 @@ export default function CalendarAddControls({
             </div>
           ) : null}
           <div className="flex flex-wrap justify-end gap-2">
-            <button
-              className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+            <Button
+              variant="ghost"
+              size="md"
               onClick={closePanel}
               type="button"
             >
               Cancel
-            </button>
-            <button
-              className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
-              type="submit"
-              disabled={isPending}
-            >
+            </Button>
+            <Button variant="primary" size="md" type="submit" loading={isPending}>
               {isMemoryDate ? "Save memory" : prefillData ? "Create event" : "Save event"}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -486,20 +484,17 @@ export default function CalendarAddControls({
             placeholder="Optional note"
           />
           <div className="flex flex-wrap justify-end gap-2">
-            <button
-              className="button-hover rounded-xl border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--accent-strong)]"
+            <Button
+              variant="ghost"
+              size="md"
               onClick={closePanel}
               type="button"
             >
               Cancel
-            </button>
-            <button
-              className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
-              type="submit"
-              disabled={isPending}
-            >
+            </Button>
+            <Button variant="primary" size="md" type="submit" loading={isPending}>
               Add block
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>

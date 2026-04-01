@@ -602,9 +602,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   }));
 
   const editBlock = editBlockId
-    ? blocks.manual.find(
-        (block) => block.id === editBlockId && block.createdByUserId === userId,
-      )
+    ? blocks.manual.find((block) => block.id === editBlockId)
     : null;
 
   const formatDateInput = (date: Date) => {
@@ -617,17 +615,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   return (
     <>
       <section className="surface p-6 md:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4 md:items-center">
-          <div>
+        <div className="grid gap-5 xl:grid-cols-[1fr_auto_1fr] xl:items-start">
+          <div className="space-y-4">
             <p className="section-kicker">Calendar</p>
-            <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl">
-              {formatMonthTitle(now)}
-            </h2>
             <p className="section-subtitle">
               Click any day to add an event or block time.
             </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
             <CalendarAddControls
               key={`add-controls-${initialEventDate ?? "none"}-${repeatEventId ?? "none"}-${openAction || "none"}`}
               onCreateEvent={handleCreate}
@@ -637,24 +630,35 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               hasGoogleCalendar={hasGoogleCalendar}
               mapsApiKey={mapsApiKey}
             />
-            <Link
-              className="pill-button button-hover"
-              href={buildCalendarHref(monthParam(prevMonth))}
-            >
-              Prev
-            </Link>
+          </div>
+          <div className="flex flex-col items-start gap-3 xl:items-center xl:justify-self-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 p-1.5 shadow-[var(--shadow-sm)]">
+              <Link
+                className="pill-button button-hover min-w-[70px] justify-center"
+                href={buildCalendarHref(monthParam(prevMonth))}
+              >
+                Prev
+              </Link>
+              <div className="min-w-[220px] px-3 text-center">
+                <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl">
+                  {formatMonthTitle(now)}
+                </h2>
+              </div>
+              <Link
+                className="pill-button button-hover min-w-[70px] justify-center"
+                href={buildCalendarHref(monthParam(nextMonth))}
+              >
+                Next
+              </Link>
+            </div>
             <Link
               className="pill-button button-hover"
               href={buildCalendarHref(monthParam(today))}
             >
-              Today
+              Jump to today
             </Link>
-            <Link
-              className="pill-button button-hover"
-              href={buildCalendarHref(monthParam(nextMonth))}
-            >
-              Next
-            </Link>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)] xl:justify-end">
             <div className="hidden items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] sm:flex">
               <Link
                 className={`rounded-full px-3 py-1 transition ${isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
@@ -816,12 +820,17 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         block={
           editBlock
             ? {
-              id: editBlock.id,
-              title: editBlock.title,
-              note: editBlock.note,
-              startDate: formatDateInput(editBlock.startAt),
-              endDate: formatDateInput(editBlock.endAt),
-            }
+                id: editBlock.id,
+                title: editBlock.title,
+                note: editBlock.note,
+                startDate: formatDateInput(editBlock.startAt),
+                endDate: formatDateInput(editBlock.endAt),
+                canEdit: editBlock.createdByUserId === userId,
+                createdByName:
+                  memberVisuals[editBlock.createdByUserId]?.displayName ??
+                  editBlock.createdBy.name ??
+                  editBlock.createdBy.email,
+              }
             : null
         }
       />

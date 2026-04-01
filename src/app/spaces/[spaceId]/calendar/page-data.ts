@@ -36,6 +36,7 @@ export type CalendarDayBlock = {
   startAt: Date;
   endAt: Date;
   title: string;
+  note?: string | null;
   createdBy: { name: string | null; email: string };
   createdByUserId?: string;
   source?: string;
@@ -127,10 +128,18 @@ export async function loadCalendarPageData(params: {
 export function buildEventsByDay(events: CalendarEvents) {
   const eventsByDay = new Map<string, CalendarEvents>();
   for (const event of events) {
-    const key = dateKey(event.dateTimeStart);
-    const list = eventsByDay.get(key) ?? [];
-    list.push(event);
-    eventsByDay.set(key, list);
+    const cursor = new Date(event.dateTimeStart);
+    cursor.setHours(0, 0, 0, 0);
+    const end = new Date(event.dateTimeEnd ?? event.dateTimeStart);
+    end.setHours(0, 0, 0, 0);
+
+    while (cursor <= end) {
+      const key = dateKey(cursor);
+      const list = eventsByDay.get(key) ?? [];
+      list.push(event);
+      eventsByDay.set(key, list);
+      cursor.setDate(cursor.getDate() + 1);
+    }
   }
   return eventsByDay;
 }
@@ -151,6 +160,7 @@ export function buildBlocksByDay(blocks: CalendarBlocks) {
         startAt: block.startAt,
         endAt: block.endAt,
         title: block.title,
+        note: block.note,
         createdBy: { name: block.createdBy.name, email: block.createdBy.email },
         createdByUserId: block.createdByUserId,
       });
