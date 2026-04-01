@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useRef, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,6 +51,7 @@ export default function EventComments({
 }: EventCommentsProps) {
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [pendingDeleteComment, setPendingDeleteComment] = useState<Comment | null>(null);
   const [optimisticComments, updateOptimisticComments] = useOptimistic(
@@ -112,6 +113,15 @@ export default function EventComments({
     }
   }
 
+  useEffect(() => {
+    if (!isComposerOpen) {
+      return;
+    }
+
+    composerRef.current?.focus();
+    composerRef.current?.scrollIntoView({ block: "nearest" });
+  }, [isComposerOpen]);
+
   return (
     <section id="event-comments" className="surface p-6">
       <div className="flex items-center justify-between">
@@ -137,7 +147,8 @@ export default function EventComments({
         <form ref={formRef} className="mt-4 flex flex-col gap-3" action={handleSubmit}>
           <input type="hidden" name="eventId" value={eventId} />
           <textarea
-            className="min-h-[96px] rounded-2xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
+            ref={composerRef}
+            className="min-h-[96px] rounded-2xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--accent)] sm:text-sm"
             name="content"
             placeholder="Leave a comment..."
             required

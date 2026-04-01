@@ -107,7 +107,7 @@ export default function TagInput({
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: PointerEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node) &&
@@ -117,8 +117,8 @@ export default function TagInput({
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handleClickOutside);
+    return () => document.removeEventListener("pointerdown", handleClickOutside);
   }, []);
 
   return (
@@ -155,7 +155,7 @@ export default function TagInput({
       <input
         ref={inputRef}
         type="text"
-        className="w-full rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-rose-300"
+        className="w-full rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-rose-300 sm:text-sm"
         placeholder={placeholder}
         value={filter}
         onChange={(e) => {
@@ -190,6 +190,7 @@ export default function TagInput({
                   key={tag.label}
                   type="button"
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                  onPointerDown={(event) => event.preventDefault()}
                   onClick={() => addTag(tag.label)}
                 >
                   <span
@@ -205,6 +206,7 @@ export default function TagInput({
             <button
               type="button"
               className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50"
+              onPointerDown={(event) => event.preventDefault()}
               onClick={() => addTag(filter.trim())}
             >
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">

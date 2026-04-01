@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import Modal from "@/components/Modal";
 import PlaceHiddenInputs from "@/components/places/PlaceHiddenInputs";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
+import TagInput from "@/components/ui/TagInput";
+import { getOffsetMinutesForLocalDateTime } from "@/lib/date-time";
 
 type PrefillData = {
   title: string;
@@ -65,6 +67,8 @@ export default function CalendarAddControls({
   const [eventDate, setEventDate] = useState<string | undefined>(
     () => initialEventDate ?? undefined,
   );
+  const [eventEndDate, setEventEndDate] = useState<string>("");
+  const [isMultiDayEvent, setIsMultiDayEvent] = useState(false);
   const todayStr = getTodayDateString();
   const [errors, setErrors] = useState<{
     eventTitle?: string;
@@ -78,6 +82,7 @@ export default function CalendarAddControls({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeEventDate = eventDate ?? initialEventDate ?? "";
+  const activeEventEndDate = eventEndDate || activeEventDate;
   const activePlaceId = place?.placeId ?? prefillData?.placeId ?? "";
   const activePlaceName = place?.name ?? prefillData?.placeName ?? "";
   const activePlaceAddress = place?.address ?? prefillData?.placeAddress ?? "";
@@ -101,6 +106,8 @@ export default function CalendarAddControls({
     setErrors({});
     setPlace(null);
     setEventDate(undefined);
+    setEventEndDate("");
+    setIsMultiDayEvent(false);
     clearModalParams();
   };
 
@@ -118,6 +125,8 @@ export default function CalendarAddControls({
           onClick={() => {
             setPlace(null);
             setEventDate(undefined);
+            setEventEndDate("");
+            setIsMultiDayEvent(false);
             setErrors({});
             setOpenPanel("event");
           }}
@@ -155,10 +164,43 @@ export default function CalendarAddControls({
             const formData = new FormData(event.currentTarget);
             const title = formData.get("title")?.toString().trim() ?? "";
             const date = formData.get("date")?.toString().trim() ?? "";
+            const endDate = formData.get("endDate")?.toString().trim() ?? "";
+            const rawTime = formData.get("time")?.toString().trim() ?? "";
+            const rawTimeEnd = formData.get("timeEnd")?.toString().trim() ?? "";
             if (!title || !date) {
               setErrors({
                 eventTitle: title ? undefined : "Please add a title.",
                 eventDate: date ? undefined : "Please choose a date.",
+              });
+              return;
+            }
+            const startDateTime = new Date(`${date}T${rawTime || "12:00"}`);
+            const hasMultiDayRange = Boolean(endDate && endDate !== date);
+            const effectiveEndDate = hasMultiDayRange ? endDate : date;
+            const startOffsetMinutes = getOffsetMinutesForLocalDateTime(
+              date,
+              rawTime || "12:00",
+            );
+            const endOffsetMinutes = getOffsetMinutesForLocalDateTime(
+              effectiveEndDate,
+              rawTimeEnd || rawTime || "12:00",
+            );
+            if (startOffsetMinutes !== null) {
+              formData.set("timeZoneOffsetStart", startOffsetMinutes.toString());
+            }
+            if (endOffsetMinutes !== null) {
+              formData.set("timeZoneOffsetEnd", endOffsetMinutes.toString());
+            }
+            const endDateTime =
+              rawTimeEnd || hasMultiDayRange
+                ? new Date(
+                    `${effectiveEndDate}T${rawTimeEnd || rawTime || "12:00"}`,
+                  )
+                : null;
+            if (endDateTime && endDateTime < startDateTime) {
+              setErrors({
+                eventTitle: undefined,
+                eventDate: "End date cannot be before the start date.",
               });
               return;
             }
@@ -195,7 +237,7 @@ export default function CalendarAddControls({
           <input
             aria-describedby={errors.eventTitle ? "event-title-error" : undefined}
             aria-invalid={errors.eventTitle ? "true" : "false"}
-            className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+            className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-base text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)] sm:text-sm"
             name="title"
             placeholder="Dinner at Aurora"
             defaultValue={prefillData?.title ?? ""}
@@ -210,39 +252,71 @@ export default function CalendarAddControls({
             <input
               aria-describedby={errors.eventDate ? "event-date-error" : undefined}
               aria-invalid={errors.eventDate ? "true" : "false"}
-              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-base text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)] sm:text-sm"
               name="date"
               type="date"
               value={activeEventDate}
               onChange={(inputEvent) => setEventDate(inputEvent.target.value)}
               required
             />
-            <div className="grid grid-cols-2 gap-2">
+            <label className="flex items-center gap-2 rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm font-medium text-[var(--text-secondary)]">
               <input
-                className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
-                name="time"
-                type="time"
-                placeholder="Start"
-                aria-label="Start time"
+                checked={isMultiDayEvent}
+                className="h-4 w-4 rounded border-[var(--panel-border)] text-rose-500 focus:ring-rose-500"
+                onChange={(inputEvent) => {
+                  const checked = inputEvent.target.checked;
+                  setIsMultiDayEvent(checked);
+                  if (!checked) {
+                    setEventEndDate("");
+                  } else if (!eventEndDate && activeEventDate) {
+                    setEventEndDate(activeEventDate);
+                  }
+                }}
+                type="checkbox"
               />
-              <input
-                className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
-                name="timeEnd"
-                type="time"
-                placeholder="End"
-                aria-label="End time (optional)"
-              />
-            </div>
+              Multi-day event
+            </label>
+          </div>
+          {isMultiDayEvent ? (
+            <input
+              aria-describedby={errors.eventDate ? "event-date-error" : undefined}
+              aria-invalid={errors.eventDate ? "true" : "false"}
+              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-base text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)] sm:text-sm"
+              name="endDate"
+              type="date"
+              value={activeEventEndDate}
+              onChange={(inputEvent) => setEventEndDate(inputEvent.target.value)}
+            />
+          ) : null}
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-base text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)] sm:text-sm"
+              name="time"
+              type="time"
+              placeholder="Start"
+              aria-label="Start time"
+            />
+            <input
+              className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-base text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)] sm:text-sm"
+              name="timeEnd"
+              type="time"
+              placeholder="End"
+              aria-label="End time (optional)"
+            />
           </div>
           {errors.eventDate ? (
             <p className="text-xs text-[var(--status-warning-text)]" id="event-date-error">
               {errors.eventDate}
             </p>
           ) : null}
-          <input
-            className="rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+          {isMultiDayEvent ? (
+            <p className="text-xs text-[var(--text-tertiary)]">
+              Optional for trips or weekends away. Leave the end time blank to keep the same start time on the last day.
+            </p>
+          ) : null}
+          <TagInput
             name="tags"
-            placeholder="tags (comma separated)"
+            placeholder="Dinner, cozy, weekend"
             defaultValue={prefillData?.tags ?? ""}
           />
           {hasMapsKey ? (
@@ -270,7 +344,7 @@ export default function CalendarAddControls({
             placeUrl={activePlaceUrl}
           />
           <textarea
-            className="min-h-[100px] rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)]"
+            className="min-h-[100px] rounded-xl border border-[var(--panel-border)] bg-white/85 px-3 py-2 text-base text-[var(--text-primary)] outline-none focus:border-[var(--action-primary)] sm:text-sm"
             name="description"
             placeholder="Notes or details"
             defaultValue={prefillData?.description ?? ""}

@@ -16,6 +16,7 @@ import { parseJsonStringArray, sanitizeHttpUrl } from "@/lib/parsers";
 import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
 import { getInitials } from "@/lib/formatters";
 import { resolveCalendarTimeFormat } from "@/lib/calendar";
+import { parseLocalDateTime, parseOffsetMinutes } from "@/lib/date-time";
 
 import { loadEventBaseData, loadEventDetailData } from "./page-data";
 import EventComments from "./event-comments";
@@ -112,17 +113,12 @@ type EventActionResult = {
   };
 };
 
-function formatDateInput(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatTimeInput(date: Date) {
-  const hours = `${date.getHours()}`.padStart(2, "0");
-  const minutes = `${date.getMinutes()}`.padStart(2, "0");
-  return `${hours}:${minutes}`;
+function isSameCalendarDay(left: Date, right: Date) {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
 }
 
 function isEventInPast(event: { dateTimeStart: Date; dateTimeEnd: Date | null }) {
@@ -176,6 +172,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     const title = formData.get("title")?.toString().trim() ?? "";
     const description = formData.get("description")?.toString().trim() ?? "";
     const date = formData.get("date")?.toString();
+    const endDate = formData.get("endDate")?.toString().trim() ?? "";
     const rawTime = formData.get("time")?.toString() || "";
     const timeIsSet = rawTime.length > 0;
     const time = timeIsSet ? rawTime : "12:00";
@@ -199,12 +196,38 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       return;
     }
 
-    const dateTimeStart = new Date(`${date}T${time}`);
+    const startOffsetMinutes = parseOffsetMinutes(formData.get("timeZoneOffsetStart"));
+    const endOffsetMinutes = parseOffsetMinutes(
+      formData.get("timeZoneOffsetEnd"),
+    );
+    const dateTimeStart =
+      parseLocalDateTime({
+        date,
+        time,
+        offsetMinutes: startOffsetMinutes,
+      }) ?? new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
       return;
     }
 
-    const dateTimeEnd = rawTimeEnd ? new Date(`${date}T${rawTimeEnd}`) : null;
+    const hasMultiDayRange = Boolean(endDate && endDate !== date);
+    const effectiveEndDate = hasMultiDayRange ? endDate : date;
+    const rawDateTimeEnd =
+      rawTimeEnd || hasMultiDayRange
+        ? parseLocalDateTime({
+            date: effectiveEndDate,
+            time: rawTimeEnd || rawTime || "12:00",
+            offsetMinutes: endOffsetMinutes ?? startOffsetMinutes,
+          }) ?? new Date(`${effectiveEndDate}T${rawTimeEnd || rawTime || "12:00"}`)
+        : null;
+    const dateTimeEnd =
+      rawDateTimeEnd && !Number.isNaN(rawDateTimeEnd.getTime())
+        ? rawDateTimeEnd
+        : null;
+
+    if (dateTimeEnd && dateTimeEnd < dateTimeStart) {
+      throw new Error("End date cannot be before the start date.");
+    }
 
     const event = await updateEvent(eventIdForActions, currentUserId, {
       title,
@@ -362,6 +385,9 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     placeOpeningHours?.find((line) =>
       line.toLowerCase().startsWith(todayName.toLowerCase()),
     ) ?? null;
+  const spansMultipleDays = Boolean(
+    event.dateTimeEnd && !isSameCalendarDay(event.dateTimeStart, event.dateTimeEnd),
+  );
   const staticMapUrl =
     mapsKey && event.placeLat && event.placeLng
       ? `https://maps.googleapis.com/maps/api/staticmap?center=${event.placeLat},${event.placeLng}&zoom=14&size=700x320&markers=color:0xdb2777%7C${event.placeLat},${event.placeLng}&key=${mapsKey}`
@@ -386,7 +412,42 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         ) : null}
       </>
     ) : (
-      "Anytime"
+      spansMultipleDays ? "All day" : "Anytime"
+    );
+
+  const renderEventDateSummary = () =>
+    spansMultipleDays && event.dateTimeEnd ? (
+      <>
+        <LocalTime
+          options={{
+            weekday: "short",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }}
+          value={event.dateTimeStart}
+        />
+        <span> - </span>
+        <LocalTime
+          options={{
+            weekday: "short",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }}
+          value={event.dateTimeEnd}
+        />
+      </>
+    ) : (
+      <LocalTime
+        options={{
+          weekday: "short",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }}
+        value={event.dateTimeStart}
+      />
     );
 
   return (
@@ -410,15 +471,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
               {event.title}
             </h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              <LocalTime
-                options={{
-                  weekday: "short",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                }}
-                value={event.dateTimeStart}
-              />
+              {renderEventDateSummary()}
               <span> · </span>
               {renderEventTime()}
             </p>
@@ -495,16 +548,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
             <div className="event-details-row">
               <span className="event-details-label">Date</span>
-              <LocalTime
-                className="event-details-value"
-                options={{
-                  weekday: "short",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                }}
-                value={event.dateTimeStart}
-              />
+              <span className="event-details-value">{renderEventDateSummary()}</span>
             </div>
 
             <div className="event-details-row">
@@ -741,9 +785,9 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         onDelete={handleDeleteFromModal}
         mapsApiKey={mapsKey}
         title={event.title}
-        dateValue={formatDateInput(event.dateTimeStart)}
-        timeValue={event.timeIsSet ? formatTimeInput(event.dateTimeStart) : ""}
-        timeEndValue={event.timeIsSet && event.dateTimeEnd ? formatTimeInput(event.dateTimeEnd) : ""}
+        dateTimeStartIso={event.dateTimeStart.toISOString()}
+        dateTimeEndIso={event.dateTimeEnd?.toISOString() ?? null}
+        timeIsSet={event.timeIsSet}
         tagsValue={tagsValue}
         descriptionValue={event.description ?? ""}
         placeId={event.placeId}
