@@ -195,7 +195,7 @@ export default async function SettingsPage({ params }: PageProps) {
   }
 
   return (
-    <>
+    <div className="min-w-0 w-full">
       <MutationToast
         messages={{
           "profile-style-saved": "Profile style updated.",
@@ -204,7 +204,7 @@ export default async function SettingsPage({ params }: PageProps) {
           "time-format-saved": "Time format updated.",
         }}
       />
-      <section className="surface p-6 md:p-8">
+      <section className="surface p-4 md:p-6 lg:p-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="section-kicker">Settings</p>
@@ -232,9 +232,9 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="space-y-6">
-          <section className="surface border border-sky-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(236,248,255,0.78))] p-6 md:p-8">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-2">
+        <div className="min-w-0 space-y-6">
+          <section className="surface border border-sky-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(236,248,255,0.78))] p-4 md:p-6 lg:p-8">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="section-kicker">People</p>
@@ -340,9 +340,9 @@ export default async function SettingsPage({ params }: PageProps) {
             </div>
           </section>
 
-      <InviteCard inviteCode={space.inviteCode} isSpaceComplete={isSpaceComplete} />
+          <InviteCard inviteCode={space.inviteCode} isSpaceComplete={isSpaceComplete} />
 
-          <section className="surface border border-[var(--panel-border)] bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(248,249,252,0.8))] p-6 md:p-8">
+          <section className="surface border border-[var(--panel-border)] bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(248,249,252,0.8))] p-4 md:p-6 lg:p-8">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="section-kicker">Space</p>
@@ -412,8 +412,8 @@ export default async function SettingsPage({ params }: PageProps) {
           </section>
         </div>
 
-        <div className="space-y-6">
-          <section className="surface p-6 md:p-8">
+        <div className="min-w-0 space-y-6">
+          <section className="surface p-4 md:p-6 lg:p-8">
             <h3 className="text-base font-semibold text-[var(--text-primary)]">
               Your Profile Style
             </h3>
@@ -492,7 +492,7 @@ export default async function SettingsPage({ params }: PageProps) {
             </form>
           </section>
 
-          <section className="surface p-6 md:p-8">
+          <section className="surface p-4 md:p-6 lg:p-8">
             <h3 className="text-base font-semibold text-[var(--text-primary)]">
               Calendar Preferences
             </h3>
@@ -571,7 +571,7 @@ export default async function SettingsPage({ params }: PageProps) {
 
         </div>
       </div>
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-2">
         <GoogleCalendarSettings />
         <MembershipActions
           isCreator={isCreator}
@@ -583,7 +583,7 @@ export default async function SettingsPage({ params }: PageProps) {
         />
       </div>
       <OnboardingSettings spaceId={space.id} />
-    </>
+    </div>
   );
 }
 

@@ -8,6 +8,9 @@ import { listEventsForSpace } from "@/lib/events";
 import { resolveCalendarTimeFormat } from "@/lib/calendar";
 import BetaNoticeBar from "@/components/beta/BetaNoticeBar";
 import SpaceNav from "./space-nav";
+import MobileTopBar from "@/components/mobile/MobileTopBar";
+import BottomTabBar from "@/components/mobile/BottomTabBar";
+import FloatingActionButton from "@/components/mobile/FloatingActionButton";
 
 type LayoutProps = {
   children: ReactNode;
@@ -50,26 +53,31 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
     to: summaryWindowEnd,
   });
 
+  const navProps = {
+    spaceId: space.id,
+    spaceName: space.name || "Your space",
+    todayDateIso: today.toISOString(),
+    todaySummaryEvents: todaySummaryEvents.map((event) => ({
+      id: event.id,
+      title: event.title,
+      dateTimeStartIso: event.dateTimeStart.toISOString(),
+      timeIsSet: event.timeIsSet,
+    })),
+    timeFormat: calendarTimeFormat,
+  };
+
   return (
     <div className="min-h-screen">
-      <SpaceNav
-        spaceId={space.id}
-        spaceName={space.name || "Your space"}
-        todayDateIso={today.toISOString()}
-        todaySummaryEvents={todaySummaryEvents.map((event) => ({
-          id: event.id,
-          title: event.title,
-          dateTimeStartIso: event.dateTimeStart.toISOString(),
-          timeIsSet: event.timeIsSet,
-        }))}
-        timeFormat={calendarTimeFormat}
-      />
-      <div className="mx-auto mt-4 w-full max-w-[1220px] px-4 md:px-6">
+      <MobileTopBar {...navProps} />
+      <SpaceNav {...navProps} />
+      <div className="mx-auto mt-4 w-full max-w-[1220px] px-3 md:px-6">
         <BetaNoticeBar spaceId={space.id} />
       </div>
-      <main className="mx-auto flex w-full max-w-[1220px] flex-col gap-10 px-4 pb-12 pt-8 md:px-6 md:pt-10">
+      <main className="mx-auto flex w-full max-w-[1220px] flex-col gap-6 overflow-x-hidden px-3 pb-24 pt-4 md:gap-10 md:px-6 md:pb-12 md:pt-10">
         {children}
       </main>
+      <FloatingActionButton spaceId={space.id} />
+      <BottomTabBar spaceId={space.id} />
     </div>
   );
 }

@@ -949,3 +949,74 @@ h3,
   border-color: var(--text-secondary);
 }
 
+/* ──────────────────────────────────────────────────
+   Mobile shell: bottom tab bar + top bar
+   ────────────────────────────────────────────────── */
+
+.bottom-tab-bar {
+  background: rgba(255, 255, 255, 0.92);
+  border-top: 1px solid var(--panel-border);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.mobile-top-bar {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 241, 247, 0.88) 100%
+  );
+  border-bottom: 1px solid rgba(237, 232, 228, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* FAB expanded menu backdrop */
+.fab-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.15);
+  z-index: 49;
+  animation: fade-in 0.2s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile-specific surface adjustments */
+@media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
+  .surface {
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .surface-muted {
+    border-radius: 20px;
+    overflow: hidden;
+  }
+}
+
+/* Mobile agenda view */
+.agenda-day-header {
+  position: sticky;
+  top: 52px; /* below mobile top bar */
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.agenda-event-row {
+  transition: background-color 0.15s ease;
+}
+
+.agenda-event-row:active {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
