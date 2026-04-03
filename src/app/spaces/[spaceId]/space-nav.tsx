@@ -152,7 +152,7 @@ export default function SpaceNav({
   };
 
   return (
-    <nav className="site-nav sticky top-3 z-50 px-4">
+    <nav className="site-nav sticky top-3 z-50 px-4 hidden md:block">
       <div className="mx-auto w-full max-w-[1220px] rounded-[32px] border border-white/70 bg-[linear-gradient(155deg,rgba(255,255,255,0.9),rgba(255,241,247,0.8),rgba(242,248,255,0.78))] px-4 py-3 shadow-[var(--shadow-soft)] backdrop-blur-xl md:px-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-3">

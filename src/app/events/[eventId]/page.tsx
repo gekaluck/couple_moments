@@ -453,7 +453,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   return (
     <div className="min-h-screen page-enter">
       <header className="border-b border-rose-200/50 bg-[linear-gradient(175deg,rgba(255,255,255,0.92),rgba(255,236,244,0.75))] backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-start justify-between gap-4 px-6 py-7">
+        <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-start justify-between gap-4 px-4 py-5 md:px-6 md:py-7">
           <div className="max-w-4xl">
             <div className="flex items-center gap-2">
               <Link
@@ -467,7 +467,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                 Event
               </span>
             </div>
-            <h1 className="mt-2 text-3xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
+            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl break-words">
               {event.title}
             </h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
@@ -515,7 +515,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-6 py-8">
+      <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
         <section className="event-details-card rounded-2xl p-6 shadow-[var(--shadow-sm)]">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">

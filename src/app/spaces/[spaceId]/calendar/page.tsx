@@ -49,6 +49,7 @@ import AvailabilityBlockModal from "./availability-block-modal";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { CalendarEmptyState } from "@/components/calendar/CalendarEmptyState";
 import DayCell from "./day-cell";
+import MobileAgendaView from "@/components/calendar/MobileAgendaView";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -612,11 +613,61 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     return `${year}-${month}-${day}`;
   };
 
+  // Build serialized agenda data for mobile view
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const agendaDays = (() => {
+    const dayMap = new Map<string, { events: typeof events; blocks: ReturnType<typeof blocksByDay.get> }>();
+
+    for (const day of monthDays) {
+      if (!day.isCurrentMonth) continue;
+      const key = dateKey(day.date);
+      const dayEvents = eventsByDay.get(key) ?? [];
+      const dayBlocks = blocksByDay.get(key) ?? [];
+      if (dayEvents.length > 0 || dayBlocks.length > 0) {
+        dayMap.set(key, { events: dayEvents, blocks: dayBlocks });
+      }
+    }
+
+    return Array.from(dayMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, data]) => ({
+        dateKey: key,
+        dateIso: new Date(key + "T00:00:00").toISOString(),
+        events: (data.events ?? []).map((event) => ({
+          id: event.id,
+          title: event.title,
+          description: event.description ?? null,
+          dateTimeStartIso: event.dateTimeStart.toISOString(),
+          dateTimeEndIso: event.dateTimeEnd?.toISOString() ?? null,
+          timeIsSet: event.timeIsSet,
+          placeName: event.placeName,
+          isPast: event.dateTimeStart < todayStart,
+          createdByUserId: event.createdByUserId,
+        })),
+        blocks: (data.blocks ?? []).map((block) => {
+          const createdByUserId = block.createdByUserId || "external";
+          const visual = memberVisuals[createdByUserId];
+          return {
+            id: block.id,
+            title: block.title,
+            startAtIso: block.startAt.toISOString(),
+            endAtIso: block.endAt.toISOString(),
+            creatorName: visual?.displayName ?? block.createdBy.name ?? block.createdBy.email,
+            source: block.source,
+            accentColor: visual?.accent.accent ?? "var(--color-secondary)",
+            accentSoft: visual?.accent.accentSoft ?? "var(--color-secondary-soft)",
+            accentText: visual?.accent.accentText ?? "var(--idea-new-text)",
+          };
+        }),
+      }));
+  })();
+  const agendaTodayKey = dateKey(today);
+
   return (
     <>
-      <section className="surface p-6 md:p-8">
+      <section className="surface overflow-hidden p-4 md:p-8">
         <div className="grid gap-5 xl:grid-cols-[1fr_auto_1fr] xl:items-start">
-          <div className="space-y-4">
+          <div className="hidden space-y-4 md:block">
             <p className="section-kicker">Calendar</p>
             <p className="section-subtitle">
               Click any day to add an event or block time.
@@ -631,28 +682,28 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               mapsApiKey={mapsApiKey}
             />
           </div>
-          <div className="flex flex-col items-start gap-3 xl:items-center xl:justify-self-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 p-1.5 shadow-[var(--shadow-sm)]">
+          <div className="flex flex-col items-center gap-3 xl:justify-self-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--panel-border)] bg-white/90 p-1 shadow-[var(--shadow-sm)] md:gap-2 md:p-1.5">
               <Link
-                className="pill-button button-hover min-w-[70px] justify-center"
+                className="pill-button button-hover min-w-[54px] justify-center text-xs md:min-w-[70px] md:text-sm"
                 href={buildCalendarHref(monthParam(prevMonth))}
               >
                 Prev
               </Link>
-              <div className="min-w-[220px] px-3 text-center">
-                <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl">
+              <div className="min-w-0 px-2 text-center md:min-w-[220px] md:px-3">
+                <h2 className="whitespace-nowrap text-lg font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl">
                   {formatMonthTitle(now)}
                 </h2>
               </div>
               <Link
-                className="pill-button button-hover min-w-[70px] justify-center"
+                className="pill-button button-hover min-w-[54px] justify-center text-xs md:min-w-[70px] md:text-sm"
                 href={buildCalendarHref(monthParam(nextMonth))}
               >
                 Next
               </Link>
             </div>
             <Link
-              className="pill-button button-hover"
+              className="pill-button button-hover hidden md:inline-flex"
               href={buildCalendarHref(monthParam(today))}
             >
               Jump to today
@@ -697,7 +748,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             </a>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]">
+        {/* Legend - desktop only */}
+        <div className="mt-3 hidden flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)] md:flex">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-rose-500" />
             Your plans
@@ -716,7 +768,18 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-7 gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] sm:gap-2">
+        {/* Mobile agenda view */}
+        <div className="mt-4 md:hidden">
+          <MobileAgendaView
+            days={agendaDays}
+            todayKey={agendaTodayKey}
+            timeFormat={calendarTimeFormat}
+            monthTitle={formatMonthTitle(now)}
+          />
+        </div>
+
+        {/* Desktop month grid */}
+        <div className="mt-4 hidden grid-cols-7 gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] md:grid sm:gap-2">
           {dayLabels.map((day) => (
             <div
               key={day}
@@ -727,7 +790,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             </div>
           ))}
         </div>
-        <div className="mt-1 grid grid-cols-7 gap-1 sm:mt-2 sm:gap-2">
+        <div className="mt-1 hidden grid-cols-7 gap-1 md:grid sm:mt-2 sm:gap-2">
           {monthDays.map((day) => {
             const key = dateKey(day.date);
             const dayEvents = eventsByDay.get(key) ?? [];
@@ -763,7 +826,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           })}
         </div>
         {events.length === 0 && blocks.manual.length === 0 && blocks.external.length === 0 ? (
-          <div className="mt-6">
+          <div className="mt-6 hidden md:block">
             <CalendarEmptyState
               actionHref={buildCalendarHref(monthParam(now), { new: dateKey(now) })}
             />

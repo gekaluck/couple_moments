@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import Link from "next/link";
 import Script from "next/script";
@@ -15,6 +15,12 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "Duet",
@@ -53,7 +59,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <div className="flex-1">{children}</div>
         </ErrorBoundary>
-        <footer className="mx-auto w-full max-w-[1220px] px-4 pb-6 pt-3 text-center text-xs text-[var(--text-tertiary)] md:px-6">
+        <footer className="hidden md:block mx-auto w-full max-w-[1220px] px-4 pb-6 pt-3 text-center text-xs text-[var(--text-tertiary)] md:px-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/70 px-3 py-1.5 backdrop-blur-sm">
             <Link href="/privacy" className="link-hover hover:text-[var(--text-primary)]">
               Privacy Policy
@@ -65,7 +71,7 @@ export default function RootLayout({
           </div>
         </footer>
         <Toaster
-          position="bottom-right"
+          position="top-center"
           toastOptions={{
             style: {
               background: "white",

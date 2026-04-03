@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FlaskConical, MessageSquareWarning, X } from "lucide-react";
@@ -15,12 +15,13 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const storageKey = `duet_beta_notice_${BETA_NOTICE_VERSION}_${spaceId}`;
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (window.localStorage.getItem(storageKey) === "1") {
+      setDismissed(true);
     }
-    return window.localStorage.getItem(storageKey) === "1";
-  });
+  }, [storageKey]);
 
   const reportHref = useMemo(() => {
     const params = searchParams.toString();
