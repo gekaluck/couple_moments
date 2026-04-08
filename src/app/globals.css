@@ -958,6 +958,9 @@ h3,
   border-top: 1px solid var(--panel-border);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
+  /* Force GPU layer to prevent mobile browser reflow detaching from viewport */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .mobile-top-bar {
