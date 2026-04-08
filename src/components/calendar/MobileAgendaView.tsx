@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Clock, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -43,6 +43,11 @@ type MobileAgendaViewProps = {
 };
 
 const DEFAULT_DAYS_SHOWN = 7;
+
+function getClientTodayKey(): string {
+  const today = new Date();
+  return `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-${`${today.getDate()}`.padStart(2, "0")}`;
+}
 
 function formatTime(isoString: string, timeFormat: "12h" | "24h"): string {
   const date = new Date(isoString);
@@ -111,13 +116,20 @@ export default function MobileAgendaView({
 }: MobileAgendaViewProps) {
   const [showPast, setShowPast] = useState(false);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
+  const [resolvedTodayKey, setResolvedTodayKey] = useState(todayKey);
+
+  useEffect(() => {
+    setResolvedTodayKey(getClientTodayKey());
+  }, []);
 
   const daysWithContent = days.filter(
     (day) => day.events.length > 0 || day.blocks.length > 0,
   );
 
   // Split into past (before today) and from-today-onwards
-  const todayIndex = daysWithContent.findIndex((day) => day.dateKey >= todayKey);
+  const todayIndex = daysWithContent.findIndex(
+    (day) => day.dateKey >= resolvedTodayKey,
+  );
   const splitAt = todayIndex === -1 ? daysWithContent.length : todayIndex;
   const pastDays = daysWithContent.slice(0, splitAt);
   const upcomingDays = daysWithContent.slice(splitAt);
@@ -144,8 +156,8 @@ export default function MobileAgendaView({
   const hiddenUpcomingCount = upcomingDays.length - DEFAULT_DAYS_SHOWN;
 
   function renderDay(day: AgendaDayData) {
-    const header = formatDayHeader(day.dateIso, todayKey, day.dateKey);
-    const isToday = day.dateKey === todayKey;
+    const header = formatDayHeader(day.dateIso, resolvedTodayKey, day.dateKey);
+    const isToday = day.dateKey === resolvedTodayKey;
 
     return (
       <div key={day.dateKey} className="relative">
