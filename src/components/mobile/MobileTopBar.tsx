@@ -21,14 +21,18 @@ type MobileTopBarProps = {
   timeFormat?: CalendarTimeFormat;
 };
 
+function clientToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
 export default function MobileTopBar({
   spaceId,
   spaceName,
-  todayDateIso,
   todaySummaryEvents,
   timeFormat = "24h",
 }: MobileTopBarProps) {
-  const today = new Date(todayDateIso);
+  const today = clientToday();
   const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
   const truncate = (value: string, maxLength: number) =>
     value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}…`;
@@ -79,13 +83,13 @@ export default function MobileTopBar({
             <p className="truncate text-sm font-semibold tracking-[-0.01em] text-[var(--accent-strong)] brand-text">
               {spaceName}
             </p>
-            <div className="flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
-              <LocalTime
-                options={{ month: "short", day: "numeric" }}
-                value={todayDateIso}
-              />
+            <div className="flex items-center gap-1 text-[10px] text-[var(--text-muted)]" suppressHydrationWarning>
+              <span suppressHydrationWarning>
+                {today.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+              </span>
               <span className="text-[var(--text-tertiary)]">·</span>
               <span
+                suppressHydrationWarning
                 className={`truncate ${
                   todaySummary.hasPlans
                     ? "text-[var(--action-primary)] font-medium"

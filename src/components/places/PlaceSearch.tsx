@@ -87,7 +87,7 @@ export default function PlaceSearch({
     let autocomplete: AutocompleteService | null = null;
 
     if (!mapsConfigured) {
-      setOptions({ key } as Parameters<typeof setOptions>[0]);
+      setOptions({ key, language: "en" } as Parameters<typeof setOptions>[0]);
       mapsConfigured = true;
     }
 
