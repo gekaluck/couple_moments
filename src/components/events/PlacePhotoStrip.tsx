@@ -1,15 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { loadPlacePhotoUrls } from "@/lib/place-photos-client";
 
 type PlacePhotoStripProps = {
   photoUrls: string[];
+  placeId?: string | null;
   alt: string;
   className?: string;
 };
 
 export default function PlacePhotoStrip({
   photoUrls,
+  placeId,
   alt,
   className,
 }: PlacePhotoStripProps) {
@@ -20,11 +23,44 @@ export default function PlacePhotoStrip({
         .filter((url) => /^https?:\/\//i.test(url)),
     [photoUrls],
   );
+  const [dynamicPhotoState, setDynamicPhotoState] = useState<{
+    placeId: string | null;
+    urls: string[];
+  }>({ placeId: null, urls: [] });
   const [failedIndices, setFailedIndices] = useState<number[]>([]);
+  const hasFreshResult = dynamicPhotoState.placeId === placeId;
+  const sourcePhotoUrls =
+    placeId
+      ? hasFreshResult
+        ? dynamicPhotoState.urls
+        : []
+      : validPhotoUrls;
 
-  const hasVisiblePhoto = validPhotoUrls.some(
+  const hasVisiblePhoto = sourcePhotoUrls.some(
     (_photoUrl, index) => !failedIndices.includes(index),
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!placeId) {
+      return;
+    }
+
+    void loadPlacePhotoUrls(placeId, {
+      limit: 3,
+      maxWidth: 800,
+      maxHeight: 600,
+    }).then((urls) => {
+      if (!cancelled) {
+        setDynamicPhotoState({ placeId: placeId ?? null, urls });
+        setFailedIndices([]);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [placeId]);
 
   if (!hasVisiblePhoto) {
     return null;
@@ -32,7 +68,7 @@ export default function PlacePhotoStrip({
 
   return (
     <div className={`grid grid-cols-3 gap-2 ${className ?? ""}`.trim()}>
-      {validPhotoUrls.map((photoUrl, index) => {
+      {sourcePhotoUrls.map((photoUrl, index) => {
         if (failedIndices.includes(index)) {
           return null;
         }

@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import EmptyState from "@/components/ui/EmptyState";
 import LocalTime from "@/components/time/LocalTime";
+import { loadPlacePhotoUrls } from "@/lib/place-photos-client";
 
 const CalendarIcon = () => (
   <svg
@@ -43,6 +44,7 @@ type Memory = {
   description: string | null;
   dateTimeStart: string;
   tags: string[];
+  placeId: string | null;
   coverUrl: string | null;
   fallbackCoverUrl: string | null;
 };
@@ -55,58 +57,90 @@ type MemoriesClientProps = {
 type MemoryCoverProps = {
   coverUrl: string | null;
   fallbackCoverUrl: string | null;
+  placeId: string | null;
   title: string;
   gradient: string;
 };
 
-function MemoryCover({ coverUrl, fallbackCoverUrl, title, gradient }: MemoryCoverProps) {
+function MemoryCover({
+  coverUrl,
+  fallbackCoverUrl,
+  placeId,
+  title,
+  gradient,
+}: MemoryCoverProps) {
   const [resolvedCoverUrl, setResolvedCoverUrl] = useState<string | null>(null);
-  const candidates = useMemo(
+  const [dynamicCoverState, setDynamicCoverState] = useState<{
+    placeId: string | null;
+    url: string | null;
+  }>({ placeId: null, url: null });
+  const uploadedCoverCandidates = useMemo(
     () =>
-      [coverUrl, fallbackCoverUrl]
+      [coverUrl]
         .map((url) => url?.trim() ?? "")
         .filter(
           (url, index, list) =>
             /^https?:\/\//i.test(url) && list.indexOf(url) === index,
         ),
-    [coverUrl, fallbackCoverUrl],
+    [coverUrl],
   );
   const activeCoverUrl =
-    resolvedCoverUrl && candidates.includes(resolvedCoverUrl)
+    resolvedCoverUrl && uploadedCoverCandidates.includes(resolvedCoverUrl)
       ? resolvedCoverUrl
-      : null;
+      : dynamicCoverState.placeId === placeId
+        ? dynamicCoverState.url
+        : !placeId
+          ? fallbackCoverUrl
+          : null;
 
   useEffect(() => {
     let cancelled = false;
 
-    if (candidates.length === 0) {
-      return;
-    }
-
-    const probe = (index: number) => {
-      if (index >= candidates.length) {
+    const loadFreshFallback = async () => {
+      if (!placeId) {
         if (!cancelled) {
           setResolvedCoverUrl(null);
+          setDynamicCoverState({ placeId: null, url: null });
         }
+        return;
+      }
+      const freshUrls = await loadPlacePhotoUrls(placeId, {
+        limit: 1,
+        maxWidth: 600,
+        maxHeight: 600,
+      });
+      if (!cancelled) {
+        setResolvedCoverUrl(null);
+        setDynamicCoverState({ placeId, url: freshUrls[0] ?? null });
+      }
+    };
+
+    const probe = (index: number) => {
+      if (index >= uploadedCoverCandidates.length) {
+        void loadFreshFallback();
         return;
       }
 
       const image = new Image();
       image.onload = () => {
         if (!cancelled) {
-          setResolvedCoverUrl(candidates[index]);
+          setResolvedCoverUrl(uploadedCoverCandidates[index]);
         }
       };
       image.onerror = () => probe(index + 1);
-      image.src = candidates[index];
+      image.src = uploadedCoverCandidates[index];
     };
 
-    probe(0);
+    if (uploadedCoverCandidates.length === 0) {
+      void loadFreshFallback();
+    } else {
+      probe(0);
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [candidates]);
+  }, [placeId, uploadedCoverCandidates]);
 
   return (
     <div
@@ -120,7 +154,14 @@ function MemoryCover({ coverUrl, fallbackCoverUrl, title, gradient }: MemoryCove
           alt={title}
           className="relative z-10 h-full w-full object-cover"
           src={activeCoverUrl}
-          onError={() => setResolvedCoverUrl(null)}
+          onError={() => {
+            setResolvedCoverUrl(null);
+            if (placeId) {
+              setDynamicCoverState((current) =>
+                current.placeId === placeId ? { placeId, url: null } : current,
+              );
+            }
+          }}
         />
       ) : (
         <svg
@@ -333,6 +374,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               <MemoryCover
                 coverUrl={event.coverUrl}
                 fallbackCoverUrl={event.fallbackCoverUrl}
+                placeId={event.placeId}
                 title={event.title}
                 gradient={gradient}
               />

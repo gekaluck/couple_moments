@@ -1,3 +1,7 @@
+import type { LookupAddress } from "node:dns";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
+
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createChangeLogEntry } from "@/lib/change-log";
@@ -5,6 +9,13 @@ import { createNoteForSpace } from "@/lib/notes";
 import { serializeTags } from "@/lib/tags";
 import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { sanitizeHttpUrl } from "@/lib/parsers";
+import {
+  isCloudinaryAssetUrl,
+  isSupportedImagePath,
+  MAX_EVENT_PHOTOS,
+} from "@/lib/event-photos";
+
+const PHOTO_VALIDATION_TIMEOUT_MS = 5000;
 
 type EventInput = {
   title: string;
@@ -37,12 +48,20 @@ export async function listEventsForSpace(params: {
   const now = referenceDate ?? new Date();
   const filters: Record<string, unknown>[] = [{ coupleSpaceId: spaceId }];
 
-  if (from || to) {
+  if (to) {
     filters.push({
       dateTimeStart: {
-        ...(from ? { gte: from } : {}),
-        ...(to ? { lte: to } : {}),
+        lte: to,
       },
+    });
+  }
+
+  if (from) {
+    filters.push({
+      OR: [
+        { dateTimeEnd: { gte: from } },
+        { dateTimeEnd: null, dateTimeStart: { gte: from } },
+      ],
     });
   }
 
@@ -72,7 +91,16 @@ export async function listEventsForSpace(params: {
     },
     include: {
       createdBy: true,
-      ...(includePhotos ? { photos: true } : {}),
+      ...(includePhotos
+        ? {
+            photos: {
+              orderBy: [
+                { isCover: "desc" },
+                { createdAt: "asc" },
+              ],
+            },
+          }
+        : {}),
     },
     orderBy: {
       dateTimeStart: "asc",
@@ -100,6 +128,9 @@ export async function createEventForSpace(
 ) {
   const space = await getCoupleSpaceForUser(spaceId, userId);
   if (!space) throw new Error("Not authorized");
+  if (input.dateTimeEnd && input.dateTimeEnd < input.dateTimeStart) {
+    throw new Error("End date cannot be before the start date.");
+  }
 
   const event = await prisma.event.create({
     data: {
@@ -209,6 +240,14 @@ export async function updateEvent(
   });
   if (!existing) throw new Error("Event not found");
 
+  const resolvedStart = updates.dateTimeStart ?? existing.dateTimeStart;
+  const resolvedEnd =
+    updates.dateTimeEnd === undefined ? existing.dateTimeEnd : updates.dateTimeEnd;
+
+  if (resolvedEnd && resolvedEnd < resolvedStart) {
+    throw new Error("End date cannot be before the start date.");
+  }
+
   const data: Record<string, unknown> = {};
   if (updates.title !== undefined) {
     data.title = updates.title.trim();
@@ -224,6 +263,15 @@ export async function updateEvent(
   }
   if (updates.timeIsSet !== undefined) {
     data.timeIsSet = updates.timeIsSet;
+  }
+  if (
+    updates.dateTimeStart !== undefined ||
+    updates.dateTimeEnd !== undefined
+  ) {
+    data.type =
+      (resolvedEnd ?? resolvedStart) < new Date()
+        ? "MEMORY"
+        : "PLANNED";
   }
   if (updates.tags !== undefined) {
     data.tags = serializeTags(updates.tags);
@@ -360,13 +408,253 @@ export async function createEventPhoto(
   if (!event) {
     throw new Error("Event not found");
   }
-  return prisma.photo.create({
+  const normalizedUrl = await validateEventPhotoUrl(storageUrl);
+  const existingPhotoCount = await prisma.photo.count({
+    where: { eventId },
+  });
+  if (existingPhotoCount >= MAX_EVENT_PHOTOS) {
+    throw new Error(`You can add up to ${MAX_EVENT_PHOTOS} photos to one memory.`);
+  }
+  const photo = await prisma.photo.create({
     data: {
       eventId,
       uploadedByUserId: userId,
-      storageUrl,
+      storageUrl: normalizedUrl,
+      isCover: existingPhotoCount === 0,
     },
   });
+
+  await createChangeLogEntry({
+    coupleSpaceId: event.coupleSpaceId,
+    entityType: "EVENT",
+    entityId: event.id,
+    userId,
+    changeType: "UPDATE",
+    summary: "Photo added to memory.",
+  });
+
+  return photo;
+}
+
+export async function deleteEventPhoto(photoId: string, userId: string) {
+  const photo = await prisma.photo.findFirst({
+    where: {
+      id: photoId,
+      event: {
+        coupleSpace: {
+          memberships: {
+            some: { userId },
+          },
+        },
+      },
+    },
+    include: {
+      event: {
+        select: {
+          id: true,
+          coupleSpaceId: true,
+        },
+      },
+    },
+  });
+  if (!photo) {
+    throw new Error("Photo not found.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.photo.delete({
+      where: { id: photoId },
+    });
+
+    if (photo.isCover) {
+      const nextCover = await tx.photo.findFirst({
+        where: {
+          eventId: photo.event.id,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+      if (nextCover) {
+        await tx.photo.update({
+          where: { id: nextCover.id },
+          data: { isCover: true },
+        });
+      }
+    }
+  });
+
+  await createChangeLogEntry({
+    coupleSpaceId: photo.event.coupleSpaceId,
+    entityType: "EVENT",
+    entityId: photo.event.id,
+    userId,
+    changeType: "UPDATE",
+    summary: "Photo removed from memory.",
+  });
+
+  return photo;
+}
+
+export async function setEventPhotoAsCover(photoId: string, userId: string) {
+  const photo = await prisma.photo.findFirst({
+    where: {
+      id: photoId,
+      event: {
+        coupleSpace: {
+          memberships: {
+            some: { userId },
+          },
+        },
+      },
+    },
+    include: {
+      event: {
+        select: {
+          id: true,
+          coupleSpaceId: true,
+        },
+      },
+    },
+  });
+  if (!photo) {
+    throw new Error("Photo not found.");
+  }
+
+  await prisma.$transaction([
+    prisma.photo.updateMany({
+      where: {
+        eventId: photo.event.id,
+        isCover: true,
+      },
+      data: {
+        isCover: false,
+      },
+    }),
+    prisma.photo.update({
+      where: { id: photo.id },
+      data: {
+        isCover: true,
+      },
+    }),
+  ]);
+
+  await createChangeLogEntry({
+    coupleSpaceId: photo.event.coupleSpaceId,
+    entityType: "EVENT",
+    entityId: photo.event.id,
+    userId,
+    changeType: "UPDATE",
+    summary: "Memory thumbnail updated.",
+  });
+
+  return photo;
+}
+
+function ipv4IsPrivate(ip: string) {
+  const parts = ip.split(".").map((part) => Number.parseInt(part, 10));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return true;
+  }
+  const [a, b] = parts;
+  if (a === 0) return true; // 0.0.0.0/8
+  if (a === 10) return true; // 10.0.0.0/8
+  if (a === 127) return true; // loopback
+  if (a === 169 && b === 254) return true; // link-local / cloud metadata (169.254.169.254)
+  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+  if (a === 192 && b === 168) return true; // 192.168.0.0/16
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGN 100.64.0.0/10
+  if (a >= 224) return true; // multicast + reserved + broadcast
+  return false;
+}
+
+function ipv6IsPrivate(ip: string) {
+  const normalized = ip.toLowerCase();
+  if (normalized === "::" || normalized === "::1") return true;
+  const mapped = normalized.match(/^::ffff:([0-9.]+)$/);
+  if (mapped && isIP(mapped[1]) === 4) {
+    return ipv4IsPrivate(mapped[1]);
+  }
+  if (/^f[cd]/.test(normalized)) return true; // ULA fc00::/7
+  if (/^fe[89ab]/.test(normalized)) return true; // link-local fe80::/10
+  return false;
+}
+
+function ipIsPrivate(ip: string, family: number) {
+  return family === 6 ? ipv6IsPrivate(ip) : ipv4IsPrivate(ip);
+}
+
+async function ensureHostnameIsPublic(hostname: string) {
+  if (!hostname) {
+    throw new Error("Photo URL must include a host.");
+  }
+  const literalFamily = isIP(hostname);
+  if (literalFamily !== 0) {
+    if (ipIsPrivate(hostname, literalFamily)) {
+      throw new Error("Photo URL must point to a public host.");
+    }
+    return;
+  }
+  let addresses: LookupAddress[];
+  try {
+    addresses = await lookup(hostname, { all: true });
+  } catch {
+    throw new Error("Photo URL host could not be resolved.");
+  }
+  if (addresses.length === 0) {
+    throw new Error("Photo URL host could not be resolved.");
+  }
+  for (const { address, family } of addresses) {
+    if (ipIsPrivate(address, family)) {
+      throw new Error("Photo URL must point to a public host.");
+    }
+  }
+}
+
+async function validateEventPhotoUrl(storageUrl: string) {
+  const trimmed = storageUrl.trim();
+  if (!trimmed) {
+    throw new Error("Photo URL is required.");
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error("Photo URL must be a valid HTTPS image link.");
+  }
+
+  if (parsed.protocol !== "https:") {
+    throw new Error("Photo URL must use HTTPS.");
+  }
+
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim() || undefined;
+  if (isCloudinaryAssetUrl(parsed, cloudName) || isSupportedImagePath(parsed.pathname)) {
+    return parsed.toString();
+  }
+
+  await ensureHostnameIsPublic(parsed.hostname);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PHOTO_VALIDATION_TIMEOUT_MS);
+  try {
+    const response = await fetch(parsed, {
+      method: "HEAD",
+      redirect: "error",
+      signal: controller.signal,
+    });
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (response.ok && contentType.startsWith("image/")) {
+      return parsed.toString();
+    }
+  } catch {
+    // Fall through to a consistent validation error.
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  throw new Error("Photo URL must point to an image.");
 }
 
 export async function listEventComments(eventId: string) {

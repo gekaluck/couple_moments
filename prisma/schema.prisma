@@ -153,6 +153,7 @@ model Photo {
   eventId          String
   uploadedByUserId String
   storageUrl       String
+  isCover          Boolean   @default(false)
 
   event            Event     @relation(fields: [eventId], references: [id])
   uploadedBy       User      @relation(fields: [uploadedByUserId], references: [id])

@@ -31,7 +31,6 @@ type SpaceNavProps = {
 const navItems = (spaceId: string): NavItem[] => [
   { id: "calendar", label: "Calendar", href: `/spaces/${spaceId}/calendar` },
   { id: "memories", label: "Memories", href: `/spaces/${spaceId}/memories` },
-  { id: "notes", label: "Notes", href: `/spaces/${spaceId}/notes` },
   { id: "activity", label: "Activity", href: `/spaces/${spaceId}/activity` },
   { id: "settings", label: "Settings", href: `/spaces/${spaceId}/settings` },
 ];

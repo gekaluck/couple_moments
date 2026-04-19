@@ -667,10 +667,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     <>
       <section className="surface overflow-hidden p-4 md:p-8">
         <div className="grid gap-5 xl:grid-cols-[1fr_auto_1fr] xl:items-start">
-          <div className="hidden space-y-4 md:block">
+          <div className="space-y-4">
             <p className="section-kicker">Calendar</p>
             <p className="section-subtitle">
-              Click any day to add an event or block time.
+              Add an event or block time from the calendar.
             </p>
             <CalendarAddControls
               key={`add-controls-${initialEventDate ?? "none"}-${repeatEventId ?? "none"}-${openAction || "none"}`}

@@ -495,7 +495,7 @@ export default function IdeaCard({
               className="min-h-[100px] w-full rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
               name="description"
               defaultValue={idea.description ?? ""}
-              placeholder="Notes, links, or vibe"
+              placeholder="Details, links, or vibe"
             />
           </div>
           <div>

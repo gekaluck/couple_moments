@@ -83,6 +83,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
           entries={pageActivity.map((entry) => ({
             id: entry.id,
             action: entry.action,
+            details: entry.details ?? null,
             entityType: entry.entityType,
             entityTitle: entry.entityTitle ?? null,
             entityHref: entry.entityHref ?? null,

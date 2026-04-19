@@ -205,7 +205,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
                   3. Keep context
                 </p>
                 <p className="mt-1 text-[var(--text-secondary)]">
-                  Add place details, comments, and notes to plans so details stay attached to the
+                  Add place details and comments to plans so details stay attached to the
                   right moment.
                 </p>
               </li>
@@ -237,7 +237,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
                 Add one idea, schedule one event, and create one unavailable block.
               </li>
               <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
-                Check Memories and Notes so the whole flow feels clear end-to-end.
+                Check Memories and Activity so the whole flow feels clear end-to-end.
               </li>
             </ul>
 
@@ -252,11 +252,11 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
                 <span className="rounded-lg border border-violet-100 bg-violet-50/80 px-2 py-1">
                   Memories
                 </span>
-                <span className="rounded-lg border border-sky-100 bg-sky-50/80 px-2 py-1">
-                  Notes
-                </span>
                 <span className="rounded-lg border border-amber-100 bg-amber-50/80 px-2 py-1">
                   Activity
+                </span>
+                <span className="rounded-lg border border-slate-100 bg-slate-50/80 px-2 py-1">
+                  Settings
                 </span>
               </div>
             </div>

@@ -257,11 +257,12 @@ export default function EventEditModal({
           <TagInput name="tags" defaultValue={tagsValue} />
         </div>
         <label className="flex flex-col gap-2 text-sm font-medium text-[var(--text-muted)] md:col-span-2">
-          Notes
+          Description
           <textarea
             className="min-h-[120px] rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
             name="description"
             defaultValue={descriptionValue}
+            placeholder="Add context for this plan"
           />
         </label>
         <div className="md:col-span-2">

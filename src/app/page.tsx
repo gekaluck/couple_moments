@@ -154,7 +154,7 @@ export default async function Home() {
             icon={<Heart className="h-5 w-5 text-[var(--accent)]" />}
             iconBg="bg-[var(--accent-soft)]"
             title="Relive every memory"
-            description="Past dates move to your archive automatically. Rate them, add photos, write notes."
+            description="Past dates move to your archive automatically. Rate them, add photos, and keep reflections attached."
           />
           <FeatureCard
             icon={<MapPin className="h-5 w-5 text-[var(--accent)]" />}
@@ -170,7 +170,7 @@ export default async function Home() {
               />
             }
             iconBg="bg-[#fff8f0]"
-            title="Notes for everything"
+            title="Shared activity trail"
             description="Wishlists, reminders, inside jokes — kept together, not lost in chat."
           />
           <FeatureCard
