@@ -1,19 +1,47 @@
 import { prisma } from "@/lib/prisma";
 
-type ActivityEntry = {
+export type ActivityType =
+  | "event_created"
+  | "event_updated"
+  | "idea_saved"
+  | "idea_promoted"
+  | "comment_added"
+  | "memory_completed"
+  | "photo_added";
+
+export type ActivityTarget = {
+  kind: "event" | "idea" | "memory";
   id: string;
+  title: string;
+  href: string;
+};
+
+export type ActivityMemory = {
+  rating: number;
+  photoCount: number;
+  heroPhotoUrl: string | null;
+};
+
+export type ActivityPhoto = {
+  url: string;
+  alt?: string | null;
+};
+
+export type ActivityItem = {
+  id: string;
+  type: ActivityType;
   createdAt: Date;
-  action: string;
-  entityType: "EVENT" | "IDEA" | "COMMENT" | "NOTE";
-  entityId?: string | null;
-  entityTitle?: string | null;
-  entityHref?: string | null;
-  details?: string | null;
-  user: {
+  actorId: string;
+  actor: {
     id: string;
     name: string | null;
     email: string;
   };
+  target: ActivityTarget | null;
+  body: string | null;
+  memory: ActivityMemory | null;
+  photos: ActivityPhoto[] | null;
+  relatedIdea: { title: string } | null;
 };
 
 type ActivityQueryOptions = {
@@ -25,17 +53,14 @@ type ChangeLogFilters = NonNullable<
   Parameters<typeof prisma.changeLogEntry.findMany>[0]
 >["where"];
 
-function summarizeNote(note: { body: string; kind: string }) {
-  const preview = note.body.length > 80 ? `${note.body.slice(0, 80)}...` : note.body;
-  return preview;
-}
-
 const IDEA_CONVERTED_SUMMARY = "Idea scheduled as an event.";
 const MEMORY_PHOTO_ADDED_SUMMARY = "Photo added to memory.";
 
 const CHANGELOG_EXCLUDED_SUMMARIES = [
   "Comment added to event.",
   "Comment added to idea.",
+  "Photo removed from memory.",
+  "Memory thumbnail updated.",
 ] as const;
 
 function getActivityChangeLogWhere(spaceId: string): ChangeLogFilters {
@@ -60,29 +85,40 @@ function getActivityChangeLogWhere(spaceId: string): ChangeLogFilters {
 }
 
 export async function countActivityForSpace(spaceId: string): Promise<number> {
-  const [noteCount, changeLogCount] = await Promise.all([
+  const [commentCount, changeLogCount, ratingCount] = await Promise.all([
     prisma.note.count({
-      where: { coupleSpaceId: spaceId },
+      where: {
+        coupleSpaceId: spaceId,
+        kind: { in: ["EVENT_COMMENT", "IDEA_COMMENT"] },
+      },
     }),
     prisma.changeLogEntry.count({
       where: getActivityChangeLogWhere(spaceId),
     }),
+    prisma.rating.count({
+      where: {
+        event: { coupleSpaceId: spaceId },
+      },
+    }),
   ]);
 
-  return noteCount + changeLogCount;
+  return commentCount + changeLogCount + ratingCount;
 }
 
 export async function listActivityForSpace(
   spaceId: string,
   options: ActivityQueryOptions = {},
-): Promise<ActivityEntry[]> {
+): Promise<ActivityItem[]> {
   const skip = Math.max(options.skip ?? 0, 0);
   const take = Math.max(options.take ?? 50, 1);
   const candidateTake = skip + take;
 
-  const [notes, changeLogs] = await Promise.all([
+  const [comments, changeLogs, ratings] = await Promise.all([
     prisma.note.findMany({
-      where: { coupleSpaceId: spaceId },
+      where: {
+        coupleSpaceId: spaceId,
+        kind: { in: ["EVENT_COMMENT", "IDEA_COMMENT"] },
+      },
       include: { author: true },
       orderBy: { createdAt: "desc" },
       take: candidateTake,
@@ -90,6 +126,28 @@ export async function listActivityForSpace(
     prisma.changeLogEntry.findMany({
       where: getActivityChangeLogWhere(spaceId),
       include: { user: true },
+      orderBy: { createdAt: "desc" },
+      take: candidateTake,
+    }),
+    prisma.rating.findMany({
+      where: {
+        event: { coupleSpaceId: spaceId },
+      },
+      include: {
+        user: true,
+        event: {
+          select: {
+            id: true,
+            title: true,
+            photos: {
+              orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
+              take: 1,
+              select: { storageUrl: true },
+            },
+            _count: { select: { photos: true } },
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
       take: candidateTake,
     }),
@@ -107,28 +165,49 @@ export async function listActivityForSpace(
     }
   }
 
-  for (const note of notes) {
-    if (note.parentType === "EVENT" && note.parentId) {
-      eventIds.add(note.parentId);
+  for (const comment of comments) {
+    if (comment.parentType === "EVENT" && comment.parentId) {
+      eventIds.add(comment.parentId);
     }
-    if (note.parentType === "IDEA" && note.parentId) {
-      ideaIds.add(note.parentId);
+    if (comment.parentType === "IDEA" && comment.parentId) {
+      ideaIds.add(comment.parentId);
     }
   }
 
-  const [events, ideas] = await Promise.all([
+  const photoLinkedEventIds = changeLogs
+    .filter(
+      (entry) =>
+        entry.entityType === "EVENT" &&
+        entry.summary === MEMORY_PHOTO_ADDED_SUMMARY,
+    )
+    .map((entry) => entry.entityId);
+
+  const [events, ideas, photoEventCovers] = await Promise.all([
     eventIds.size > 0
       ? prisma.event.findMany({
           where: { id: { in: [...eventIds] } },
           select: { id: true, title: true },
         })
-      : Promise.resolve([]),
+      : Promise.resolve([] as { id: string; title: string }[]),
     ideaIds.size > 0
       ? prisma.idea.findMany({
           where: { id: { in: [...ideaIds] } },
           select: { id: true, title: true, convertedToEventId: true },
         })
-      : Promise.resolve([]),
+      : Promise.resolve(
+          [] as {
+            id: string;
+            title: string;
+            convertedToEventId: string | null;
+          }[],
+        ),
+    photoLinkedEventIds.length > 0
+      ? prisma.photo.findMany({
+          where: { eventId: { in: photoLinkedEventIds } },
+          orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
+          select: { eventId: true, storageUrl: true },
+        })
+      : Promise.resolve([] as { eventId: string; storageUrl: string }[]),
   ]);
 
   const convertedEventIds = ideas
@@ -147,89 +226,189 @@ export async function listActivityForSpace(
     [...events, ...convertedEvents].map((event) => [event.id, event.title]),
   );
   const ideaById = new Map(ideas.map((idea) => [idea.id, idea]));
+  const photoCoverByEventId = new Map<string, string>();
+  for (const cover of photoEventCovers) {
+    if (!photoCoverByEventId.has(cover.eventId)) {
+      photoCoverByEventId.set(cover.eventId, cover.storageUrl);
+    }
+  }
 
-  const logEntries: ActivityEntry[] = changeLogs.map((entry) => {
-    const linkedIdea = entry.entityType === "IDEA" ? ideaById.get(entry.entityId) : null;
-    const linkedEventId =
-      entry.summary === IDEA_CONVERTED_SUMMARY
-        ? linkedIdea?.convertedToEventId ?? null
-        : entry.entityType === "EVENT"
-          ? entry.entityId
+  const logItems: ActivityItem[] = [];
+  for (const entry of changeLogs) {
+    const linkedIdea =
+      entry.entityType === "IDEA" ? ideaById.get(entry.entityId) ?? null : null;
+
+    if (entry.summary === IDEA_CONVERTED_SUMMARY) {
+      const convertedEventId = linkedIdea?.convertedToEventId ?? null;
+      const targetTitle =
+        (convertedEventId ? eventTitleById.get(convertedEventId) : null) ??
+        linkedIdea?.title ??
+        null;
+      if (!convertedEventId || !targetTitle) {
+        continue;
+      }
+      logItems.push({
+        id: `log-${entry.id}`,
+        type: "idea_promoted",
+        createdAt: entry.createdAt,
+        actorId: entry.userId,
+        actor: entry.user,
+        target: {
+          kind: "event",
+          id: convertedEventId,
+          title: targetTitle,
+          href: `/events/${convertedEventId}`,
+        },
+        body: null,
+        memory: null,
+        photos: null,
+        relatedIdea: linkedIdea ? { title: linkedIdea.title } : null,
+      });
+      continue;
+    }
+
+    if (
+      entry.entityType === "EVENT" &&
+      entry.summary === MEMORY_PHOTO_ADDED_SUMMARY
+    ) {
+      const eventTitle = eventTitleById.get(entry.entityId);
+      if (!eventTitle) {
+        continue;
+      }
+      const cover = photoCoverByEventId.get(entry.entityId) ?? null;
+      logItems.push({
+        id: `log-${entry.id}`,
+        type: "photo_added",
+        createdAt: entry.createdAt,
+        actorId: entry.userId,
+        actor: entry.user,
+        target: {
+          kind: "event",
+          id: entry.entityId,
+          title: eventTitle,
+          href: `/events/${entry.entityId}`,
+        },
+        body: null,
+        memory: null,
+        photos: cover ? [{ url: cover }] : null,
+        relatedIdea: null,
+      });
+      continue;
+    }
+
+    if (entry.entityType === "EVENT") {
+      const eventTitle = eventTitleById.get(entry.entityId);
+      if (!eventTitle || entry.changeType === "DELETE") {
+        continue;
+      }
+      logItems.push({
+        id: `log-${entry.id}`,
+        type: entry.changeType === "CREATE" ? "event_created" : "event_updated",
+        createdAt: entry.createdAt,
+        actorId: entry.userId,
+        actor: entry.user,
+        target: {
+          kind: "event",
+          id: entry.entityId,
+          title: eventTitle,
+          href: `/events/${entry.entityId}`,
+        },
+        body: null,
+        memory: null,
+        photos: null,
+        relatedIdea: null,
+      });
+      continue;
+    }
+
+    if (entry.entityType === "IDEA") {
+      if (entry.changeType !== "CREATE" || !linkedIdea) {
+        continue;
+      }
+      logItems.push({
+        id: `log-${entry.id}`,
+        type: "idea_saved",
+        createdAt: entry.createdAt,
+        actorId: entry.userId,
+        actor: entry.user,
+        target: {
+          kind: "idea",
+          id: entry.entityId,
+          title: linkedIdea.title,
+          href: `/spaces/${spaceId}/calendar#idea-${entry.entityId}`,
+        },
+        body: null,
+        memory: null,
+        photos: null,
+        relatedIdea: null,
+      });
+    }
+  }
+
+  const commentItems: ActivityItem[] = [];
+  for (const comment of comments) {
+    if (!comment.parentId) {
+      continue;
+    }
+    const targetTitle =
+      comment.parentType === "EVENT"
+        ? eventTitleById.get(comment.parentId) ?? null
+        : comment.parentType === "IDEA"
+          ? ideaById.get(comment.parentId)?.title ?? null
           : null;
-    const defaultEntityTitle =
-      entry.entityType === "EVENT"
-        ? eventTitleById.get(entry.entityId)
-        : linkedIdea?.title;
-    const entityTitle =
-      linkedEventId && eventTitleById.get(linkedEventId)
-        ? eventTitleById.get(linkedEventId)
-        : defaultEntityTitle;
-    const entityHref =
-      linkedEventId
-        ? `/events/${linkedEventId}`
-        : entry.entityType === "IDEA"
-          ? `/spaces/${spaceId}/calendar#idea-${entry.entityId}`
-          : null;
-    const action =
-      entry.summary === IDEA_CONVERTED_SUMMARY
-        ? "Moved from idea to event"
-        : entry.summary === MEMORY_PHOTO_ADDED_SUMMARY
-          ? "Photo uploaded"
-          : entry.entityType === "EVENT"
-            ? entry.changeType === "CREATE"
-              ? "Event created"
-              : entry.changeType === "UPDATE"
-                ? "Event updated"
-                : "Event deleted"
-            : entry.changeType === "CREATE"
-              ? "Idea created"
-              : entry.changeType === "UPDATE"
-                ? "Idea updated"
-                : "Idea deleted";
-    const entityType =
-      entry.summary === IDEA_CONVERTED_SUMMARY ? "EVENT" : entry.entityType;
+    if (!targetTitle) {
+      continue;
+    }
+    const href =
+      comment.parentType === "EVENT"
+        ? `/events/${comment.parentId}`
+        : `/spaces/${spaceId}/calendar#idea-${comment.parentId}`;
+
+    commentItems.push({
+      id: `note-${comment.id}`,
+      type: "comment_added",
+      createdAt: comment.createdAt,
+      actorId: comment.authorUserId,
+      actor: comment.author,
+      target: {
+        kind: comment.parentType === "EVENT" ? "event" : "idea",
+        id: comment.parentId,
+        title: targetTitle,
+        href,
+      },
+      body: comment.body,
+      memory: null,
+      photos: null,
+      relatedIdea: null,
+    });
+  }
+
+  const ratingItems: ActivityItem[] = ratings.map((rating) => {
+    const heroPhotoUrl = rating.event.photos[0]?.storageUrl ?? null;
     return {
-      id: `log-${entry.id}`,
-      createdAt: entry.createdAt,
-      action,
-      entityType,
-      entityId: entry.entityId,
-      entityTitle: entityTitle ?? null,
-      entityHref: entityTitle ? entityHref : null,
-      details: null,
-      user: entry.user,
+      id: `rating-${rating.id}`,
+      type: "memory_completed",
+      createdAt: rating.createdAt,
+      actorId: rating.userId,
+      actor: rating.user,
+      target: {
+        kind: "memory",
+        id: rating.event.id,
+        title: rating.event.title,
+        href: `/events/${rating.event.id}`,
+      },
+      body: null,
+      memory: {
+        rating: rating.value,
+        photoCount: rating.event._count.photos,
+        heroPhotoUrl,
+      },
+      photos: null,
+      relatedIdea: null,
     };
   });
 
-  const noteEntries: ActivityEntry[] = notes.map((note) => {
-    const isComment =
-      note.kind === "EVENT_COMMENT" || note.kind === "IDEA_COMMENT";
-    const parentTitle =
-      note.parentType === "EVENT"
-        ? eventTitleById.get(note.parentId ?? "")
-        : note.parentType === "IDEA"
-          ? ideaById.get(note.parentId ?? "")?.title
-          : null;
-    const parentHref =
-      note.parentType === "EVENT" && note.parentId
-        ? `/events/${note.parentId}`
-        : note.parentType === "IDEA" && note.parentId
-          ? `/spaces/${spaceId}/calendar#idea-${note.parentId}`
-          : null;
-    return {
-      id: `note-${note.id}`,
-      createdAt: note.createdAt,
-      action: isComment ? "Comment added" : "Note added",
-      entityType: isComment ? "COMMENT" : "NOTE",
-      entityId: note.parentId ?? null,
-      entityTitle: isComment ? parentTitle ?? null : null,
-      entityHref: isComment && parentTitle ? parentHref : null,
-      details: isComment ? note.body : summarizeNote(note),
-      user: note.author,
-    };
-  });
-
-  const combined = [...logEntries, ...noteEntries];
+  const combined = [...logItems, ...commentItems, ...ratingItems];
   combined.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return combined.slice(skip, skip + take);

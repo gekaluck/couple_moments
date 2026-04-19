@@ -60,6 +60,7 @@ type MemoryCoverProps = {
   placeId: string | null;
   title: string;
   gradient: string;
+  sizeClass?: string;
 };
 
 function MemoryCover({
@@ -68,6 +69,7 @@ function MemoryCover({
   placeId,
   title,
   gradient,
+  sizeClass = "h-[72px] w-[72px] min-h-[72px] min-w-[72px] md:h-[120px] md:w-[120px] md:min-h-[120px] md:min-w-[120px]",
 }: MemoryCoverProps) {
   const [resolvedCoverUrl, setResolvedCoverUrl] = useState<string | null>(null);
   const [dynamicCoverState, setDynamicCoverState] = useState<{
@@ -144,7 +146,7 @@ function MemoryCover({
 
   return (
     <div
-      className="relative flex h-[120px] w-[120px] min-h-[120px] min-w-[120px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br text-4xl font-semibold text-white shadow-sm"
+      className={`relative flex ${sizeClass} items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br text-4xl font-semibold text-white shadow-sm`}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
       <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.6) 0, rgba(255,255,255,0) 60%)" }} />
@@ -166,7 +168,7 @@ function MemoryCover({
       ) : (
         <svg
           aria-hidden="true"
-          className="relative z-10 h-9 w-9 text-white/90"
+          className="relative z-10 h-7 w-7 text-white/90 md:h-9 md:w-9"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -236,24 +238,26 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
     .sort((a, b) => new Date(b.dateTimeStart).getTime() - new Date(a.dateTimeStart).getTime());
   const hasActiveFilters = year !== "all" || tag !== "all" || search.trim() !== "";
   const memoriesCountLabel = hasActiveFilters
-    ? `Showing ${filtered.length} of ${memories.length} memories`
-    : `${memories.length} memories`;
+    ? `Showing ${filtered.length} of ${memories.length}`
+    : `${memories.length} ${memories.length === 1 ? "memory" : "memories"}`;
 
   return (
     <div className="page-enter-stagger">
-      <section className="surface-muted p-6">
+      <section className="surface-muted p-4 md:p-6">
         <div>
-          <div>
-            <p className="section-kicker">Memories</p>
-            <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-              Revisit your highlights
-            </h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">{memoriesCountLabel}</p>
-          </div>
+          <p className="section-kicker uppercase tracking-[0.18em]">
+            Memories · {memories.length}
+          </p>
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)] md:text-2xl">
+            Revisit your highlights
+          </h2>
+          <p className="mt-1 hidden text-sm text-[var(--text-muted)] md:block">
+            {memoriesCountLabel}
+          </p>
         </div>
         <div className="mt-4 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex h-10 min-w-[260px] flex-1 items-center">
+            <div className="relative flex h-10 min-w-[220px] flex-1 items-center">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                 <svg
                   aria-hidden="true"
@@ -273,7 +277,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="relative flex h-10 items-center">
+            <div className="relative hidden h-10 items-center md:flex">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent-strong)]">
                 <CalendarIcon />
               </span>
@@ -290,7 +294,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 ))}
               </select>
             </div>
-            <div className="relative flex h-10 items-center">
+            <div className="relative hidden h-10 items-center md:flex">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent-strong)]">
                 <TagIcon />
               </span>
@@ -309,9 +313,9 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             </div>
           </div>
           {tags.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--panel-border)] pt-3">
+            <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-[var(--panel-border)] px-1 pt-3 md:flex-wrap md:overflow-visible">
               <button
-                className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   tag === "all"
                     ? "border-rose-300 bg-rose-100 text-rose-700"
                     : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
@@ -324,7 +328,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               {tags.map((value) => (
                 <button
                   key={value}
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                     tag === value
                       ? "border-rose-300 bg-rose-100 text-rose-700"
                       : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
@@ -352,16 +356,17 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           />
         </div>
       ) : null}
-      <div className="stagger-children mx-auto flex max-w-4xl flex-col gap-6">
+      <div className="stagger-children mx-auto flex max-w-4xl flex-col gap-2 md:gap-6">
         {filtered.map((event) => {
           const gradient =
             event.tags
               .map((value) => TAG_GRADIENTS[value.toLowerCase()])
               .find(Boolean) ?? "from-slate-500 to-slate-600";
+          const primaryTag = event.tags[0] ?? null;
           return (
             <div
               key={event.id}
-              className="group surface relative flex min-h-[156px] flex-col gap-4 overflow-hidden p-6 transition-all duration-200 hover:scale-[1.01] hover:shadow-lg md:flex-row md:items-center"
+              className="group surface relative flex flex-row items-center gap-3 overflow-hidden p-3 transition-all duration-200 hover:shadow-lg md:min-h-[156px] md:items-center md:gap-4 md:p-6 md:hover:scale-[1.01]"
             >
               <div
                 aria-hidden="true"
@@ -378,41 +383,41 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 title={event.title}
                 gradient={gradient}
               />
-              <div className="flex-1">
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-                    {event.title}
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <LocalTime
-                      className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] shadow-sm"
-                      options={{
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      }}
-                      value={event.dateTimeStart}
-                    />
-                  </div>
-                </div>
+              <div className="relative z-[1] min-w-0 flex-1">
+                <h2 className="truncate text-[14.5px] font-semibold leading-tight tracking-[-0.01em] text-[var(--text-primary)] md:whitespace-normal md:text-xl md:font-[var(--font-display)]">
+                  {event.title}
+                </h2>
                 {event.description ? (
-                  <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
+                  <p className="mt-0.5 truncate text-xs text-[var(--text-muted)] md:mt-2 md:whitespace-normal md:text-sm md:leading-relaxed">
                     {event.description}
                   </p>
                 ) : null}
-                {event.tags.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {event.tags.map((value) => (
-                      <span
-                        key={value}
-                        className="inline-flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)]"
-                      >
-                        <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
-                        {value}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="mt-1.5 flex items-center gap-2 md:mt-3 md:flex-wrap">
+                  {primaryTag ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
+                      {primaryTag}
+                    </span>
+                  ) : null}
+                  {event.tags.slice(1).map((value) => (
+                    <span
+                      key={value}
+                      className="hidden items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)] md:inline-flex"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
+                      {value}
+                    </span>
+                  ))}
+                  <LocalTime
+                    className="ml-auto shrink-0 rounded-full bg-white/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)] shadow-sm md:px-3 md:py-1 md:text-xs md:tracking-[0.2em]"
+                    options={{
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }}
+                    value={event.dateTimeStart}
+                  />
+                </div>
               </div>
             </div>
           );

@@ -47,6 +47,27 @@ export default function UpcomingPlansColumn({
   const visiblePlans = plans.slice(0, visibleCount);
   const hasMore = plans.length > visibleCount;
 
+  const nextInDays = (() => {
+    const next = plans[0]?.dateTimeStart;
+    if (!next) return null;
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const target = new Date(next.getFullYear(), next.getMonth(), next.getDate());
+    const diff = Math.round((target.getTime() - start.getTime()) / 86_400_000);
+    if (diff < 0) return null;
+    return diff;
+  })();
+  const subLabel =
+    plans.length === 0
+      ? "Nothing on the books"
+      : nextInDays === 0
+        ? `${plans.length} planned · next today`
+        : nextInDays === 1
+          ? `${plans.length} planned · next tomorrow`
+          : nextInDays != null
+            ? `${plans.length} planned · next in ${nextInDays} days`
+            : `${plans.length} planned`;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -56,11 +77,9 @@ export default function UpcomingPlansColumn({
           </span>
           <div>
             <h3 className="text-lg font-semibold tracking-[-0.015em] text-[var(--text-primary)]">
-              All upcoming plans
+              Upcoming plans
             </h3>
-            <p className="text-xs text-[var(--text-tertiary)]">
-              {plans.length} plans
-            </p>
+            <p className="text-xs text-[var(--text-tertiary)]">{subLabel}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
