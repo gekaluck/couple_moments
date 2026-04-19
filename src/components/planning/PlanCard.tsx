@@ -93,7 +93,7 @@ export default function PlanCard({
         variant="rose"
         hover
         padding="sm"
-        className="group/plan card-hover animate-fade-in-up relative border-rose-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,238,244,0.74))]"
+        className="group/plan card-hover animate-fade-in-up relative border-l-[3px] border-l-rose-500 border-rose-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,238,244,0.74))] md:border-l md:border-l-rose-200/70"
       >
         <Link
           href={eventHref}
