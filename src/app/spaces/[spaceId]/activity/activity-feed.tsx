@@ -9,6 +9,7 @@ import LocalTime, { formatRelativeDayLabel } from "@/components/time/LocalTime";
 type ActivityEntry = {
   id: string;
   action: string;
+  details: string | null;
   entityType: string;
   entityTitle: string | null;
   entityHref: string | null;
@@ -200,6 +201,11 @@ export default function ActivityFeed({
                           {entry.entityType.toLowerCase()}
                         </span>
                       </div>
+                      {entry.details ? (
+                        <p className="mt-3 max-w-3xl whitespace-pre-wrap text-sm leading-relaxed text-[var(--text-secondary)]">
+                          {entry.details}
+                        </p>
+                      ) : null}
                     </div>
                     <LocalTime
                       className="rounded-full border border-[var(--panel-border)] bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--text-tertiary)]"

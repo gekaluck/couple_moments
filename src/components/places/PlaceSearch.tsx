@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
+import { loadPlacePhotoUrls } from "@/lib/place-photos-client";
 
 let mapsConfigured = false;
 
@@ -13,11 +14,9 @@ type AutocompletePlace = {
   geometry?: { location?: LatLng };
   url?: string;
 };
-type PlacePhoto = { getUrl: (options: { maxWidth: number; maxHeight: number }) => string };
 type PlaceDetails = {
   website?: string;
   opening_hours?: { weekday_text?: string[] };
-  photos?: PlacePhoto[];
   url?: string;
   name?: string;
 };
@@ -79,15 +78,15 @@ export default function PlaceSearch({
   const hasKey = Boolean(apiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
 
   useEffect(() => {
-    const key = apiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key || !inputRef.current) {
+    const activeKey = apiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!activeKey || !inputRef.current) {
       return;
     }
 
     let autocomplete: AutocompleteService | null = null;
 
     if (!mapsConfigured) {
-      setOptions({ key, language: "en" } as Parameters<typeof setOptions>[0]);
+      setOptions({ key: activeKey, language: "en" } as Parameters<typeof setOptions>[0]);
       mapsConfigured = true;
     }
 
@@ -107,11 +106,12 @@ export default function PlaceSearch({
       });
       autocomplete.addListener("place_changed", () => {
         const place = autocomplete?.getPlace();
-        if (!place?.place_id || !place.geometry?.location) {
+        const selectedPlaceId = place?.place_id;
+        if (!selectedPlaceId || !place.geometry?.location) {
           return;
         }
         const baseSelection: PlaceSelection = {
-          placeId: place.place_id,
+          placeId: selectedPlaceId,
           name: place.name ?? "Untitled place",
           address: place.formatted_address ?? "",
           lat: place.geometry.location.lat(),
@@ -121,10 +121,10 @@ export default function PlaceSearch({
 
         service.getDetails(
           {
-            placeId: place.place_id,
+            placeId: selectedPlaceId,
             fields: ["website", "opening_hours", "photos", "url", "name"],
           },
-          (details, status) => {
+          async (details, status) => {
             if (
               status !== googleMaps.maps.places.PlacesServiceStatus.OK ||
               !details
@@ -137,13 +137,12 @@ export default function PlaceSearch({
               ...baseSelection,
               website: details.website ?? "",
               openingHours: details.opening_hours?.weekday_text ?? [],
-              photoUrls: Array.isArray(details.photos)
-                ? details.photos
-                    .slice(0, 3)
-                    .map((photo) =>
-                      photo.getUrl({ maxWidth: 800, maxHeight: 600 }),
-                    )
-                : [],
+              photoUrls: await loadPlacePhotoUrls(selectedPlaceId, {
+                apiKey: activeKey,
+                limit: 3,
+                maxWidth: 800,
+                maxHeight: 600,
+              }),
               url: details.url ?? baseSelection.url,
               name: details.name ?? baseSelection.name,
             };

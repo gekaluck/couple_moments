@@ -24,8 +24,10 @@ import EventEditModal from "./event-edit-modal";
 import EventRating from "./event-rating";
 import HeartRating from "@/components/ui/HeartRating";
 import ConfirmForm from "@/components/ConfirmForm";
+import EventPhotoGallery from "@/components/events/EventPhotoGallery";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 import LocalTime from "@/components/time/LocalTime";
+import { createEventPhoto, deleteEventPhoto, setEventPhotoAsCover } from "@/lib/events";
 
 const PencilIcon = () => (
   <svg
@@ -151,6 +153,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     googleSyncStatus,
     members,
     memberVisuals,
+    photos,
   } =
     await loadEventDetailData({
       eventId,
@@ -356,6 +359,40 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     revalidatePath(`/events/${eventIdForActions}`);
   }
 
+  async function handleCreatePhoto(input: { storageUrl: string }) {
+    "use server";
+    const currentUserId = await requireUserId();
+    const photo = await createEventPhoto(
+      eventIdForActions,
+      currentUserId,
+      input.storageUrl,
+    );
+    revalidatePath(`/events/${eventIdForActions}`);
+    revalidatePath(`/spaces/${spaceIdForActions}/memories`);
+
+    return {
+      id: photo.id,
+      storageUrl: photo.storageUrl,
+      createdAtIso: photo.createdAt.toISOString(),
+    };
+  }
+
+  async function handleDeletePhoto(input: { photoId: string }) {
+    "use server";
+    const currentUserId = await requireUserId();
+    await deleteEventPhoto(input.photoId, currentUserId);
+    revalidatePath(`/events/${eventIdForActions}`);
+    revalidatePath(`/spaces/${spaceIdForActions}/memories`);
+  }
+
+  async function handleSetPhotoAsCover(input: { photoId: string }) {
+    "use server";
+    const currentUserId = await requireUserId();
+    await setEventPhotoAsCover(input.photoId, currentUserId);
+    revalidatePath(`/events/${eventIdForActions}`);
+    revalidatePath(`/spaces/${spaceIdForActions}/memories`);
+  }
+
   const tags = parseTags(event.tags);
   const tagsValue = tags.join(", ");
   const isPast = isEventInPast(event);
@@ -367,6 +404,8 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const partnerMembers = members.filter((member) => member.userId !== userId);
   const statusLabel = isPast ? "Past" : "Upcoming";
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const cloudinaryCloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const cloudinaryUploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
   const hasPlace = Boolean(event.placeName || event.placeAddress);
   const placeLink =
     sanitizeHttpUrl(event.placeUrl) ||
@@ -604,6 +643,17 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             ) : null}
           </div>
 
+          {event.description ? (
+            <div className="mt-4 rounded-xl border border-rose-100/80 bg-white/70 p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                Description
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-primary)]">
+                {event.description}
+              </p>
+            </div>
+          ) : null}
+
           {isPast && partnerMembers.length > 0 ? (
             <div className="mt-3 rounded-xl border border-rose-100/80 bg-white/70 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
@@ -635,33 +685,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
               </div>
             </div>
           ) : null}
-        </section>
-
-        <section className="rounded-2xl border border-rose-200/60 bg-[linear-gradient(150deg,rgba(255,255,255,0.96),rgba(255,240,246,0.72))] p-6 shadow-[var(--shadow-sm)]">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-              Notes
-            </h3>
-          </div>
-          {event.description ? (
-            <div className="mt-4 rounded-xl border border-rose-100/80 bg-white/70 p-4">
-              <p className="text-sm leading-relaxed text-[var(--text-primary)]">
-                {event.description}
-              </p>
-            </div>
-          ) : (
-            <Link
-              className="empty-description-prompt mt-4 inline-flex items-center"
-              href={`/events/${event.id}?edit=1`}
-            >
-              Add a note about this event...
-            </Link>
-          )}
         </section>
 
         {hasPlace ? (
@@ -744,9 +767,10 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                   />
                 ) : null}
 
-                {placePhotoUrls && placePhotoUrls.length > 0 ? (
+                {event.placeId || (placePhotoUrls && placePhotoUrls.length > 0) ? (
                   <PlacePhotoStrip
-                    photoUrls={placePhotoUrls.slice(0, 3)}
+                    photoUrls={placePhotoUrls?.slice(0, 3) ?? []}
+                    placeId={event.placeId}
                     alt={event.placeName || "Place photo"}
                   />
                 ) : null}
@@ -754,6 +778,29 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             </div>
           </section>
         ) : null}
+
+        <EventPhotoGallery
+          canUploadDirectly={Boolean(cloudinaryCloudName && cloudinaryUploadPreset)}
+          cloudName={cloudinaryCloudName}
+          currentUser={{
+            name: currentUser.name,
+            email: currentUser.email,
+          }}
+          initialPhotos={photos.map((photo) => ({
+            id: photo.id,
+            storageUrl: photo.storageUrl,
+            createdAtIso: photo.createdAt.toISOString(),
+            isCover: photo.isCover,
+            uploadedBy: {
+              name: photo.uploadedBy.name,
+              email: photo.uploadedBy.email,
+            },
+          }))}
+          onCreatePhoto={handleCreatePhoto}
+          onDeletePhoto={handleDeletePhoto}
+          onSetPhotoAsCover={handleSetPhotoAsCover}
+          uploadPreset={cloudinaryUploadPreset}
+        />
 
         <EventComments
           eventId={event.id}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Clock, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -43,11 +43,6 @@ type MobileAgendaViewProps = {
 };
 
 const DEFAULT_DAYS_SHOWN = 7;
-
-function getClientTodayKey(): string {
-  const today = new Date();
-  return `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-${`${today.getDate()}`.padStart(2, "0")}`;
-}
 
 function formatTime(isoString: string, timeFormat: "12h" | "24h"): string {
   const date = new Date(isoString);
@@ -116,11 +111,7 @@ export default function MobileAgendaView({
 }: MobileAgendaViewProps) {
   const [showPast, setShowPast] = useState(false);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
-  const [resolvedTodayKey, setResolvedTodayKey] = useState(todayKey);
-
-  useEffect(() => {
-    setResolvedTodayKey(getClientTodayKey());
-  }, []);
+  const resolvedTodayKey = todayKey;
 
   const daysWithContent = days.filter(
     (day) => day.events.length > 0 || day.blocks.length > 0,
@@ -144,7 +135,7 @@ export default function MobileAgendaView({
           No events in {monthTitle}
         </p>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Tap + to create your first event
+          Use the controls above to add your first event or block time
         </p>
       </div>
     );

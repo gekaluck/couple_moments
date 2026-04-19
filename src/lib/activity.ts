@@ -8,6 +8,7 @@ type ActivityEntry = {
   entityId?: string | null;
   entityTitle?: string | null;
   entityHref?: string | null;
+  details?: string | null;
   user: {
     id: string;
     name: string | null;
@@ -28,6 +29,9 @@ function summarizeNote(note: { body: string; kind: string }) {
   const preview = note.body.length > 80 ? `${note.body.slice(0, 80)}...` : note.body;
   return preview;
 }
+
+const IDEA_CONVERTED_SUMMARY = "Idea scheduled as an event.";
+const MEMORY_PHOTO_ADDED_SUMMARY = "Photo added to memory.";
 
 const CHANGELOG_EXCLUDED_SUMMARIES = [
   "Comment added to event.",
@@ -122,39 +126,77 @@ export async function listActivityForSpace(
     ideaIds.size > 0
       ? prisma.idea.findMany({
           where: { id: { in: [...ideaIds] } },
-          select: { id: true, title: true },
+          select: { id: true, title: true, convertedToEventId: true },
         })
       : Promise.resolve([]),
   ]);
 
-  const eventTitleById = new Map(events.map((event) => [event.id, event.title]));
-  const ideaTitleById = new Map(ideas.map((idea) => [idea.id, idea.title]));
+  const convertedEventIds = ideas
+    .map((idea) => idea.convertedToEventId)
+    .filter((eventId): eventId is string => Boolean(eventId));
+
+  const convertedEvents =
+    convertedEventIds.length > 0
+      ? await prisma.event.findMany({
+          where: { id: { in: convertedEventIds } },
+          select: { id: true, title: true },
+        })
+      : [];
+
+  const eventTitleById = new Map(
+    [...events, ...convertedEvents].map((event) => [event.id, event.title]),
+  );
+  const ideaById = new Map(ideas.map((idea) => [idea.id, idea]));
 
   const logEntries: ActivityEntry[] = changeLogs.map((entry) => {
-    const entityTitle =
+    const linkedIdea = entry.entityType === "IDEA" ? ideaById.get(entry.entityId) : null;
+    const linkedEventId =
+      entry.summary === IDEA_CONVERTED_SUMMARY
+        ? linkedIdea?.convertedToEventId ?? null
+        : entry.entityType === "EVENT"
+          ? entry.entityId
+          : null;
+    const defaultEntityTitle =
       entry.entityType === "EVENT"
         ? eventTitleById.get(entry.entityId)
-        : ideaTitleById.get(entry.entityId);
+        : linkedIdea?.title;
+    const entityTitle =
+      linkedEventId && eventTitleById.get(linkedEventId)
+        ? eventTitleById.get(linkedEventId)
+        : defaultEntityTitle;
     const entityHref =
-      entry.entityType === "EVENT"
-        ? `/events/${entry.entityId}`
-        : `/spaces/${spaceId}/calendar#idea-${entry.entityId}`;
-    const actionBase =
-      entry.entityType === "EVENT" ? "Event" : "Idea";
-    const actionSuffix =
-      entry.changeType === "CREATE"
-        ? "created"
-        : entry.changeType === "UPDATE"
-          ? "updated"
-          : "deleted";
+      linkedEventId
+        ? `/events/${linkedEventId}`
+        : entry.entityType === "IDEA"
+          ? `/spaces/${spaceId}/calendar#idea-${entry.entityId}`
+          : null;
+    const action =
+      entry.summary === IDEA_CONVERTED_SUMMARY
+        ? "Moved from idea to event"
+        : entry.summary === MEMORY_PHOTO_ADDED_SUMMARY
+          ? "Photo uploaded"
+          : entry.entityType === "EVENT"
+            ? entry.changeType === "CREATE"
+              ? "Event created"
+              : entry.changeType === "UPDATE"
+                ? "Event updated"
+                : "Event deleted"
+            : entry.changeType === "CREATE"
+              ? "Idea created"
+              : entry.changeType === "UPDATE"
+                ? "Idea updated"
+                : "Idea deleted";
+    const entityType =
+      entry.summary === IDEA_CONVERTED_SUMMARY ? "EVENT" : entry.entityType;
     return {
       id: `log-${entry.id}`,
       createdAt: entry.createdAt,
-      action: `${actionBase} ${actionSuffix}`,
-      entityType: entry.entityType,
+      action,
+      entityType,
       entityId: entry.entityId,
       entityTitle: entityTitle ?? null,
       entityHref: entityTitle ? entityHref : null,
+      details: null,
       user: entry.user,
     };
   });
@@ -166,7 +208,7 @@ export async function listActivityForSpace(
       note.parentType === "EVENT"
         ? eventTitleById.get(note.parentId ?? "")
         : note.parentType === "IDEA"
-          ? ideaTitleById.get(note.parentId ?? "")
+          ? ideaById.get(note.parentId ?? "")?.title
           : null;
     const parentHref =
       note.parentType === "EVENT" && note.parentId
@@ -177,11 +219,12 @@ export async function listActivityForSpace(
     return {
       id: `note-${note.id}`,
       createdAt: note.createdAt,
-      action: isComment ? "Comment added" : `Note added: ${summarizeNote(note)}`,
+      action: isComment ? "Comment added" : "Note added",
       entityType: isComment ? "COMMENT" : "NOTE",
       entityId: note.parentId ?? null,
       entityTitle: isComment ? parentTitle ?? null : null,
       entityHref: isComment && parentTitle ? parentHref : null,
+      details: isComment ? note.body : summarizeNote(note),
       user: note.author,
     };
   });

@@ -7,9 +7,9 @@ import {
   HelpCircle,
   RotateCcw,
   CalendarDays,
-  NotebookText,
   Camera,
   Settings2,
+  Activity,
 } from "lucide-react";
 
 import BetaChecklist from "@/components/beta/BetaChecklist";
@@ -101,8 +101,8 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
             className="inline-flex items-center justify-between rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2 text-left text-xs text-[var(--text-tertiary)] transition hover:border-violet-300 hover:bg-violet-100/70"
           >
             <span className="inline-flex items-center gap-2">
-              <NotebookText className="h-3.5 w-3.5 text-violet-700" />
-              Notes workflow
+              <Activity className="h-3.5 w-3.5 text-violet-700" />
+              Comments and activity
             </span>
             <span>Step 4</span>
           </button>
@@ -135,7 +135,7 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
             Calendar -&gt; Ideas -&gt; Events
           </div>
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2">
-            Notes + comments context
+            Comments + activity context
           </div>
           <div className="rounded-xl border border-violet-100/80 bg-violet-50/70 px-3 py-2">
             Memories + ratings

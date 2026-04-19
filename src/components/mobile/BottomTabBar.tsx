@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Camera, StickyNote, Activity } from "lucide-react";
+import { CalendarDays, Camera, Activity } from "lucide-react";
 
 type Tab = {
   id: string;
@@ -14,7 +14,6 @@ type Tab = {
 const tabs = (spaceId: string): Tab[] => [
   { id: "calendar", label: "Calendar", href: `/spaces/${spaceId}/calendar`, icon: CalendarDays },
   { id: "memories", label: "Memories", href: `/spaces/${spaceId}/memories`, icon: Camera },
-  { id: "notes", label: "Notes", href: `/spaces/${spaceId}/notes`, icon: StickyNote },
   { id: "activity", label: "Activity", href: `/spaces/${spaceId}/activity`, icon: Activity },
 ];
 

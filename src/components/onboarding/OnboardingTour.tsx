@@ -9,10 +9,10 @@ import {
   Lightbulb,
   Camera,
   Heart,
-  NotebookText,
   Activity,
   Settings2,
   Link2,
+  MessageSquare,
 } from "lucide-react";
 
 type OnboardingStep = {
@@ -32,7 +32,7 @@ const steps: OnboardingStep[] = [
       "Duet keeps planning and memory-keeping in one place, so both of you always see the same timeline.",
     highlights: [
       "Calendar is the source of truth.",
-      "Ideas and notes stay linked to moments.",
+      "Ideas and comments stay linked to moments.",
       "Memories preserve what happened after each date.",
     ],
     icon: <Heart className="h-8 w-8" />,
@@ -65,16 +65,16 @@ const steps: OnboardingStep[] = [
     color: "from-amber-500 to-orange-600",
   },
   {
-    title: "Use Notes as your shared context",
-    kicker: "Notes center",
+    title: "Use comments as your shared context",
+    kicker: "Attached conversations",
     description:
-      "Notes are for planning conversations, links, and reminders that should stay close to your upcoming plans.",
+      "Keep planning conversation attached directly to the idea or event it belongs to, then use Activity to catch up quickly.",
     highlights: [
-      "Keep practical details out of chat clutter.",
-      "Link relevant notes to ideas or events.",
-      "Review before a date to avoid last-minute confusion.",
+      "Comment directly on ideas together.",
+      "Add event-specific context where it will still be visible later.",
+      "Use Activity to skim recent comment history without hunting.",
     ],
-    icon: <NotebookText className="h-8 w-8" />,
+    icon: <MessageSquare className="h-8 w-8" />,
     color: "from-sky-500 to-indigo-600",
   },
   {
@@ -119,7 +119,7 @@ const steps: OnboardingStep[] = [
   {
     title: "You're ready",
     kicker: "First actions",
-    description: "Recommended first run: add one idea, schedule one date, and add one note together.",
+    description: "Recommended first run: add one idea, schedule one date, and leave one comment together.",
     highlights: [
       "Create your next date right now.",
       "Open one idea and leave a comment each.",

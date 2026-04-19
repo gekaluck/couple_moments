@@ -108,7 +108,7 @@ export default function CreateIdeaModal({
                   <textarea
                     className="min-h-[120px] rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)] outline-none focus:border-amber-400"
                     name="description"
-                    placeholder="Notes, links, or vibe"
+                    placeholder="Details, links, or vibe"
                   />
                   <TagInput name="tags" />
                   {hasMapsKey ? (

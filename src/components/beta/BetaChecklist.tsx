@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, RotateCcw } from "lucide-react";
 
-const CHECKLIST_VERSION = "v1";
+const CHECKLIST_VERSION = "v2";
 
 type ChecklistItem = {
   id: string;
@@ -33,9 +33,9 @@ const ITEMS: ChecklistItem[] = [
     hint: "What's ahead -> New idea -> Schedule",
   },
   {
-    id: "notes-context",
-    label: "Add one note linked to planning context",
-    hint: "Notes tab",
+    id: "comment-context",
+    label: "Leave one planning comment on an idea or event",
+    hint: "Ideas or event comments",
   },
   {
     id: "memory-rating",
