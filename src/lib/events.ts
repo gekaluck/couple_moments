@@ -1,3 +1,7 @@
+import type { LookupAddress } from "node:dns";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
+
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { createChangeLogEntry } from "@/lib/change-log";
@@ -10,6 +14,8 @@ import {
   isSupportedImagePath,
   MAX_EVENT_PHOTOS,
 } from "@/lib/event-photos";
+
+const PHOTO_VALIDATION_TIMEOUT_MS = 5000;
 
 type EventInput = {
   title: string;
@@ -546,6 +552,66 @@ export async function setEventPhotoAsCover(photoId: string, userId: string) {
   return photo;
 }
 
+function ipv4IsPrivate(ip: string) {
+  const parts = ip.split(".").map((part) => Number.parseInt(part, 10));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return true;
+  }
+  const [a, b] = parts;
+  if (a === 0) return true; // 0.0.0.0/8
+  if (a === 10) return true; // 10.0.0.0/8
+  if (a === 127) return true; // loopback
+  if (a === 169 && b === 254) return true; // link-local / cloud metadata (169.254.169.254)
+  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+  if (a === 192 && b === 168) return true; // 192.168.0.0/16
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGN 100.64.0.0/10
+  if (a >= 224) return true; // multicast + reserved + broadcast
+  return false;
+}
+
+function ipv6IsPrivate(ip: string) {
+  const normalized = ip.toLowerCase();
+  if (normalized === "::" || normalized === "::1") return true;
+  const mapped = normalized.match(/^::ffff:([0-9.]+)$/);
+  if (mapped && isIP(mapped[1]) === 4) {
+    return ipv4IsPrivate(mapped[1]);
+  }
+  if (/^f[cd]/.test(normalized)) return true; // ULA fc00::/7
+  if (/^fe[89ab]/.test(normalized)) return true; // link-local fe80::/10
+  return false;
+}
+
+function ipIsPrivate(ip: string, family: number) {
+  return family === 6 ? ipv6IsPrivate(ip) : ipv4IsPrivate(ip);
+}
+
+async function ensureHostnameIsPublic(hostname: string) {
+  if (!hostname) {
+    throw new Error("Photo URL must include a host.");
+  }
+  const literalFamily = isIP(hostname);
+  if (literalFamily !== 0) {
+    if (ipIsPrivate(hostname, literalFamily)) {
+      throw new Error("Photo URL must point to a public host.");
+    }
+    return;
+  }
+  let addresses: LookupAddress[];
+  try {
+    addresses = await lookup(hostname, { all: true });
+  } catch {
+    throw new Error("Photo URL host could not be resolved.");
+  }
+  if (addresses.length === 0) {
+    throw new Error("Photo URL host could not be resolved.");
+  }
+  for (const { address, family } of addresses) {
+    if (ipIsPrivate(address, family)) {
+      throw new Error("Photo URL must point to a public host.");
+    }
+  }
+}
+
 async function validateEventPhotoUrl(storageUrl: string) {
   const trimmed = storageUrl.trim();
   if (!trimmed) {
@@ -568,10 +634,15 @@ async function validateEventPhotoUrl(storageUrl: string) {
     return parsed.toString();
   }
 
+  await ensureHostnameIsPublic(parsed.hostname);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PHOTO_VALIDATION_TIMEOUT_MS);
   try {
     const response = await fetch(parsed, {
       method: "HEAD",
-      redirect: "follow",
+      redirect: "error",
+      signal: controller.signal,
     });
     const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
     if (response.ok && contentType.startsWith("image/")) {
@@ -579,6 +650,8 @@ async function validateEventPhotoUrl(storageUrl: string) {
     }
   } catch {
     // Fall through to a consistent validation error.
+  } finally {
+    clearTimeout(timeout);
   }
 
   throw new Error("Photo URL must point to an image.");
