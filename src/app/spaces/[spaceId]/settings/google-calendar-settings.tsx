@@ -31,7 +31,11 @@ type GoogleCalendarData = {
   syncState: SyncState | null;
 } | null;
 
-export default function GoogleCalendarSettings() {
+type GoogleCalendarSettingsProps = {
+  embedded?: boolean;
+};
+
+export default function GoogleCalendarSettings({ embedded = false }: GoogleCalendarSettingsProps = {}) {
   const router = useRouter();
   const [data, setData] = useState<GoogleCalendarData>(null);
   const [loading, setLoading] = useState(true);
@@ -148,43 +152,53 @@ export default function GoogleCalendarSettings() {
   }
 
   if (loading) {
+    const loadingSpinner = (
+      <div className="flex items-center justify-center py-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600"></div>
+      </div>
+    );
+    if (embedded) {
+      return loadingSpinner;
+    }
     return (
       <section className="surface border border-sky-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(233,245,255,0.8))] p-6 md:p-8">
-        <div className="flex items-center justify-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600"></div>
-        </div>
+        {loadingSpinner}
       </section>
     );
   }
 
-  return (
-    <section className="surface border border-sky-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(233,245,255,0.8))] p-6 md:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-sky-200/80 bg-sky-50/90 text-sky-700 shadow-[var(--shadow-sm)]">
-            <CalendarDays className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="section-kicker">Integrations</p>
-            <h3 className="text-base font-semibold text-[var(--text-primary)]">
-              Google Calendar
-            </h3>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Bring in real busy time so plans feel realistic for both of you.
-            </p>
-          </div>
+  const header = (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-sky-200/80 bg-sky-50/90 text-sky-700 shadow-[var(--shadow-sm)]">
+          <CalendarDays className="h-5 w-5" />
         </div>
-        <span
-          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
-            data
-              ? "border-emerald-200 bg-emerald-100 text-emerald-700"
-              : "border-slate-200 bg-white/85 text-slate-600"
-          }`}
-        >
-          {data ? <Link2 className="h-3 w-3" /> : <Link2Off className="h-3 w-3" />}
-          {data ? "Connected" : "Not connected"}
-        </span>
+        <div>
+          <p className="section-kicker">Integrations</p>
+          <h3 className="text-base font-semibold text-[var(--text-primary)]">
+            Google Calendar
+          </h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            Bring in real busy time so plans feel realistic for both of you.
+          </p>
+        </div>
       </div>
+      <span
+        className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+          data
+            ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+            : "border-slate-200 bg-white/85 text-slate-600"
+        }`}
+      >
+        {data ? <Link2 className="h-3 w-3" /> : <Link2Off className="h-3 w-3" />}
+        {data ? "Connected" : "Not connected"}
+      </span>
+    </div>
+  );
+
+  const body = (
+    <>
+      {!embedded ? header : null}
 
       {error && (
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
@@ -384,6 +398,16 @@ export default function GoogleCalendarSettings() {
           />
         </>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return body;
+  }
+
+  return (
+    <section className="surface border border-sky-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(233,245,255,0.8))] p-6 md:p-8">
+      {body}
     </section>
   );
 }

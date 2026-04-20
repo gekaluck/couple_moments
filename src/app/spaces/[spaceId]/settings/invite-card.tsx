@@ -6,6 +6,7 @@ import { toast } from "sonner";
 type InviteCardProps = {
   inviteCode: string;
   isSpaceComplete?: boolean;
+  embedded?: boolean;
 };
 
 const CopyIcon = () => (
@@ -48,7 +49,7 @@ const ShareIcon = () => (
   </svg>
 );
 
-export default function InviteCard({ inviteCode, isSpaceComplete = false }: InviteCardProps) {
+export default function InviteCard({ inviteCode, isSpaceComplete = false, embedded = false }: InviteCardProps) {
   const [copied, setCopied] = useState<"link" | "code" | null>(null);
 
   const inviteUrl =
@@ -83,35 +84,37 @@ export default function InviteCard({ inviteCode, isSpaceComplete = false }: Invi
     }
   };
 
-  return (
-    <section className="surface border border-rose-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.88),rgba(255,236,245,0.75))] p-6 md:p-8">
-      <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-lg shadow-rose-500/25">
-          <svg
-            className="h-6 w-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M19 8v6M22 11h-6" strokeLinecap="round" />
-          </svg>
+  const body = (
+    <>
+      {!embedded ? (
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-lg shadow-rose-500/25">
+            <svg
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M19 8v6M22 11h-6" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-[var(--text-primary)]">
+              {isSpaceComplete ? "Invite code" : "Invite your partner"}
+            </h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              {isSpaceComplete
+                ? "Your space is full. Share this code if you ever need to re-invite."
+                : "Share this link with your partner so they can join your space."}
+            </p>
+          </div>
         </div>
-        <div className="flex-1">
-          <h3 className="text-base font-semibold text-[var(--text-primary)]">
-            {isSpaceComplete ? "Invite code" : "Invite your partner"}
-          </h3>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            {isSpaceComplete
-              ? "Your space is full. Share this code if you ever need to re-invite."
-              : "Share this link with your partner so they can join your space."}
-          </p>
-        </div>
-      </div>
+      ) : null}
 
-      <div className="mt-6 space-y-4">
+      <div className={embedded ? "space-y-4" : "mt-6 space-y-4"}>
         {/* Invite Link */}
         <div>
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
@@ -171,6 +174,16 @@ export default function InviteCard({ inviteCode, isSpaceComplete = false }: Invi
       <p className="mt-4 text-center text-xs text-[var(--text-tertiary)]">
         Your partner will need to create an account and enter this code to join.
       </p>
+    </>
+  );
+
+  if (embedded) {
+    return body;
+  }
+
+  return (
+    <section className="surface border border-rose-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.88),rgba(255,236,245,0.75))] p-6 md:p-8">
+      {body}
     </section>
   );
 }

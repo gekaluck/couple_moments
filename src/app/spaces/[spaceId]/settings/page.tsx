@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { CalendarClock, Info, Palette } from "lucide-react";
+import { CalendarClock, CalendarDays, Info, Link2, Palette, Shield } from "lucide-react";
 
 import {
   getCoupleSpaceForUser,
@@ -90,6 +90,8 @@ export default async function SettingsPage({ params }: PageProps) {
     day: "numeric",
   });
   const spaceInfoPreview = `${space.name || "Our Space"} · ${spaceCreatedShort}`;
+  const invitePreview = isSpaceComplete ? "Complete" : space.inviteCode;
+  const membershipPreview = isCreator ? "Owner" : "Member";
 
   async function handleCalendarWeekStart(formData: FormData) {
     "use server";
@@ -356,7 +358,24 @@ export default async function SettingsPage({ params }: PageProps) {
             </div>
           </section>
 
-          <InviteCard inviteCode={space.inviteCode} isSpaceComplete={isSpaceComplete} />
+          <div className="surface overflow-hidden border border-rose-200/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.88),rgba(255,236,245,0.75))]">
+            <SettingsDisclosure
+              icon={<Link2 className="h-4 w-4" />}
+              label={isSpaceComplete ? "Invite code" : "Invite your partner"}
+              previewValue={invitePreview}
+              description={
+                isSpaceComplete
+                  ? "Your space is full. Share this code if you ever need to re-invite."
+                  : "Share this link with your partner so they can join your space."
+              }
+            >
+              <InviteCard
+                inviteCode={space.inviteCode}
+                isSpaceComplete={isSpaceComplete}
+                embedded
+              />
+            </SettingsDisclosure>
+          </div>
 
           <div className="surface overflow-hidden border border-[var(--panel-border)] bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(248,249,252,0.8))]">
             <SettingsDisclosure
@@ -577,15 +596,34 @@ export default async function SettingsPage({ params }: PageProps) {
         </div>
       </div>
       <div className="grid min-w-0 gap-6 xl:grid-cols-2">
-        <GoogleCalendarSettings />
-        <MembershipActions
-          isCreator={isCreator}
-          canLeave={canLeave}
-          hasPartner={Boolean(partner)}
-          partnerLabel={partnerVisual?.displayName ?? partner?.user.name ?? "your partner"}
-          onRemovePartner={handleRemovePartner}
-          onLeaveSpace={handleLeaveSpace}
-        />
+        <div className="surface overflow-hidden border border-sky-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.9),rgba(233,245,255,0.8))]">
+          <SettingsDisclosure
+            icon={<CalendarDays className="h-4 w-4" />}
+            label="Google Calendar"
+            previewValue="Manage"
+            description="Bring in real busy time so plans feel realistic for both of you."
+          >
+            <GoogleCalendarSettings embedded />
+          </SettingsDisclosure>
+        </div>
+        <div className="surface overflow-hidden border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(255,241,245,0.8))]">
+          <SettingsDisclosure
+            icon={<Shield className="h-4 w-4" />}
+            label="Membership"
+            previewValue={membershipPreview}
+            description="Manage who is in this space. Destructive actions are confirmed first."
+          >
+            <MembershipActions
+              isCreator={isCreator}
+              canLeave={canLeave}
+              hasPartner={Boolean(partner)}
+              partnerLabel={partnerVisual?.displayName ?? partner?.user.name ?? "your partner"}
+              onRemovePartner={handleRemovePartner}
+              onLeaveSpace={handleLeaveSpace}
+              embedded
+            />
+          </SettingsDisclosure>
+        </div>
       </div>
       <OnboardingSettings spaceId={space.id} />
     </div>

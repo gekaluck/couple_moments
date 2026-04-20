@@ -16,6 +16,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import LocalTime from "@/components/time/LocalTime";
 import Card, { CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import { CalendarTimeFormat } from "@/lib/calendar";
+import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
+import { getInitials } from "@/lib/formatters";
 
 type GoogleSyncFeedback = {
   attempted: boolean;
@@ -182,8 +184,14 @@ export default function PlanCard({
               ) : null}
             </div>
             {createdBy ? (
-              <span className="text-xs text-[var(--text-tertiary)]">
-                by{" "}
+              <span className="inline-flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
+                <span
+                  aria-hidden="true"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                  style={{ backgroundImage: getAvatarGradient(CREATOR_ACCENTS.rose) }}
+                >
+                  {getInitials(createdBy.name, createdBy.email)}
+                </span>
                 <span className="font-semibold text-[var(--text-primary)]">
                   {createdBy.name || createdBy.email}
                 </span>
