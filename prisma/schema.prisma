@@ -233,6 +233,7 @@ model Rating {
   updatedAt DateTime @updatedAt
 
   value     Int
+  note      String?
   userId    String
   eventId   String
 

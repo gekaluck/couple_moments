@@ -19,6 +19,7 @@ type MembershipActionsProps = {
   partnerLabel: string;
   onRemovePartner: () => Promise<ActionResult>;
   onLeaveSpace: () => Promise<ActionResult>;
+  embedded?: boolean;
 };
 
 export default function MembershipActions({
@@ -28,6 +29,7 @@ export default function MembershipActions({
   partnerLabel,
   onRemovePartner,
   onLeaveSpace,
+  embedded = false,
 }: MembershipActionsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -58,16 +60,20 @@ export default function MembershipActions({
     }
   }
 
-  return (
-    <section className="surface border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(255,241,245,0.8))] p-6 md:p-8">
-      <h3 className="text-base font-semibold text-[var(--text-primary)]">
-        Membership Management
-      </h3>
-      <p className="mt-1 text-sm text-[var(--text-muted)]">
-        Manage who is in this space. Destructive actions are confirmed first.
-      </p>
+  const body = (
+    <>
+      {!embedded ? (
+        <>
+          <h3 className="text-base font-semibold text-[var(--text-primary)]">
+            Membership Management
+          </h3>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            Manage who is in this space. Destructive actions are confirmed first.
+          </p>
+        </>
+      ) : null}
 
-      <div className="mt-5 space-y-4">
+      <div className={embedded ? "space-y-4" : "mt-5 space-y-4"}>
         <div className="rounded-2xl border border-rose-200/70 bg-white/80 p-4">
           <p className="text-sm font-semibold text-[var(--text-primary)]">Remove partner</p>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
@@ -126,6 +132,16 @@ export default function MembershipActions({
         confirmLabel="Leave space"
         variant="danger"
       />
+    </>
+  );
+
+  if (embedded) {
+    return body;
+  }
+
+  return (
+    <section className="surface border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(255,241,245,0.8))] p-6 md:p-8">
+      {body}
     </section>
   );
 }

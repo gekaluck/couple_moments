@@ -1,0 +1,2 @@
+ALTER TABLE "Rating"
+ADD COLUMN "note" TEXT;
