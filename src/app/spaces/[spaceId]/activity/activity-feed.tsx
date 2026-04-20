@@ -37,11 +37,12 @@ type ActivityEntry = {
   body: string | null;
   memory: {
     rating: number;
+    note: string | null;
     photoCount: number;
     heroPhotoUrl: string | null;
   } | null;
   photos: { url: string; alt?: string | null }[] | null;
-  relatedIdea: { title: string } | null;
+  relatedIdea: { id: string; title: string } | null;
 };
 
 type ActivityFeedProps = {
@@ -208,6 +209,7 @@ type ActivityRowProps = {
   timeFormat: CalendarTimeFormat;
   currentUserId: string;
   isUnseen: boolean;
+  hasConnectorBelow: boolean;
 };
 
 function ActivityRow({
@@ -216,6 +218,7 @@ function ActivityRow({
   timeFormat,
   currentUserId,
   isUnseen,
+  hasConnectorBelow,
 }: ActivityRowProps) {
   const presentation = ACTIVITY_PRESENTATION[entry.type];
   const Icon = presentation.icon;
@@ -295,6 +298,11 @@ function ActivityRow({
           ) : null}
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <HeartRatingDots value={entry.memory.rating} />
+            {entry.memory.note ? (
+              <p className="text-[12px] italic leading-[1.35] text-[var(--text-secondary)]">
+                &ldquo;{entry.memory.note}&rdquo;
+              </p>
+            ) : null}
             {entry.memory.photoCount > 0 ? (
               <p className="text-[9.5px] font-medium uppercase tracking-[0.05em] text-[var(--text-tertiary)]">
                 {entry.memory.photoCount}{" "}
@@ -321,12 +329,23 @@ function ActivityRow({
     </article>
   );
 
-  return href ? (
-    <Link className="block" href={href}>
-      {content}
-    </Link>
-  ) : (
-    content
+  return (
+    <div className="relative">
+      {href ? (
+        <Link className="block" href={href}>
+          {content}
+        </Link>
+      ) : (
+        content
+      )}
+      {hasConnectorBelow ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-2 left-0 h-2 w-[3px]"
+          style={{ backgroundColor: accentHex }}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -501,15 +520,22 @@ export default function ActivityFeed({
             <div className="flex flex-col gap-2" key={group.key}>
               <DayHeader entries={group.items} />
               <div className="stagger-children flex flex-col gap-2">
-                {group.items.map((entry) => {
+                {group.items.map((entry, idx) => {
                   const isUnseen =
                     Boolean(lastSeenIso) &&
                     entry.createdAt > (lastSeenIso ?? "") &&
                     entry.actorId !== currentUserId;
+                  const next = group.items[idx + 1];
+                  const hasConnectorBelow =
+                    entry.type === "idea_promoted" &&
+                    Boolean(entry.relatedIdea?.id) &&
+                    next?.type === "idea_saved" &&
+                    next?.target?.id === entry.relatedIdea?.id;
                   return (
                     <ActivityRow
                       currentUserId={currentUserId}
                       entry={entry}
+                      hasConnectorBelow={hasConnectorBelow}
                       isUnseen={isUnseen}
                       key={entry.id}
                       memberVisuals={memberVisuals}

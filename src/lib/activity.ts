@@ -18,6 +18,7 @@ export type ActivityTarget = {
 
 export type ActivityMemory = {
   rating: number;
+  note: string | null;
   photoCount: number;
   heroPhotoUrl: string | null;
 };
@@ -41,7 +42,7 @@ export type ActivityItem = {
   body: string | null;
   memory: ActivityMemory | null;
   photos: ActivityPhoto[] | null;
-  relatedIdea: { title: string } | null;
+  relatedIdea: { id: string; title: string } | null;
 };
 
 type ActivityQueryOptions = {
@@ -262,7 +263,9 @@ export async function listActivityForSpace(
         body: null,
         memory: null,
         photos: null,
-        relatedIdea: linkedIdea ? { title: linkedIdea.title } : null,
+        relatedIdea: linkedIdea
+          ? { id: linkedIdea.id, title: linkedIdea.title }
+          : null,
       });
       continue;
     }
@@ -400,6 +403,7 @@ export async function listActivityForSpace(
       body: null,
       memory: {
         rating: rating.value,
+        note: rating.note,
         photoCount: rating.event._count.photos,
         heroPhotoUrl,
       },
