@@ -118,7 +118,7 @@ export default function IdeasColumn({
           {ideas.map((idea) => (
             <div
               key={idea.id}
-              className="min-w-[72%] max-w-[78%] snap-start md:min-w-0 md:max-w-none"
+              className="min-w-[72%] max-w-[78%] snap-start md:min-w-0 md:max-w-none [&:only-child]:min-w-full [&:only-child]:max-w-full"
             >
               <IdeaCard
                 idea={idea}
