@@ -472,7 +472,7 @@ export default function EventPhotoGallery({
         onClose={() => setPhotoPendingDelete(null)}
         onConfirm={handleConfirmDelete}
         title="Remove photo"
-        message="Remove this photo from the memory? The image will disappear from Memoris immediately."
+        message="Remove this photo from the memory? The image will disappear from Memories immediately."
         confirmLabel="Remove photo"
         cancelLabel="Keep photo"
         variant="danger"

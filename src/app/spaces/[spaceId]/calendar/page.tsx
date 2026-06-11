@@ -24,6 +24,7 @@ import {
   createIdeaComment,
   createIdeaForSpace,
   deleteIdea,
+  getIdeaForUser,
   updateIdea,
 } from "@/lib/ideas";
 import { normalizeTags, parseTags } from "@/lib/tags";
@@ -32,8 +33,8 @@ import {
   createGoogleCalendarEvent,
   getGoogleEventDeleteContext,
 } from "@/lib/integrations/google/events";
-import { parseJsonStringArray } from "@/lib/parsers";
 import { parseLocalDateTime, parseOffsetMinutes } from "@/lib/date-time";
+import { parseEventFormData, parsePlaceFields } from "@/lib/event-form";
 import CalendarAddControls from "./add-controls";
 import {
   buildBlocksByDay,
@@ -101,6 +102,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const repeatEventId = search.repeat ?? null;
   const openAction = search.action ?? "";
   const autoOpenIdea = openAction === "idea";
+  const autoOpenBlock = openAction === "block";
   const forceTourOpen = search.tour === "1";
   const forcedTourStepRaw = Number.parseInt(search.tourStep ?? "", 10);
   const forcedTourStep = Number.isFinite(forcedTourStepRaw) ? forcedTourStepRaw : 0;
@@ -138,87 +140,29 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   async function handleCreate(formData: FormData): Promise<CalendarActionResult | void> {
     "use server";
     const currentUserId = await requireUserId();
-    const title = formData.get("title")?.toString().trim() ?? "";
-    const description = formData.get("description")?.toString().trim() ?? "";
-    const date = formData.get("date")?.toString();
-    const endDate = formData.get("endDate")?.toString().trim() ?? "";
-    const rawTime = formData.get("time")?.toString() || "";
-    const timeIsSet = rawTime.length > 0;
-    const time = timeIsSet ? rawTime : "12:00";
-    const rawTimeEnd = formData.get("timeEnd")?.toString() || "";
-    const tags = normalizeTags(formData.get("tags"));
-    const addToGoogleCalendar = formData.get("addToGoogleCalendar") === "true";
-    const placeId = formData.get("placeId")?.toString() || null;
-    const placeName = formData.get("placeName")?.toString() || null;
-    const placeAddress = formData.get("placeAddress")?.toString() || null;
-    const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const placeOpeningHours = parseJsonStringArray(
-      formData.get("placeOpeningHours")?.toString() ?? null,
-    );
-    const placePhotoUrls = parseJsonStringArray(
-      formData.get("placePhotoUrls")?.toString() ?? null,
-    );
-    const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
-    const placeLng = parseFloat(formData.get("placeLng")?.toString() ?? "");
-    const placeUrl = formData.get("placeUrl")?.toString() || null;
-
-    if (!title || !date) {
-      throw new Error("Title and date are required.");
-    }
-
-    const startOffsetMinutes = parseOffsetMinutes(formData.get("timeZoneOffsetStart"));
-    const endOffsetMinutes = parseOffsetMinutes(
-      formData.get("timeZoneOffsetEnd"),
-    );
-    const dateTimeStart =
-      parseLocalDateTime({
-        date,
-        time,
-        offsetMinutes: startOffsetMinutes,
-      }) ?? new Date(`${date}T${time}`);
-    if (Number.isNaN(dateTimeStart.getTime())) {
-      throw new Error("Invalid date. Please try again.");
-    }
-    const hasMultiDayRange = Boolean(endDate && endDate !== date);
-    const effectiveEndDate = hasMultiDayRange ? endDate : date;
-    const rawDateTimeEnd =
-      rawTimeEnd || hasMultiDayRange
-        ? parseLocalDateTime({
-            date: effectiveEndDate,
-            time: rawTimeEnd || rawTime || "12:00",
-            offsetMinutes: endOffsetMinutes ?? startOffsetMinutes,
-          }) ?? new Date(`${effectiveEndDate}T${rawTimeEnd || rawTime || "12:00"}`)
-        : null;
-    const dateTimeEnd =
-      rawDateTimeEnd && !Number.isNaN(rawDateTimeEnd.getTime())
-        ? rawDateTimeEnd
-        : null;
-
-    if (dateTimeEnd && dateTimeEnd < dateTimeStart) {
-      throw new Error("End date cannot be before the start date.");
-    }
+    const parsed = parseEventFormData(formData);
 
     const event = await createEventForSpace(spaceIdForActions, currentUserId, {
-      title,
-      description: description || null,
-      dateTimeStart,
-      dateTimeEnd,
-      timeIsSet,
-      tags,
-      placeId,
-      placeName,
-      placeAddress,
-      placeWebsite,
-      placeOpeningHours,
-      placePhotoUrls,
-      placeLat: Number.isNaN(placeLat) ? null : placeLat,
-      placeLng: Number.isNaN(placeLng) ? null : placeLng,
-      placeUrl,
+      title: parsed.title,
+      description: parsed.description,
+      dateTimeStart: parsed.dateTimeStart,
+      dateTimeEnd: parsed.dateTimeEnd,
+      timeIsSet: parsed.timeIsSet,
+      tags: parsed.tags,
+      placeId: parsed.placeId,
+      placeName: parsed.placeName,
+      placeAddress: parsed.placeAddress,
+      placeWebsite: parsed.placeWebsite,
+      placeOpeningHours: parsed.placeOpeningHours,
+      placePhotoUrls: parsed.placePhotoUrls,
+      placeLat: parsed.placeLat,
+      placeLng: parsed.placeLng,
+      placeUrl: parsed.placeUrl,
     });
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
 
     // Sync to Google Calendar if requested
-    if (addToGoogleCalendar) {
+    if (parsed.addToGoogleCalendar) {
       const syncResult = await createGoogleCalendarEvent(currentUserId, {
         id: event.id,
         title: event.title,
@@ -325,19 +269,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const title = formData.get("title")?.toString().trim() ?? "";
     const description = formData.get("description")?.toString().trim() ?? "";
     const tags = normalizeTags(formData.get("tags"));
-    const placeId = formData.get("placeId")?.toString() || null;
-    const placeName = formData.get("placeName")?.toString() || null;
-    const placeAddress = formData.get("placeAddress")?.toString() || null;
-    const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const placeOpeningHours = parseJsonStringArray(
-      formData.get("placeOpeningHours")?.toString() ?? null,
-    );
-    const placePhotoUrls = parseJsonStringArray(
-      formData.get("placePhotoUrls")?.toString() ?? null,
-    );
-    const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
-    const placeLng = parseFloat(formData.get("placeLng")?.toString() ?? "");
-    const placeUrl = formData.get("placeUrl")?.toString() || null;
+    const place = parsePlaceFields(formData);
 
     if (!title) {
       redirect(`/spaces/${spaceIdForActions}/calendar`);
@@ -347,15 +279,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       title,
       description: description || null,
       tags,
-      placeId,
-      placeName,
-      placeAddress,
-      placeWebsite,
-      placeOpeningHours,
-      placePhotoUrls,
-      placeLat: Number.isNaN(placeLat) ? null : placeLat,
-      placeLng: Number.isNaN(placeLng) ? null : placeLng,
-      placeUrl,
+      ...place,
     });
 
   }
@@ -374,12 +298,15 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
-    const idea = ideas.find((item) => item.id === ideaId);
+    const idea = await getIdeaForUser(ideaId, currentUserId);
     if (!idea) {
       redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
 
-    const dateTimeStart = new Date(`${date}T${time}`);
+    const offsetMinutes = parseOffsetMinutes(formData.get("timeZoneOffsetStart"));
+    const dateTimeStart =
+      parseLocalDateTime({ date, time, offsetMinutes }) ??
+      new Date(`${date}T${time}`);
     if (Number.isNaN(dateTimeStart.getTime())) {
       redirect(`/spaces/${spaceIdForActions}/calendar`);
     }
@@ -470,19 +397,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     const title = formData.get("title")?.toString().trim() ?? "";
     const description = formData.get("description")?.toString().trim() ?? "";
     const tags = normalizeTags(formData.get("tags"));
-    const placeId = formData.get("placeId")?.toString() || null;
-    const placeName = formData.get("placeName")?.toString() || null;
-    const placeAddress = formData.get("placeAddress")?.toString() || null;
-    const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const placeOpeningHours = parseJsonStringArray(
-      formData.get("placeOpeningHours")?.toString() ?? null,
-    );
-    const placePhotoUrls = parseJsonStringArray(
-      formData.get("placePhotoUrls")?.toString() ?? null,
-    );
-    const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
-    const placeLng = parseFloat(formData.get("placeLng")?.toString() ?? "");
-    const placeUrl = formData.get("placeUrl")?.toString() || null;
+    const place = parsePlaceFields(formData);
 
     if (!ideaId || !title) {
       return;
@@ -492,15 +407,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       title,
       description: description || null,
       tags,
-      placeId,
-      placeName,
-      placeAddress,
-      placeWebsite,
-      placeOpeningHours,
-      placePhotoUrls,
-      placeLat: Number.isNaN(placeLat) ? null : placeLat,
-      placeLng: Number.isNaN(placeLng) ? null : placeLng,
-      placeUrl,
+      ...place,
     });
 
     revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
@@ -569,7 +476,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     return `/spaces/${space.id}/calendar?${params.toString()}`;
   };
 
-  const blocksByDay = buildBlocksByDay(blocks);
+  const blocksByDay = buildBlocksByDay(blocks);
   const { ideaCommentCounts, ideaCommentsByIdea } = buildIdeaCommentAggregates(
     ideaComments,
   );
@@ -654,6 +561,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             endAtIso: block.endAt.toISOString(),
             creatorName: visual?.displayName ?? block.createdBy.name ?? block.createdBy.email,
             source: block.source,
+            editHref:
+              block.source === "GOOGLE"
+                ? null
+                : buildCalendarHref(monthParam(now), { editBlock: block.id }),
             accentColor: visual?.accent.accent ?? "var(--color-secondary)",
             accentSoft: visual?.accent.accentSoft ?? "var(--color-secondary-soft)",
             accentText: visual?.accent.accentText ?? "var(--idea-new-text)",
@@ -678,6 +589,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               onCreateBlock={handleCreateBlock}
               initialEventDate={initialEventDate}
               prefillData={prefillData}
+              autoOpenBlock={autoOpenBlock}
               hasGoogleCalendar={hasGoogleCalendar}
               mapsApiKey={mapsApiKey}
             />

@@ -24,7 +24,7 @@ type RegisterErrorCode = "duplicate-email" | "invalid-input";
 
 const REGISTER_ERROR_MESSAGES: Record<RegisterErrorCode, string> = {
   "duplicate-email": "An account with that email already exists.",
-  "invalid-input": "Email and password are required.",
+  "invalid-input": "Enter a valid email and a password with at least 8 characters.",
 };
 
 export async function POST(request: Request) {
@@ -35,14 +35,14 @@ export async function POST(request: Request) {
 
   const schema = z.object({
     email: z.string().trim().email(),
-    password: z.string().trim().min(1),
+    password: z.string().trim().min(8),
     name: z.string().trim().optional().nullable(),
   });
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     const errorMessage = formatZodFieldErrors(
       parsed.error,
-      "Email and password are required.",
+      REGISTER_ERROR_MESSAGES["invalid-input"],
     );
     if (isFormSubmission(request)) {
       return buildAuthErrorResponse({

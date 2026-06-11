@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import Link from "next/link";
-import Script from "next/script";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
@@ -42,17 +41,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   return (
     <html lang="en">
-      <head>
-        {mapsApiKey ? (
-          <Script
-            src={`https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&libraries=places&loading=async`}
-            strategy="beforeInteractive"
-          />
-        ) : null}
-      </head>
       <body
         className={`${dmSans.variable} ${fraunces.variable} antialiased min-h-screen flex flex-col`}
       >

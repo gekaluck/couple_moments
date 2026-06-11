@@ -75,6 +75,7 @@ export default function PlaceSearch({
 }: PlaceSearchProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [value, setValue] = useState(initialValue ?? "");
+  const [loadError, setLoadError] = useState<string | null>(null);
   const hasKey = Boolean(apiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
 
   useEffect(() => {
@@ -90,68 +91,74 @@ export default function PlaceSearch({
       mapsConfigured = true;
     }
 
-    importLibrary("places").then(() => {
-      if (!inputRef.current) {
-        return;
-      }
-      const googleMaps = (globalThis as unknown as { google?: GoogleMapsGlobal }).google;
-      if (!googleMaps) {
-        return;
-      }
-      const service = new googleMaps.maps.places.PlacesService(
-        document.createElement("div"),
-      );
-      autocomplete = new googleMaps.maps.places.Autocomplete(inputRef.current, {
-        fields: ["place_id", "name", "formatted_address", "geometry", "url"],
-      });
-      autocomplete.addListener("place_changed", () => {
-        const place = autocomplete?.getPlace();
-        const selectedPlaceId = place?.place_id;
-        if (!selectedPlaceId || !place.geometry?.location) {
+    importLibrary("places")
+      .then(() => {
+        if (!inputRef.current) {
           return;
         }
-        const baseSelection: PlaceSelection = {
-          placeId: selectedPlaceId,
-          name: place.name ?? "Untitled place",
-          address: place.formatted_address ?? "",
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-          url: place.url ?? "",
-        };
-
-        service.getDetails(
-          {
+        const googleMaps = (globalThis as unknown as { google?: GoogleMapsGlobal }).google;
+        if (!googleMaps) {
+          setLoadError("Place search failed to load. Try again after refreshing.");
+          return;
+        }
+        const service = new googleMaps.maps.places.PlacesService(
+          document.createElement("div"),
+        );
+        autocomplete = new googleMaps.maps.places.Autocomplete(inputRef.current, {
+          fields: ["place_id", "name", "formatted_address", "geometry", "url"],
+        });
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete?.getPlace();
+          const selectedPlaceId = place?.place_id;
+          if (!selectedPlaceId || !place.geometry?.location) {
+            return;
+          }
+          const baseSelection: PlaceSelection = {
             placeId: selectedPlaceId,
-            fields: ["website", "opening_hours", "photos", "url", "name"],
-          },
-          async (details, status) => {
-            if (
-              status !== googleMaps.maps.places.PlacesServiceStatus.OK ||
-              !details
-            ) {
-              setValue(baseSelection.name);
-              onSelect(baseSelection);
-              return;
-            }
-            const selection: PlaceSelection = {
-              ...baseSelection,
-              website: details.website ?? "",
-              openingHours: details.opening_hours?.weekday_text ?? [],
-              photoUrls: await loadPlacePhotoUrls(selectedPlaceId, {
+            name: place.name ?? "Untitled place",
+            address: place.formatted_address ?? "",
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+            url: place.url ?? "",
+          };
+
+          service.getDetails(
+            {
+              placeId: selectedPlaceId,
+              fields: ["website", "opening_hours", "photos", "url", "name"],
+            },
+            async (details, status) => {
+              if (
+                status !== googleMaps.maps.places.PlacesServiceStatus.OK ||
+                !details
+              ) {
+                setValue(baseSelection.name);
+                onSelect(baseSelection);
+                return;
+              }
+              const photoUrls = await loadPlacePhotoUrls(selectedPlaceId, {
                 apiKey: activeKey,
                 limit: 3,
                 maxWidth: 800,
                 maxHeight: 600,
-              }),
-              url: details.url ?? baseSelection.url,
-              name: details.name ?? baseSelection.name,
-            };
-            setValue(selection.name);
-            onSelect(selection);
-          },
-        );
+              }).catch(() => []);
+              const selection: PlaceSelection = {
+                ...baseSelection,
+                website: details.website ?? "",
+                openingHours: details.opening_hours?.weekday_text ?? [],
+                photoUrls,
+                url: details.url ?? baseSelection.url,
+                name: details.name ?? baseSelection.name,
+              };
+              setValue(selection.name);
+              onSelect(selection);
+            },
+          );
+        });
+      })
+      .catch(() => {
+        setLoadError("Place search failed to load. Try again after refreshing.");
       });
-    });
 
     return () => {
       const googleMaps = (globalThis as unknown as { google?: GoogleMapsGlobal }).google;
@@ -169,12 +176,18 @@ export default function PlaceSearch({
         className="rounded-xl border border-transparent bg-[var(--surface-50)] px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white sm:text-sm"
         placeholder={placeholder}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          setValue(event.target.value);
+          setLoadError(null);
+        }}
       />
       {!hasKey ? (
         <span className="text-xs text-rose-600">
           Maps API key missing. Check `.env.local` and restart dev server.
         </span>
+      ) : null}
+      {loadError ? (
+        <span className="text-xs text-rose-600">{loadError}</span>
       ) : null}
     </label>
   );

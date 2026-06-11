@@ -41,6 +41,7 @@ type CalendarAddControlsProps = {
   onCreateBlock: (formData: FormData) => Promise<void>;
   initialEventDate?: string | null;
   prefillData?: PrefillData | null;
+  autoOpenBlock?: boolean;
   hasGoogleCalendar?: boolean;
   mapsApiKey?: string;
 };
@@ -58,12 +59,13 @@ export default function CalendarAddControls({
   onCreateBlock,
   initialEventDate,
   prefillData,
+  autoOpenBlock = false,
   hasGoogleCalendar = false,
   mapsApiKey,
 }: CalendarAddControlsProps) {
   const hasMapsKey = Boolean(mapsApiKey);
   const [openPanel, setOpenPanel] = useState<"event" | "block" | null>(() =>
-    initialEventDate || prefillData ? "event" : null,
+    initialEventDate || prefillData ? "event" : autoOpenBlock ? "block" : null,
   );
   const [eventDate, setEventDate] = useState<string | undefined>(
     () => initialEventDate ?? undefined,

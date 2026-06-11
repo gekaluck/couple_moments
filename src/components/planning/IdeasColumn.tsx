@@ -6,6 +6,7 @@ import { Lightbulb } from "lucide-react";
 import EmptyState from "./EmptyState";
 import IdeaCard from "./IdeaCard";
 import CreateIdeaModal from "./CreateIdeaModal";
+import HorizontalRail from "./HorizontalRail";
 import { CreatorVisualMap } from "@/lib/creator-colors";
 
 type Idea = {
@@ -112,30 +113,25 @@ export default function IdeasColumn({
           onAction={() => setIsCreateOpen(true)}
         />
       ) : (
-        <div
-          className="stagger-children -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:snap-none md:flex-col md:gap-4 md:overflow-visible md:px-0 md:pb-0"
-        >
-          {ideas.map((idea) => (
-            <div
-              key={idea.id}
-              className="min-w-[72%] max-w-[78%] snap-start md:min-w-0 md:max-w-none [&:only-child]:min-w-full [&:only-child]:max-w-full"
-            >
-              <IdeaCard
-                idea={idea}
-                commentCount={commentCounts[idea.id] ?? 0}
-                comments={commentsByIdea[idea.id] ?? []}
-                currentUserId={currentUserId}
-                memberVisuals={memberVisuals}
-                mapsApiKey={mapsApiKey}
-                hasGoogleCalendar={hasGoogleCalendar}
-                onSchedule={onScheduleIdea}
-                onAddComment={onAddComment}
-                onDelete={onDeleteIdea}
-                onEdit={onEditIdea}
-              />
-            </div>
-          ))}
-        </div>
+        <HorizontalRail
+          items={ideas}
+          getKey={(idea) => idea.id}
+          renderItem={(idea) => (
+            <IdeaCard
+              idea={idea}
+              commentCount={commentCounts[idea.id] ?? 0}
+              comments={commentsByIdea[idea.id] ?? []}
+              currentUserId={currentUserId}
+              memberVisuals={memberVisuals}
+              mapsApiKey={mapsApiKey}
+              hasGoogleCalendar={hasGoogleCalendar}
+              onSchedule={onScheduleIdea}
+              onAddComment={onAddComment}
+              onDelete={onDeleteIdea}
+              onEdit={onEditIdea}
+            />
+          )}
+        />
       )}
       <CreateIdeaModal
         isOpen={isCreateOpen}

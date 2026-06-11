@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Calendar, MapPin, MessageSquare, Pencil, Trash2 } from "lucide-react";
@@ -13,6 +13,7 @@ import Button from "@/components/ui/Button";
 import Card, { CardDescription, CardFooter, CardTitle } from "@/components/ui/Card";
 import { LocalTimeAgo } from "@/components/time/LocalTime";
 
+import { getOffsetMinutesForLocalDateTime } from "@/lib/date-time";
 import { getInitials } from "@/lib/formatters";
 import { sanitizeHttpUrl } from "@/lib/parsers";
 import {
@@ -144,23 +145,23 @@ export default function IdeaCard({
       id={`idea-${idea.id}`}
       variant="amber"
       padding="sm"
-      className={`group/idea card-hover animate-fade-in-up relative border-l-[3px] border-l-amber-400 border-amber-200/70 bg-[linear-gradient(155deg,rgba(255,255,255,0.97),rgba(254,243,220,0.6))] md:border-l md:border-l-amber-200/70 ${hasOpenModal ? "z-50" : ""}`}
+      className={`group/idea card-hover animate-fade-in-up relative flex h-full flex-col border-l-[3px] border-l-amber-400 border-amber-200/70 bg-[linear-gradient(155deg,rgba(255,255,255,0.97),rgba(254,243,220,0.6))] md:border-l md:border-l-amber-200/70 ${hasOpenModal ? "z-50" : ""}`}
     >
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="flex min-w-0 flex-1 flex-col">
           <CardTitle className="text-lg">{idea.title}</CardTitle>
           {idea.description ? (
             <CardDescription className="normal-case">{idea.description}</CardDescription>
           ) : null}
           {idea.placeName || idea.placeAddress ? (
-            <div className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200/70 bg-white/80 px-3 py-1 text-xs text-[var(--text-tertiary)]">
-              <MapPin className="h-3.5 w-3.5 text-amber-600" />
-              <span className="text-[var(--text-muted)]">
+            <div className="mt-2 inline-flex max-w-full min-w-0 items-center gap-2 rounded-xl border border-amber-200/70 bg-white/80 px-3 py-1 text-xs text-[var(--text-tertiary)]">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+              <span className="min-w-0 truncate text-[var(--text-muted)]">
                 {idea.placeName || idea.placeAddress}
               </span>
               {safePlaceLink ? (
                 <a
-                  className="font-semibold text-amber-600 transition hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="shrink-0 font-semibold text-amber-600 transition hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   href={safePlaceLink}
                   target="_blank"
                   rel="noreferrer"
@@ -177,7 +178,7 @@ export default function IdeaCard({
               ))}
             </div>
           ) : null}
-          <CardFooter className="mt-3 justify-start text-xs text-[var(--text-tertiary)]">
+          <CardFooter className="mt-auto justify-start pt-3 text-xs text-[var(--text-tertiary)]">
             <span className="inline-flex items-center gap-2">
               <span
                 aria-hidden="true"
@@ -197,7 +198,7 @@ export default function IdeaCard({
         </div>
         <div className="flex items-center gap-1.5 md:justify-end">
           <button
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-amber-200/90 bg-white/90 text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-200/90 bg-white/90 text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:pointer-events-none md:h-8 md:w-8 md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Schedule as event"
             aria-label={`Schedule idea: ${idea.title}`}
             onClick={() => setIsScheduleOpen(true)}
@@ -206,7 +207,7 @@ export default function IdeaCard({
             <Calendar className="h-4 w-4" />
           </button>
           <button
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 md:pointer-events-none md:h-8 md:w-8 md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Edit idea"
             aria-label={`Edit idea: ${idea.title}`}
             onClick={() => setIsEditOpen(true)}
@@ -215,7 +216,7 @@ export default function IdeaCard({
             <Pencil className="h-4 w-4" />
           </button>
           <button
-            className="relative inline-flex h-8 items-center justify-center gap-1 rounded-full border border-gray-200 bg-white px-2 text-gray-600 transition hover:shadow-[var(--shadow-sm)] md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
+            className="relative inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 text-gray-600 transition hover:shadow-[var(--shadow-sm)] md:pointer-events-none md:h-8 md:min-w-8 md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title={`Comments (${commentCount})`}
             onClick={() => setIsCommentsOpen((prev) => !prev)}
             type="button"
@@ -228,7 +229,7 @@ export default function IdeaCard({
             ) : null}
           </button>
           <button
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-red-50/80 text-red-600 transition hover:bg-red-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-red-50/80 text-red-600 transition hover:bg-red-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 md:pointer-events-none md:h-8 md:w-8 md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Delete idea"
             aria-label={`Delete idea: ${idea.title}`}
             type="button"
@@ -355,6 +356,12 @@ export default function IdeaCard({
             onSubmit={(event) => {
               event.preventDefault();
               const formData = new FormData(event.currentTarget);
+              const date = formData.get("date")?.toString() ?? "";
+              const time = formData.get("time")?.toString() || "12:00";
+              const offsetMinutes = getOffsetMinutesForLocalDateTime(date, time);
+              if (offsetMinutes !== null) {
+                formData.set("timeZoneOffsetStart", offsetMinutes.toString());
+              }
               startTransition(async () => {
                 try {
                   const result = await onSchedule(formData);
