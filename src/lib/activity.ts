@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type ActivityType =
@@ -48,11 +49,13 @@ export type ActivityItem = {
 type ActivityQueryOptions = {
   skip?: number;
   take?: number;
+  query?: string | null;
 };
 
-type ChangeLogFilters = NonNullable<
-  Parameters<typeof prisma.changeLogEntry.findMany>[0]
->["where"];
+type ActivitySearchTargets = {
+  eventIds: string[];
+  ideaIds: string[];
+};
 
 const IDEA_CONVERTED_SUMMARY = "Idea scheduled as an event.";
 const MEMORY_PHOTO_ADDED_SUMMARY = "Photo added to memory.";
@@ -64,12 +67,76 @@ const CHANGELOG_EXCLUDED_SUMMARIES = [
   "Memory thumbnail updated.",
 ] as const;
 
-function getActivityChangeLogWhere(spaceId: string): ChangeLogFilters {
+function containsQuery(query: string): Prisma.StringFilter {
+  return { contains: query, mode: "insensitive" };
+}
+
+function userMatchesQuery(query: string): Prisma.UserWhereInput {
+  return {
+    OR: [
+      { name: containsQuery(query) },
+      { email: containsQuery(query) },
+    ],
+  };
+}
+
+async function loadActivitySearchTargets(
+  spaceId: string,
+  query: string,
+): Promise<ActivitySearchTargets> {
+  if (!query) {
+    return { eventIds: [], ideaIds: [] };
+  }
+
+  const [events, ideas, convertedIdeas] = await Promise.all([
+    prisma.event.findMany({
+      where: {
+        coupleSpaceId: spaceId,
+        title: containsQuery(query),
+      },
+      select: { id: true },
+    }),
+    prisma.idea.findMany({
+      where: {
+        coupleSpaceId: spaceId,
+        title: containsQuery(query),
+      },
+      select: { id: true },
+    }),
+    prisma.idea.findMany({
+      where: {
+        coupleSpaceId: spaceId,
+        convertedToEvent: {
+          title: containsQuery(query),
+        },
+      },
+      select: { id: true },
+    }),
+  ]);
+
+  return {
+    eventIds: events.map((event) => event.id),
+    ideaIds: [...new Set([...ideas, ...convertedIdeas].map((idea) => idea.id))],
+  };
+}
+
+function getActivityChangeLogWhere(spaceId: string): Prisma.ChangeLogEntryWhereInput {
   return {
     coupleSpaceId: spaceId,
-    entityType: {
-      not: "NOTE",
-    },
+    OR: [
+      {
+        entityType: "EVENT",
+        changeType: { in: ["CREATE", "UPDATE"] },
+      },
+      {
+        entityType: "IDEA",
+        changeType: "CREATE",
+      },
+      {
+        entityType: "IDEA",
+        summary: IDEA_CONVERTED_SUMMARY,
+      },
+    ],
     NOT: {
       AND: [
         {
@@ -85,21 +152,123 @@ function getActivityChangeLogWhere(spaceId: string): ChangeLogFilters {
   };
 }
 
-export async function countActivityForSpace(spaceId: string): Promise<number> {
+function getCommentWhere(
+  spaceId: string,
+  query: string,
+  targets: ActivitySearchTargets,
+): Prisma.NoteWhereInput {
+  const base: Prisma.NoteWhereInput = {
+    coupleSpaceId: spaceId,
+    kind: { in: ["EVENT_COMMENT", "IDEA_COMMENT"] },
+  };
+  if (!query) {
+    return base;
+  }
+
+  const targetClauses: Prisma.NoteWhereInput[] = [];
+  if (targets.eventIds.length > 0) {
+    targetClauses.push({
+      parentType: "EVENT",
+      parentId: { in: targets.eventIds },
+    });
+  }
+  if (targets.ideaIds.length > 0) {
+    targetClauses.push({
+      parentType: "IDEA",
+      parentId: { in: targets.ideaIds },
+    });
+  }
+
+  return {
+    AND: [
+      base,
+      {
+        OR: [
+          { body: containsQuery(query) },
+          { author: userMatchesQuery(query) },
+          ...targetClauses,
+        ],
+      },
+    ],
+  };
+}
+
+function getSearchedChangeLogWhere(
+  spaceId: string,
+  query: string,
+  targets: ActivitySearchTargets,
+): Prisma.ChangeLogEntryWhereInput {
+  const base = getActivityChangeLogWhere(spaceId);
+  if (!query) {
+    return base;
+  }
+
+  const targetClauses: Prisma.ChangeLogEntryWhereInput[] = [];
+  if (targets.eventIds.length > 0) {
+    targetClauses.push({
+      entityType: "EVENT",
+      entityId: { in: targets.eventIds },
+    });
+  }
+  if (targets.ideaIds.length > 0) {
+    targetClauses.push({
+      entityType: "IDEA",
+      entityId: { in: targets.ideaIds },
+    });
+  }
+
+  return {
+    AND: [
+      base,
+      {
+        OR: [
+          { summary: containsQuery(query) },
+          { user: userMatchesQuery(query) },
+          ...targetClauses,
+        ],
+      },
+    ],
+  };
+}
+
+function getRatingWhere(spaceId: string, query: string): Prisma.RatingWhereInput {
+  const base: Prisma.RatingWhereInput = {
+    event: { coupleSpaceId: spaceId },
+  };
+  if (!query) {
+    return base;
+  }
+
+  return {
+    AND: [
+      base,
+      {
+        OR: [
+          { note: containsQuery(query) },
+          { user: userMatchesQuery(query) },
+          { event: { title: containsQuery(query) } },
+        ],
+      },
+    ],
+  };
+}
+
+export async function countActivityForSpace(
+  spaceId: string,
+  query?: string | null,
+): Promise<number> {
+  const normalizedQuery = query?.trim() ?? "";
+  const searchTargets = await loadActivitySearchTargets(spaceId, normalizedQuery);
+
   const [commentCount, changeLogCount, ratingCount] = await Promise.all([
     prisma.note.count({
-      where: {
-        coupleSpaceId: spaceId,
-        kind: { in: ["EVENT_COMMENT", "IDEA_COMMENT"] },
-      },
+      where: getCommentWhere(spaceId, normalizedQuery, searchTargets),
     }),
     prisma.changeLogEntry.count({
-      where: getActivityChangeLogWhere(spaceId),
+      where: getSearchedChangeLogWhere(spaceId, normalizedQuery, searchTargets),
     }),
     prisma.rating.count({
-      where: {
-        event: { coupleSpaceId: spaceId },
-      },
+      where: getRatingWhere(spaceId, normalizedQuery),
     }),
   ]);
 
@@ -112,28 +281,25 @@ export async function listActivityForSpace(
 ): Promise<ActivityItem[]> {
   const skip = Math.max(options.skip ?? 0, 0);
   const take = Math.max(options.take ?? 50, 1);
+  const query = options.query?.trim() ?? "";
   const candidateTake = skip + take;
+  const searchTargets = await loadActivitySearchTargets(spaceId, query);
 
   const [comments, changeLogs, ratings] = await Promise.all([
     prisma.note.findMany({
-      where: {
-        coupleSpaceId: spaceId,
-        kind: { in: ["EVENT_COMMENT", "IDEA_COMMENT"] },
-      },
+      where: getCommentWhere(spaceId, query, searchTargets),
       include: { author: true },
       orderBy: { createdAt: "desc" },
       take: candidateTake,
     }),
     prisma.changeLogEntry.findMany({
-      where: getActivityChangeLogWhere(spaceId),
+      where: getSearchedChangeLogWhere(spaceId, query, searchTargets),
       include: { user: true },
       orderBy: { createdAt: "desc" },
       take: candidateTake,
     }),
     prisma.rating.findMany({
-      where: {
-        event: { coupleSpaceId: spaceId },
-      },
+      where: getRatingWhere(spaceId, query),
       include: {
         user: true,
         event: {

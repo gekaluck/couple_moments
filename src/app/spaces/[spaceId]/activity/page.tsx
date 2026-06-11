@@ -11,7 +11,7 @@ import ActivityFeed from "./activity-feed";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
-  searchParams?: Promise<{ page?: string }>;
+  searchParams?: Promise<{ page?: string; q?: string }>;
 };
 
 export default async function ActivityPage({ params, searchParams }: PageProps) {
@@ -23,6 +23,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
   const { spaceId } = await params;
   const search = (await searchParams) ?? {};
   const page = Math.max(Number(search.page ?? "1") || 1, 1);
+  const query = search.q?.trim() ?? "";
   const pageSize = 30;
   const space = await getCoupleSpaceForUser(spaceId, userId);
 
@@ -31,7 +32,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
   }
 
   const [totalCount, members] = await Promise.all([
-    countActivityForSpace(space.id),
+    countActivityForSpace(space.id, query),
     listSpaceMembers(space.id),
   ]);
   const memberVisuals = buildCreatorVisuals(
@@ -46,12 +47,21 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
   );
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const startIndex = (currentPage - 1) * pageSize;
+  const visibleCount = currentPage * pageSize;
   const pageActivity = await listActivityForSpace(space.id, {
-    skip: startIndex,
-    take: pageSize,
+    skip: 0,
+    take: visibleCount,
+    query,
   });
   const hasNextPage = currentPage < totalPages;
+  const buildActivityHref = (targetPage: number) => {
+    const params = new URLSearchParams();
+    params.set("page", targetPage.toString());
+    if (query) {
+      params.set("q", query);
+    }
+    return `/spaces/${space.id}/activity?${params.toString()}`;
+  };
 
   return (
     <>
@@ -60,6 +70,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
         currentUserId={userId}
         memberVisuals={memberVisuals}
         totalCount={totalCount}
+        initialQuery={query}
         entries={pageActivity.map((entry) => ({
           id: entry.id,
           type: entry.type,
@@ -79,36 +90,22 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
         timeFormat={calendarTimeFormat}
       />
       {totalCount > 0 ? (
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 px-1">
+        <div className="mt-6 flex flex-col items-center gap-3 px-1">
           <div className="text-xs text-[var(--text-tertiary)]">
-            Page {currentPage} of {totalPages}
+            Showing {pageActivity.length} of {totalCount}
           </div>
-          <div className="flex items-center gap-2">
-            {currentPage > 1 ? (
-              <Link
-                className="rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-xs font-semibold text-[var(--text-primary)] shadow-sm transition hover:shadow-md"
-                href={`/spaces/${space.id}/activity?page=${currentPage - 1}`}
-              >
-                Previous
-              </Link>
-            ) : (
-              <span className="rounded-full border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-tertiary)] opacity-60">
-                Previous
-              </span>
-            )}
             {hasNextPage ? (
               <Link
-                className="rounded-full border border-transparent bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
-                href={`/spaces/${space.id}/activity?page=${currentPage + 1}`}
+                className="rounded-full border border-transparent bg-gradient-to-r from-rose-500 to-pink-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
+                href={buildActivityHref(currentPage + 1)}
               >
-                Next
+                Load more
               </Link>
             ) : (
-              <span className="rounded-full border border-[var(--panel-border)] px-4 py-2 text-xs font-semibold text-[var(--text-tertiary)] opacity-60">
-                Next
+              <span className="text-xs font-medium text-[var(--text-tertiary)]">
+                You&apos;re caught up.
               </span>
             )}
-          </div>
         </div>
       ) : null}
     </>

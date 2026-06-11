@@ -23,6 +23,7 @@ type AgendaBlock = {
   endAtIso: string;
   creatorName: string;
   source?: string;
+  editHref?: string | null;
   accentColor: string;
   accentSoft: string;
   accentText: string;
@@ -176,41 +177,59 @@ export default function MobileAgendaView({
         </div>
 
         <div className="flex flex-col gap-1.5 pb-3">
-          {day.blocks.map((block) => (
-            <div
-              key={`block-${block.id}-${day.dateKey}`}
-              className="agenda-event-row flex items-center gap-3 rounded-xl border border-dashed px-3 py-2.5"
-              style={{
-                backgroundColor: block.accentSoft,
-                borderColor: `color-mix(in srgb, ${block.accentColor} 40%, transparent)`,
-              }}
-            >
-              <div
-                className="h-8 w-1 flex-shrink-0 rounded-full"
-                style={{ backgroundColor: block.accentColor }}
-              />
-              <div className="min-w-0 flex-1">
-                <p
-                  className="truncate text-sm font-medium"
-                  style={{ color: block.accentText }}
-                >
-                  {block.title}
-                </p>
-                <div className="mt-0.5 flex items-center gap-2 text-xs" style={{ color: block.accentText, opacity: 0.7 }}>
-                  <span className="inline-flex items-center gap-1">
-                    <Clock size={11} />
-                    {formatTime(block.startAtIso, timeFormat)}
-                    {" - "}
-                    {formatTime(block.endAtIso, timeFormat)}
-                  </span>
-                  <span>
-                    {block.creatorName}
-                    {block.source === "GOOGLE_CALENDAR" && " · Google"}
-                  </span>
+          {day.blocks.map((block) => {
+            const blockStyle = {
+              backgroundColor: block.accentSoft,
+              borderColor: `color-mix(in srgb, ${block.accentColor} 40%, transparent)`,
+            };
+            const content = (
+              <>
+                <div
+                  className="h-8 w-1 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: block.accentColor }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="truncate text-sm font-medium"
+                    style={{ color: block.accentText }}
+                  >
+                    {block.title}
+                  </p>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs" style={{ color: block.accentText, opacity: 0.7 }}>
+                    <span className="inline-flex items-center gap-1">
+                      <Clock size={11} />
+                      {formatTime(block.startAtIso, timeFormat)}
+                      {" - "}
+                      {formatTime(block.endAtIso, timeFormat)}
+                    </span>
+                    <span>
+                      {block.creatorName}
+                      {block.source === "GOOGLE" && " · Google"}
+                    </span>
+                  </div>
                 </div>
+              </>
+            );
+
+            return block.editHref ? (
+              <Link
+                key={`block-${block.id}-${day.dateKey}`}
+                href={block.editHref}
+                className="agenda-event-row flex items-center gap-3 rounded-xl border border-dashed px-3 py-2.5 active:scale-[0.99]"
+                style={blockStyle}
+              >
+                {content}
+              </Link>
+            ) : (
+              <div
+                key={`block-${block.id}-${day.dateKey}`}
+                className="agenda-event-row flex items-center gap-3 rounded-xl border border-dashed px-3 py-2.5"
+                style={blockStyle}
+              >
+                {content}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {day.events.map((event) => (
             <Link

@@ -8,6 +8,12 @@ import {
   normalizeAuthRedirectPath,
 } from "@/lib/auth-error-response";
 import { verifyPassword } from "@/lib/auth";
+import {
+  checkLoginRateLimit,
+  getClientIp,
+  recordFailedLoginAttempt,
+  resetLoginRateLimit,
+} from "@/lib/auth-rate-limit";
 import { prisma } from "@/lib/prisma";
 import { parseJsonOrForm } from "@/lib/request";
 import {
@@ -20,11 +26,12 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type LoginErrorCode = "invalid-credentials" | "invalid-input";
+type LoginErrorCode = "invalid-credentials" | "invalid-input" | "rate-limited";
 
 const LOGIN_ERROR_MESSAGES: Record<LoginErrorCode, string> = {
   "invalid-credentials": "Invalid email or password.",
   "invalid-input": "Email and password are required.",
+  "rate-limited": "Too many login attempts. Try again shortly.",
 };
 
 export async function POST(request: Request) {
@@ -32,6 +39,7 @@ export async function POST(request: Request) {
   const rawEmail =
     typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const redirectTo = normalizeAuthRedirectPath(body.redirectTo);
+  const ip = getClientIp(request);
 
   const schema = z.object({
     email: z.string().trim().email(),
@@ -61,12 +69,28 @@ export async function POST(request: Request) {
 
   const email = parsed.data.email.toLowerCase();
   const password = parsed.data.password;
+  const rateLimit = checkLoginRateLimit({ ip, email });
+  if (rateLimit.limited) {
+    return buildAuthErrorResponse({
+      request,
+      formRedirectPath: "/login",
+      errorCode: "rate-limited",
+      status: 429,
+      errorMessages: LOGIN_ERROR_MESSAGES,
+      options: {
+        email,
+        redirectTo,
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
+    });
+  }
 
   const user = await prisma.user.findUnique({
     where: { email },
   });
 
   if (!user) {
+    recordFailedLoginAttempt({ ip, email });
     return buildAuthErrorResponse({
       request,
       formRedirectPath: "/login",
@@ -82,6 +106,7 @@ export async function POST(request: Request) {
 
   const isValid = await verifyPassword(password, user.passwordHash);
   if (!isValid) {
+    recordFailedLoginAttempt({ ip, email });
     return buildAuthErrorResponse({
       request,
       formRedirectPath: "/login",
@@ -94,6 +119,7 @@ export async function POST(request: Request) {
       },
     });
   }
+  resetLoginRateLimit({ ip, email });
 
   // Create signed session token
   const token = await createSession(user.id);

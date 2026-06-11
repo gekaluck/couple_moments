@@ -52,6 +52,7 @@ type ActivityFeedProps = {
   currentUserId: string;
   memberVisuals: CreatorVisualMap;
   totalCount: number;
+  initialQuery?: string;
 };
 
 type FilterKey = "all" | "plans" | "ideas" | "memories" | "photos" | "notes";
@@ -396,10 +397,11 @@ export default function ActivityFeed({
   currentUserId,
   memberVisuals,
   totalCount,
+  initialQuery = "",
 }: ActivityFeedProps) {
   const hasHydrated = useSyncExternalStore(subscribe, () => true, () => false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const storageKey = `${LAST_SEEN_STORAGE_PREFIX}${spaceId}:${currentUserId}`;
   // useSyncExternalStore only re-snapshots on subscribe events; same-tab writes
   // don't fire `storage`, so the dot stays visible for the whole session.
@@ -484,20 +486,25 @@ export default function ActivityFeed({
           })}
         </div>
 
-        <label className="relative hidden items-center md:flex">
+        <form
+          action={`/spaces/${spaceId}/activity`}
+          className="relative flex items-center"
+          method="get"
+        >
           <Search
             aria-hidden="true"
             className="pointer-events-none absolute left-3 h-4 w-4 text-[var(--text-tertiary)]"
           />
           <input
             aria-label="Search activity"
+            name="q"
             className="w-full rounded-full border border-[var(--panel-border)] bg-white py-2 pl-9 pr-4 text-sm text-[var(--text-primary)] outline-none transition focus:border-rose-400"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search activity..."
             type="search"
             value={query}
           />
-        </label>
+        </form>
       </section>
 
       {totalCount === 0 ? (

@@ -5,6 +5,7 @@ import { Calendar } from "lucide-react";
 import Link from "next/link";
 
 import EmptyState from "./EmptyState";
+import HorizontalRail from "./HorizontalRail";
 import PlanCard from "./PlanCard";
 import { CalendarTimeFormat } from "@/lib/calendar";
 
@@ -100,10 +101,12 @@ export default function UpcomingPlansColumn({
           description="Create an event from the calendar to start planning!"
         />
       ) : (
-        <div className="stagger-children flex flex-col gap-4">
-          {visiblePlans.map((plan) => (
+        <>
+          <HorizontalRail
+            items={visiblePlans}
+            getKey={(plan) => plan.id}
+            renderItem={(plan) => (
             <PlanCard
-              key={plan.id}
               id={plan.id}
               title={plan.title}
               description={plan.description}
@@ -115,7 +118,8 @@ export default function UpcomingPlansColumn({
               timeFormat={timeFormat}
               onDelete={onDeleteEvent}
             />
-          ))}
+            )}
+          />
           {hasMore ? (
             <button
               type="button"
@@ -125,7 +129,7 @@ export default function UpcomingPlansColumn({
               Show more ({plans.length - visibleCount} remaining)
             </button>
           ) : null}
-        </div>
+        </>
       )}
     </div>
   );

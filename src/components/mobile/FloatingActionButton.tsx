@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, CalendarPlus, Lightbulb } from "lucide-react";
+import { Plus, CalendarPlus, Lightbulb, Clock } from "lucide-react";
 
 type FloatingActionButtonProps = {
   spaceId: string;
@@ -30,6 +30,14 @@ export default function FloatingActionButton({ spaceId }: FloatingActionButtonPr
       href: `/spaces/${spaceId}/calendar?action=idea`,
       icon: Lightbulb,
       bgClass: "bg-amber-500",
+      textClass: "text-white",
+    },
+    {
+      id: "block",
+      label: "Block time",
+      href: `/spaces/${spaceId}/calendar?action=block`,
+      icon: Clock,
+      bgClass: "bg-slate-800",
       textClass: "text-white",
     },
   ];

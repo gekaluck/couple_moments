@@ -95,7 +95,7 @@ export default function PlanCard({
         variant="rose"
         hover
         padding="sm"
-        className="group/plan card-hover animate-fade-in-up relative border-l-[3px] border-l-rose-500 border-rose-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,238,244,0.74))] md:border-l md:border-l-rose-200/70"
+        className="group/plan card-hover animate-fade-in-up relative flex h-full w-full flex-col border-l-[3px] border-l-rose-500 border-rose-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.95),rgba(255,238,244,0.74))] md:border-l md:border-l-rose-200/70"
       >
         <Link
           href={eventHref}
@@ -156,7 +156,7 @@ export default function PlanCard({
             {description}
           </CardDescription>
         ) : null}
-        <CardFooter className="relative z-10 flex-col items-start gap-2 pt-1">
+        <CardFooter className="relative z-10 mt-auto flex-col items-start gap-2 pt-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="inline-flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
               <CalendarClock className="h-4 w-4 text-rose-500" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import EmptyState from "@/components/ui/EmptyState";
@@ -110,7 +110,7 @@ function MemoryCover({
         limit: 1,
         maxWidth: 600,
         maxHeight: 600,
-      });
+      }).catch(() => []);
       if (!cancelled) {
         setResolvedCoverUrl(null);
         setDynamicCoverState({ placeId, url: freshUrls[0] ?? null });
@@ -207,6 +207,8 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
   const [year, setYear] = useState("all");
   const [tag, setTag] = useState("all");
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(12);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const years = useMemo(
     () =>
@@ -240,6 +242,25 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
   const memoriesCountLabel = hasActiveFilters
     ? `Showing ${filtered.length} of ${memories.length}`
     : `${memories.length} ${memories.length === 1 ? "memory" : "memories"}`;
+  const visibleMemories = filtered.slice(0, visibleCount);
+  const hasMoreMemories = visibleCount < filtered.length;
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !hasMoreMemories) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setVisibleCount((count) => Math.min(count + 12, filtered.length));
+        }
+      },
+      { rootMargin: "240px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [filtered.length, hasMoreMemories]);
 
   return (
     <div className="page-enter-stagger">
@@ -274,7 +295,10 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
                 placeholder="Search memories..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setVisibleCount(12);
+                }}
               />
             </div>
             <div className="relative hidden h-10 items-center md:flex">
@@ -283,7 +307,10 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               </span>
               <select
                 className="h-10 rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
-                onChange={(event) => setYear(event.target.value)}
+                onChange={(event) => {
+                  setYear(event.target.value);
+                  setVisibleCount(12);
+                }}
                 value={year}
               >
                 <option value="all">All years</option>
@@ -300,7 +327,10 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               </span>
               <select
                 className="h-10 rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
-                onChange={(event) => setTag(event.target.value)}
+                onChange={(event) => {
+                  setTag(event.target.value);
+                  setVisibleCount(12);
+                }}
                 value={tag}
               >
                 <option value="all">All tags</option>
@@ -320,7 +350,10 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                     ? "border-rose-300 bg-rose-100 text-rose-700"
                     : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
                 }`}
-                onClick={() => setTag("all")}
+                onClick={() => {
+                  setTag("all");
+                  setVisibleCount(12);
+                }}
                 type="button"
               >
                 All
@@ -333,7 +366,45 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                       ? "border-rose-300 bg-rose-100 text-rose-700"
                       : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
                   }`}
-                  onClick={() => setTag(value)}
+                  onClick={() => {
+                    setTag(value);
+                    setVisibleCount(12);
+                  }}
+                  type="button"
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {years.length > 0 ? (
+            <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-[var(--panel-border)] px-1 pt-3 md:hidden">
+              <button
+                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  year === "all"
+                    ? "border-rose-300 bg-rose-100 text-rose-700"
+                    : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
+                }`}
+                onClick={() => {
+                  setYear("all");
+                  setVisibleCount(12);
+                }}
+                type="button"
+              >
+                All years
+              </button>
+              {years.map((value) => (
+                <button
+                  key={value}
+                  className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                    year === value.toString()
+                      ? "border-rose-300 bg-rose-100 text-rose-700"
+                      : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
+                  }`}
+                  onClick={() => {
+                    setYear(value.toString());
+                    setVisibleCount(12);
+                  }}
                   type="button"
                 >
                   {value}
@@ -357,7 +428,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
         </div>
       ) : null}
       <div className="stagger-children mx-auto flex max-w-4xl flex-col gap-2 md:gap-6">
-        {filtered.map((event) => {
+        {visibleMemories.map((event) => {
           const gradient =
             event.tags
               .map((value) => TAG_GRADIENTS[value.toLowerCase()])
@@ -423,6 +494,15 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           );
         })}
       </div>
+      {hasMoreMemories ? (
+        <div ref={loadMoreRef} className="py-6 text-center text-xs font-medium text-[var(--text-tertiary)]">
+          Loading more memories...
+        </div>
+      ) : filtered.length > 0 ? (
+        <div className="py-6 text-center text-xs font-medium text-[var(--text-tertiary)]">
+          You&apos;re caught up.
+        </div>
+      ) : null}
     </div>
   );
 }

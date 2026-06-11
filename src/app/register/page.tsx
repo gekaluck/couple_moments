@@ -14,7 +14,7 @@ function getRegisterErrorMessage(errorCode?: string, retryAfterSeconds?: number 
     return "An account with that email already exists.";
   }
   if (errorCode === "invalid-input") {
-    return "Enter a valid email and password.";
+    return "Enter a valid email and a password with at least 8 characters.";
   }
   if (errorCode === "rate-limited") {
     if (retryAfterSeconds && retryAfterSeconds > 0) {
@@ -93,6 +93,8 @@ export default async function RegisterPage({ searchParams }: PageProps) {
               className="rounded-xl border border-[var(--panel-border)] bg-white/70 px-4 py-3 text-base text-[var(--text-primary)] outline-none focus:border-[var(--accent)]"
               name="password"
               type="password"
+              minLength={8}
+              autoComplete="new-password"
               required
             />
           </label>

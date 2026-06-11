@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -11,12 +11,12 @@ import {
 } from "@/lib/integrations/google/events";
 import { deleteNote } from "@/lib/notes";
 import { requireUserId } from "@/lib/current-user";
-import { normalizeTags, parseTags } from "@/lib/tags";
-import { parseJsonStringArray, sanitizeHttpUrl } from "@/lib/parsers";
+import { parseTags } from "@/lib/tags";
+import { sanitizeHttpUrl } from "@/lib/parsers";
 import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
 import { getInitials } from "@/lib/formatters";
 import { resolveCalendarTimeFormat } from "@/lib/calendar";
-import { parseLocalDateTime, parseOffsetMinutes } from "@/lib/date-time";
+import { parseEventFormData } from "@/lib/event-form";
 
 import { loadEventBaseData, loadEventDetailData } from "./page-data";
 import EventComments from "./event-comments";
@@ -172,82 +172,24 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   async function handleUpdate(formData: FormData): Promise<EventActionResult | void> {
     "use server";
     const currentUserId = await requireUserId();
-    const title = formData.get("title")?.toString().trim() ?? "";
-    const description = formData.get("description")?.toString().trim() ?? "";
-    const date = formData.get("date")?.toString();
-    const endDate = formData.get("endDate")?.toString().trim() ?? "";
-    const rawTime = formData.get("time")?.toString() || "";
-    const timeIsSet = rawTime.length > 0;
-    const time = timeIsSet ? rawTime : "12:00";
-    const rawTimeEnd = formData.get("timeEnd")?.toString() || "";
-    const tags = normalizeTags(formData.get("tags"));
-    const placeId = formData.get("placeId")?.toString() || null;
-    const placeName = formData.get("placeName")?.toString() || null;
-    const placeAddress = formData.get("placeAddress")?.toString() || null;
-    const placeWebsite = formData.get("placeWebsite")?.toString() || null;
-    const placeOpeningHours = parseJsonStringArray(
-      formData.get("placeOpeningHours")?.toString() ?? null,
-    );
-    const placePhotoUrls = parseJsonStringArray(
-      formData.get("placePhotoUrls")?.toString() ?? null,
-    );
-    const placeLat = parseFloat(formData.get("placeLat")?.toString() ?? "");
-    const placeLng = parseFloat(formData.get("placeLng")?.toString() ?? "");
-    const placeUrl = formData.get("placeUrl")?.toString() || null;
-
-    if (!title || !date) {
-      return;
-    }
-
-    const startOffsetMinutes = parseOffsetMinutes(formData.get("timeZoneOffsetStart"));
-    const endOffsetMinutes = parseOffsetMinutes(
-      formData.get("timeZoneOffsetEnd"),
-    );
-    const dateTimeStart =
-      parseLocalDateTime({
-        date,
-        time,
-        offsetMinutes: startOffsetMinutes,
-      }) ?? new Date(`${date}T${time}`);
-    if (Number.isNaN(dateTimeStart.getTime())) {
-      return;
-    }
-
-    const hasMultiDayRange = Boolean(endDate && endDate !== date);
-    const effectiveEndDate = hasMultiDayRange ? endDate : date;
-    const rawDateTimeEnd =
-      rawTimeEnd || hasMultiDayRange
-        ? parseLocalDateTime({
-            date: effectiveEndDate,
-            time: rawTimeEnd || rawTime || "12:00",
-            offsetMinutes: endOffsetMinutes ?? startOffsetMinutes,
-          }) ?? new Date(`${effectiveEndDate}T${rawTimeEnd || rawTime || "12:00"}`)
-        : null;
-    const dateTimeEnd =
-      rawDateTimeEnd && !Number.isNaN(rawDateTimeEnd.getTime())
-        ? rawDateTimeEnd
-        : null;
-
-    if (dateTimeEnd && dateTimeEnd < dateTimeStart) {
-      throw new Error("End date cannot be before the start date.");
-    }
+    const parsed = parseEventFormData(formData);
 
     const event = await updateEvent(eventIdForActions, currentUserId, {
-      title,
-      description: description || null,
-      dateTimeStart,
-      dateTimeEnd: dateTimeEnd && !Number.isNaN(dateTimeEnd.getTime()) ? dateTimeEnd : null,
-      timeIsSet,
-      tags,
-      placeId,
-      placeName,
-      placeAddress,
-      placeWebsite,
-      placeOpeningHours,
-      placePhotoUrls,
-      placeLat: Number.isNaN(placeLat) ? null : placeLat,
-      placeLng: Number.isNaN(placeLng) ? null : placeLng,
-      placeUrl,
+      title: parsed.title,
+      description: parsed.description,
+      dateTimeStart: parsed.dateTimeStart,
+      dateTimeEnd: parsed.dateTimeEnd,
+      timeIsSet: parsed.timeIsSet,
+      tags: parsed.tags,
+      placeId: parsed.placeId,
+      placeName: parsed.placeName,
+      placeAddress: parsed.placeAddress,
+      placeWebsite: parsed.placeWebsite,
+      placeOpeningHours: parsed.placeOpeningHours,
+      placePhotoUrls: parsed.placePhotoUrls,
+      placeLat: parsed.placeLat,
+      placeLng: parsed.placeLng,
+      placeUrl: parsed.placeUrl,
     });
     const googleSyncResult = await updateGoogleCalendarEvent(event.id, {
       id: event.id,

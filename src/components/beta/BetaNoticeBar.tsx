@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FlaskConical, MessageSquareWarning, X } from "lucide-react";
@@ -11,17 +11,20 @@ type BetaNoticeBarProps = {
   spaceId: string;
 };
 
+function subscribe() {
+  return () => {};
+}
+
 export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const storageKey = `duet_beta_notice_${BETA_NOTICE_VERSION}_${spaceId}`;
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (window.localStorage.getItem(storageKey) === "1") {
-      setDismissed(true);
-    }
-  }, [storageKey]);
+  const storedDismissed = useSyncExternalStore(
+    subscribe,
+    () => window.localStorage.getItem(storageKey) === "1",
+    () => false,
+  );
+  const [dismissedInSession, setDismissedInSession] = useState(false);
 
   const reportHref = useMemo(() => {
     const params = searchParams.toString();
@@ -29,7 +32,7 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
     return `/feedback?from=${encodeURIComponent(from)}&spaceId=${encodeURIComponent(spaceId)}`;
   }, [pathname, searchParams, spaceId]);
 
-  if (dismissed) {
+  if (storedDismissed || dismissedInSession) {
     return null;
   }
 
@@ -67,7 +70,7 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
               if (typeof window !== "undefined") {
                 window.localStorage.setItem(storageKey, "1");
               }
-              setDismissed(true);
+              setDismissedInSession(true);
             }}
             className="rounded-full border border-amber-300 bg-white/90 p-1.5 text-amber-700 transition hover:bg-amber-50"
             aria-label="Dismiss beta notice"
