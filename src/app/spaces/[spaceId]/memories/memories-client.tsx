@@ -343,7 +343,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             </div>
           </div>
           {tags.length > 0 ? (
-            <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-[var(--panel-border)] px-1 pt-3 md:flex-wrap md:overflow-visible">
+            <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-[var(--panel-border)] px-1 pt-3 md:flex-wrap md:overflow-visible">
               <button
                 className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   tag === "all"
@@ -378,7 +378,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             </div>
           ) : null}
           {years.length > 0 ? (
-            <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-[var(--panel-border)] px-1 pt-3 md:hidden">
+            <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-[var(--panel-border)] px-1 pt-3 md:hidden">
               <button
                 className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   year === "all"

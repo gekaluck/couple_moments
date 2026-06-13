@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Clock, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { Clock, MapPin, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 
 type AgendaEvent = {
   id: string;
@@ -36,14 +36,33 @@ type AgendaDayData = {
   blocks: AgendaBlock[];
 };
 
+export type MonthGridDay = {
+  dateKey: string;
+  dayOfMonth: number;
+  isToday: boolean;
+  hasPlan: boolean;
+  hasMemory: boolean;
+  hasBlock: boolean;
+  blockSpansPrev: boolean;
+  blockSpansNext: boolean;
+  addHref: string;
+};
+
+type MonthGrid = {
+  weekStartsOn: 0 | 1;
+  days: MonthGridDay[];
+};
+
 type MobileAgendaViewProps = {
   days: AgendaDayData[];
   todayKey: string;
   timeFormat: "12h" | "24h";
   monthTitle: string;
+  monthGrid?: MonthGrid;
 };
 
 const DEFAULT_DAYS_SHOWN = 7;
+const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 function formatTime(isoString: string, timeFormat: "12h" | "24h"): string {
   const date = new Date(isoString);
@@ -104,14 +123,164 @@ function formatDayHeader(
   };
 }
 
+function formatFullDayLabel(dateKey: string) {
+  return new Date(dateKey + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+type MonthStripProps = {
+  grid: MonthGrid;
+  selectedKey: string | null;
+  onSelectDay: (dateKey: string) => void;
+};
+
+function MonthStrip({ grid, selectedKey, onSelectDay }: MonthStripProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const weeks = useMemo(() => {
+    if (grid.days.length === 0) {
+      return [] as (MonthGridDay | null)[][];
+    }
+    const firstDow = new Date(grid.days[0].dateKey + "T00:00:00").getDay();
+    const offset = (firstDow - grid.weekStartsOn + 7) % 7;
+    const cells: (MonthGridDay | null)[] = [
+      ...Array.from({ length: offset }, () => null),
+      ...grid.days,
+    ];
+    while (cells.length % 7 !== 0) {
+      cells.push(null);
+    }
+    const result: (MonthGridDay | null)[][] = [];
+    for (let i = 0; i < cells.length; i += 7) {
+      result.push(cells.slice(i, i + 7));
+    }
+    return result;
+  }, [grid]);
+
+  if (weeks.length === 0) {
+    return null;
+  }
+
+  const focusKey = selectedKey ?? null;
+  const focusWeekIndex = (() => {
+    if (focusKey) {
+      const index = weeks.findIndex((week) =>
+        week.some((day) => day?.dateKey === focusKey),
+      );
+      if (index !== -1) {
+        return index;
+      }
+    }
+    const todayIndex = weeks.findIndex((week) =>
+      week.some((day) => day?.isToday),
+    );
+    return todayIndex === -1 ? 0 : todayIndex;
+  })();
+  const visibleWeeks = isExpanded ? weeks : [weeks[focusWeekIndex]];
+
+  const labels = [
+    ...WEEKDAY_LABELS.slice(grid.weekStartsOn),
+    ...WEEKDAY_LABELS.slice(0, grid.weekStartsOn),
+  ];
+
+  return (
+    <div className="mb-3 rounded-2xl border border-[var(--panel-border)] bg-white/75 px-2 pt-2 shadow-[var(--shadow-xs)]">
+      <div className="grid grid-cols-7">
+        {labels.map((label) => (
+          <span
+            key={label}
+            className="py-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+      {visibleWeeks.map((week, weekIndex) => (
+        <div key={weekIndex} className="grid grid-cols-7">
+          {week.map((day, dayIndex) => {
+            if (!day) {
+              return <span key={`empty-${dayIndex}`} />;
+            }
+            const hasContent = day.hasPlan || day.hasMemory || day.hasBlock;
+            const isMultiDayBlock =
+              day.hasBlock && (day.blockSpansPrev || day.blockSpansNext);
+            const isSelected = day.dateKey === selectedKey;
+            const numberClasses = day.isToday
+              ? "flex h-6 w-6 items-center justify-center rounded-full bg-[var(--action-primary)] text-xs font-bold text-white"
+              : `flex h-6 w-6 items-center justify-center text-xs ${
+                  hasContent
+                    ? "font-semibold text-[var(--text-primary)]"
+                    : "text-[var(--text-tertiary)]"
+                }`;
+
+            return (
+              <button
+                key={day.dateKey}
+                type="button"
+                aria-pressed={isSelected}
+                aria-label={`${formatFullDayLabel(day.dateKey)}${isSelected ? " (selected)" : ""}`}
+                className={`relative flex h-12 w-full flex-col items-center rounded-xl pt-1 transition active:scale-95 ${
+                  isSelected ? "bg-rose-50 ring-1 ring-rose-300" : ""
+                }`}
+                onClick={() => onSelectDay(day.dateKey)}
+              >
+                <span className={numberClasses}>{day.dayOfMonth}</span>
+                <span className="mt-0.5 flex h-1 items-center gap-0.5">
+                  {day.hasPlan ? (
+                    <span className="h-1 w-1 rounded-full bg-[var(--action-primary)]" />
+                  ) : null}
+                  {day.hasMemory ? (
+                    <span className="h-1 w-1 rounded-full bg-[var(--calendar-memory-dot)]" />
+                  ) : null}
+                  {day.hasBlock && !isMultiDayBlock ? (
+                    <span className="h-1 w-1 rounded-full bg-[var(--color-secondary)]" />
+                  ) : null}
+                </span>
+                {isMultiDayBlock ? (
+                  <span
+                    aria-hidden="true"
+                    className={`absolute bottom-1 left-0 right-0 h-[3px] bg-[var(--color-secondary)] ${
+                      day.blockSpansPrev ? "" : "ml-2 rounded-l-full"
+                    } ${day.blockSpansNext ? "" : "mr-2 rounded-r-full"}`}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      ))}
+      <button
+        type="button"
+        className="flex w-full items-center justify-center gap-1 py-1.5 text-[11px] font-medium text-[var(--text-tertiary)] transition hover:text-[var(--text-secondary)]"
+        onClick={() => setIsExpanded((prev) => !prev)}
+      >
+        {isExpanded ? (
+          <>
+            This week <ChevronUp size={12} />
+          </>
+        ) : (
+          <>
+            Full month <ChevronDown size={12} />
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
 export default function MobileAgendaView({
   days,
   todayKey,
   timeFormat,
   monthTitle,
+  monthGrid,
 }: MobileAgendaViewProps) {
   const [showPast, setShowPast] = useState(false);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const resolvedTodayKey = todayKey;
 
   const daysWithContent = days.filter(
@@ -126,20 +295,8 @@ export default function MobileAgendaView({
   const pastDays = daysWithContent.slice(0, splitAt);
   const upcomingDays = daysWithContent.slice(splitAt);
 
-  if (daysWithContent.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="mb-3 rounded-2xl bg-rose-50 p-4">
-          <Clock size={28} className="text-rose-400" />
-        </div>
-        <p className="text-base font-semibold text-[var(--text-primary)]">
-          No events in {monthTitle}
-        </p>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Use the controls above to add your first event or block time
-        </p>
-      </div>
-    );
+  function handleSelectDay(dateKey: string) {
+    setSelectedKey((prev) => (prev === dateKey ? null : dateKey));
   }
 
   const visibleUpcoming = showAllUpcoming
@@ -303,8 +460,93 @@ export default function MobileAgendaView({
     );
   }
 
+  const monthStrip = monthGrid ? (
+    <MonthStrip
+      grid={monthGrid}
+      selectedKey={selectedKey}
+      onSelectDay={handleSelectDay}
+    />
+  ) : null;
+
+  // Day-focused view: a day is selected in the month strip
+  if (selectedKey) {
+    const selectedDay = daysWithContent.find(
+      (day) => day.dateKey === selectedKey,
+    );
+    const selectedGridDay = monthGrid?.days.find(
+      (day) => day.dateKey === selectedKey,
+    );
+
+    return (
+      <div className="flex flex-col">
+        {monthStrip}
+        <div className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2">
+          <span className="min-w-0 truncate text-xs font-semibold text-rose-700">
+            {formatFullDayLabel(selectedKey)}
+          </span>
+          <span className="flex shrink-0 items-center gap-1.5">
+            {selectedGridDay ? (
+              <Link
+                href={selectedGridDay.addHref}
+                className="inline-flex items-center gap-1 rounded-full bg-[var(--action-primary)] px-3 py-1.5 text-[11px] font-semibold text-white transition active:scale-95"
+              >
+                <Plus size={12} strokeWidth={2.5} />
+                Add
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setSelectedKey(null)}
+              className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-rose-700 transition active:scale-95"
+            >
+              <X size={12} />
+              All days
+            </button>
+          </span>
+        </div>
+        {selectedDay ? (
+          renderDay(selectedDay)
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="mb-3 rounded-2xl bg-rose-50 p-4">
+              <Clock size={28} className="text-rose-400" />
+            </div>
+            <p className="text-base font-semibold text-[var(--text-primary)]">
+              Nothing planned this day
+            </p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              A free evening is a blank canvas
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (daysWithContent.length === 0) {
+    return (
+      <div className="flex flex-col">
+        {monthStrip}
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="mb-3 rounded-2xl bg-rose-50 p-4">
+            <Clock size={28} className="text-rose-400" />
+          </div>
+          <p className="text-base font-semibold text-[var(--text-primary)]">
+            No events in {monthTitle}
+          </p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            Tap a day above to add your first event, or use the controls at the
+            top
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col">
+      {monthStrip}
+
       {/* Earlier days toggle */}
       {pastDays.length > 0 && (
         <>

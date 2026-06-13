@@ -1023,6 +1023,16 @@ h3,
   background-color: rgba(0, 0, 0, 0.03);
 }
 
+/* Hide scrollbars on horizontal chip rails / swipe rails */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -37,6 +37,7 @@ type IdeaComment = {
 
 type IdeasColumnProps = {
   ideas: Idea[];
+  spaceId: string;
   commentCounts: Record<string, number>;
   commentsByIdea: Record<string, IdeaComment[]>;
   currentUserId: string;
@@ -63,6 +64,7 @@ type IdeasColumnProps = {
 
 export default function IdeasColumn({
   ideas,
+  spaceId,
   commentCounts,
   commentsByIdea,
   currentUserId,
@@ -116,9 +118,11 @@ export default function IdeasColumn({
         <HorizontalRail
           items={ideas}
           getKey={(idea) => idea.id}
+          accent="amber"
           renderItem={(idea) => (
             <IdeaCard
               idea={idea}
+              href={`/spaces/${spaceId}/ideas/${idea.id}`}
               commentCount={commentCounts[idea.id] ?? 0}
               comments={commentsByIdea[idea.id] ?? []}
               currentUserId={currentUserId}

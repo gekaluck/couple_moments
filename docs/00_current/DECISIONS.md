@@ -50,6 +50,18 @@ This file records high-level decisions and trade-offs. Add dated entries as they
 - Alternatives considered: Magic link login — rejected as it changes the login model. NextAuth credentials — rejected as we have a working custom auth system.
 - Consequences: Requires `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in production. Dev without API key logs the reset URL to the console. Requires `NEXT_PUBLIC_APP_URL` in production for correct link generation.
 
+## 2026-06-11 - Mobile calendar: agenda + collapsible month strip
+- Context: The desktop month grid was unusable at mobile widths (cells too small for content), which is why mobile previously had an agenda list only. Users still wanted a month-at-a-glance view on mobile.
+- Decision: Keep the agenda list as the primary mobile view and add a compact month strip above it (`MonthStrip` in `MobileAgendaView`). Collapsed by default to the current week; expandable to the full month. Day cells show the day number, dots for plans (rose) and memories (memory color), and a continuous horizontal bar for busy blocks — multi-day blocks render as an unbroken line across cells (`blockSpansPrev`/`blockSpansNext` per day, rounded only at span ends). Tapping any day switches the agenda into a day-focused view showing only that day (with an "Add" link pre-filled with that date and an "All days" button to clear); tapping the selected day again clears it.
+- Alternatives considered: Full month grid with event titles on mobile — rejected, already proven unreadable. Scroll-to-day instead of day-filter on tap (first iteration) — replaced after user feedback: the click→result relationship was too weak.
+- Consequences: Month grid data is serialized server-side in `calendar/page.tsx` (`agendaMonthGrid`) from data already fetched for desktop, so no extra queries.
+
+## 2026-06-11 - "What's ahead" mobile cards: pure tap targets + idea detail page
+- Context: Plan and idea cards in the mobile rails crowded titles into a sliver (action pills shared the header row), showed four heavyweight bordered buttons per card, and idea comments opened inline inside a 72%-wide rail card (cramped, buggy). Events had a detail page; ideas only had a redirect stub at `/spaces/[spaceId]/ideas/[ideaId]`.
+- Decision: Built a real idea detail page (details, location with photos, schedule/edit/delete actions, comments — mirroring the event page, amber-accented). Both plan and idea cards on mobile are now pure tap targets (chevron + passive comment count, zero inline buttons); all actions live on the detail pages. Rail slides are full-viewport-width with swipe progress dots (`HorizontalRail` is now a client component), which also fixes uneven-height cards looking empty at partial widths. Desktop hover-reveal actions and inline idea comments unchanged.
+- Alternatives considered: Overflow ("...") menu per card — rejected as it adds a tap for every action while still cluttering the card. Keeping a "Schedule" button on idea cards — rejected for symmetry with plan cards once the detail page exists.
+- Consequences: One consistent interaction model: card → page → act. Scheduling an idea from the detail page navigates to the created event. The old `ideas/[ideaId]` redirect is gone; `ideas/` (list) still redirects to the calendar.
+
 ## ADR Index
 - ADR-2026-01-30-custom-session-auth.md
 - ADR-2026-01-30-tags-json-string.md
