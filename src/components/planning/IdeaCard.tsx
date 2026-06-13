@@ -146,6 +146,42 @@ export default function IdeaCard({
     ? getAvatarGradient(creatorVisual.accent)
     : getAvatarGradient(CREATOR_ACCENTS.amber);
 
+  // When the user hasn't picked a new place (editPlace is null), preserve the
+  // idea's existing place fields instead of submitting empty strings, which
+  // would silently wipe the saved place. All-or-nothing so a newly selected
+  // place never inherits stale fields from the original.
+  const editPlaceFields = editPlace
+    ? {
+        placeId: editPlace.placeId,
+        placeName: editPlace.name,
+        placeAddress: editPlace.address,
+        placeWebsite: editPlace.website ?? "",
+        placeOpeningHours: editPlace.openingHours
+          ? JSON.stringify(editPlace.openingHours)
+          : "",
+        placePhotoUrls: editPlace.photoUrls
+          ? JSON.stringify(editPlace.photoUrls)
+          : "",
+        placeLat: editPlace.lat?.toString() ?? "",
+        placeLng: editPlace.lng?.toString() ?? "",
+        placeUrl: editPlace.url,
+      }
+    : {
+        placeId: idea.placeId ?? "",
+        placeName: idea.placeName ?? "",
+        placeAddress: idea.placeAddress ?? "",
+        placeWebsite: idea.placeWebsite ?? "",
+        placeOpeningHours: idea.placeOpeningHours
+          ? JSON.stringify(idea.placeOpeningHours)
+          : "",
+        placePhotoUrls: idea.placePhotoUrls
+          ? JSON.stringify(idea.placePhotoUrls)
+          : "",
+        placeLat: idea.placeLat?.toString() ?? "",
+        placeLng: idea.placeLng?.toString() ?? "",
+        placeUrl: idea.placeUrl ?? "",
+      };
+
   return (
     <Card
       id={`idea-${idea.id}`}
@@ -624,23 +660,23 @@ export default function IdeaCard({
               </p>
             )}
           </div>
-          <input type="hidden" name="placeId" value={editPlace?.placeId ?? ""} />
-          <input type="hidden" name="placeName" value={editPlace?.name ?? ""} />
-          <input type="hidden" name="placeAddress" value={editPlace?.address ?? ""} />
-          <input type="hidden" name="placeWebsite" value={editPlace?.website ?? ""} />
+          <input type="hidden" name="placeId" value={editPlaceFields.placeId} />
+          <input type="hidden" name="placeName" value={editPlaceFields.placeName} />
+          <input type="hidden" name="placeAddress" value={editPlaceFields.placeAddress} />
+          <input type="hidden" name="placeWebsite" value={editPlaceFields.placeWebsite} />
           <input
             type="hidden"
             name="placeOpeningHours"
-            value={editPlace?.openingHours ? JSON.stringify(editPlace.openingHours) : ""}
+            value={editPlaceFields.placeOpeningHours}
           />
           <input
             type="hidden"
             name="placePhotoUrls"
-            value={editPlace?.photoUrls ? JSON.stringify(editPlace.photoUrls) : ""}
+            value={editPlaceFields.placePhotoUrls}
           />
-          <input type="hidden" name="placeLat" value={editPlace?.lat?.toString() ?? ""} />
-          <input type="hidden" name="placeLng" value={editPlace?.lng?.toString() ?? ""} />
-          <input type="hidden" name="placeUrl" value={editPlace?.url ?? ""} />
+          <input type="hidden" name="placeLat" value={editPlaceFields.placeLat} />
+          <input type="hidden" name="placeLng" value={editPlaceFields.placeLng} />
+          <input type="hidden" name="placeUrl" value={editPlaceFields.placeUrl} />
           <div className="flex flex-wrap justify-end gap-2">
             <Button
               variant="ghost"
