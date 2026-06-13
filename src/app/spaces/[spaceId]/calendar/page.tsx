@@ -86,7 +86,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const calendarTimeFormat = resolveCalendarTimeFormat(
     cookieStore.get("cm_calendar_time_format")?.value,
   );
-  const weekStartsOn = calendarWeekStart === "monday" ? 1 : 0;
+  const weekStartsOn: 0 | 1 = calendarWeekStart === "monday" ? 1 : 0;
   const userId = await requireUserId();
   const { spaceId } = await params;
   const search = (await searchParams) ?? {};
@@ -574,6 +574,40 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   })();
   const agendaTodayKey = dateKey(today);
 
+  // Compact month grid for the mobile calendar strip
+  const shiftDateKey = (key: string, deltaDays: number) => {
+    const date = new Date(key + "T00:00:00");
+    date.setDate(date.getDate() + deltaDays);
+    return dateKey(date);
+  };
+  const agendaMonthGrid = {
+    weekStartsOn,
+    days: monthDays
+      .filter((day) => day.isCurrentMonth)
+      .map((day) => {
+        const key = dateKey(day.date);
+        const dayEvents = eventsByDay.get(key) ?? [];
+        const dayBlocks = blocksByDay.get(key) ?? [];
+        const prevIds = new Set(
+          (blocksByDay.get(shiftDateKey(key, -1)) ?? []).map((block) => block.id),
+        );
+        const nextIds = new Set(
+          (blocksByDay.get(shiftDateKey(key, 1)) ?? []).map((block) => block.id),
+        );
+        return {
+          dateKey: key,
+          dayOfMonth: day.date.getDate(),
+          isToday: key === agendaTodayKey,
+          hasPlan: dayEvents.some((event) => event.dateTimeStart >= todayStart),
+          hasMemory: dayEvents.some((event) => event.dateTimeStart < todayStart),
+          hasBlock: dayBlocks.length > 0,
+          blockSpansPrev: dayBlocks.some((block) => prevIds.has(block.id)),
+          blockSpansNext: dayBlocks.some((block) => nextIds.has(block.id)),
+          addHref: buildCalendarHref(monthParam(now), { new: key }),
+        };
+      }),
+  };
+
   return (
     <>
       <section className="surface overflow-hidden p-4 md:p-8">
@@ -687,6 +721,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             todayKey={agendaTodayKey}
             timeFormat={calendarTimeFormat}
             monthTitle={formatMonthTitle(now)}
+            monthGrid={agendaMonthGrid}
           />
         </div>
 
@@ -750,6 +785,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           <IdeasColumn
             key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
             ideas={ideasForPlanning}
+            spaceId={space.id}
             commentCounts={ideaCommentCounts}
             commentsByIdea={ideaCommentsByIdea}
             currentUserId={userId}

@@ -22,7 +22,7 @@ const variantStyles = {
 
 const paddingStyles = {
   none: "",
-  sm: "p-3",
+  sm: "p-4 md:p-3",
   md: "p-5",
   lg: "p-6",
 };
@@ -86,7 +86,7 @@ type CardTitleProps = {
 export function CardTitle({ children, className = "" }: CardTitleProps) {
   return (
     <h3
-      className={`min-w-0 flex-1 text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-all overflow-hidden tracking-[-0.015em] ${className}`}
+      className={`min-w-0 flex-1 text-lg font-semibold text-[var(--text-primary)] line-clamp-2 break-words [overflow-wrap:anywhere] overflow-hidden tracking-[-0.015em] ${className}`}
     >
       {children}
     </h3>

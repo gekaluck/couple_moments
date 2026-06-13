@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Calendar, MapPin, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Calendar, ChevronRight, Lightbulb, MapPin, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/Modal";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
@@ -58,6 +59,7 @@ type IdeaComment = {
 
 type IdeaCardProps = {
   idea: Idea;
+  href: string;
   commentCount: number;
   comments: IdeaComment[];
   currentUserId: string;
@@ -82,6 +84,7 @@ type IdeaCardProps = {
 
 export default function IdeaCard({
   idea,
+  href,
   commentCount,
   comments,
   currentUserId,
@@ -118,6 +121,9 @@ export default function IdeaCard({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [thumbFailed, setThumbFailed] = useState(false);
+  const thumbUrl =
+    idea.placePhotoUrls?.find((url) => /^https:\/\//i.test(url.trim())) ?? null;
 
   useEffect(() => {
     if (isCommentsOpen) {
@@ -145,9 +151,80 @@ export default function IdeaCard({
       id={`idea-${idea.id}`}
       variant="amber"
       padding="sm"
-      className={`group/idea card-hover animate-fade-in-up relative flex h-full flex-col border-l-[3px] border-l-amber-400 border-amber-200/70 bg-[linear-gradient(155deg,rgba(255,255,255,0.97),rgba(254,243,220,0.6))] md:border-l md:border-l-amber-200/70 ${hasOpenModal ? "z-50" : ""}`}
+      className={`group/idea card-hover animate-fade-in-up relative flex h-full w-full flex-col border-amber-200/70 bg-[linear-gradient(155deg,rgba(255,255,255,0.97),rgba(254,243,220,0.6))] ${hasOpenModal ? "z-50" : ""}`}
     >
-      <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <Link
+        href={href}
+        aria-label={`Open idea: ${idea.title}`}
+        className="absolute inset-0 z-0 rounded-xl md:hidden"
+      />
+
+      {/* Mobile: compact tile with photo / icon block */}
+      <div className="relative z-0 flex flex-1 gap-3 md:hidden">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl shadow-[var(--shadow-sm)]">
+          {thumbUrl && !thumbFailed ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={thumbUrl}
+              alt=""
+              className="h-full w-full object-cover"
+              onError={() => setThumbFailed(true)}
+            />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-100 to-amber-200/80 text-amber-600">
+              <Lightbulb className="h-6 w-6" />
+            </span>
+          )}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0 flex-1 break-words text-base font-semibold leading-snug text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere]">
+              {idea.title}
+            </p>
+            <ChevronRight
+              aria-hidden="true"
+              className="mt-0.5 h-4 w-4 shrink-0 text-amber-400"
+            />
+          </div>
+          {idea.description ? (
+            <p className="text-xs text-[var(--text-muted)] line-clamp-1">
+              {idea.description}
+            </p>
+          ) : null}
+          {idea.placeName || idea.placeAddress ? (
+            <p className="flex min-w-0 items-center gap-1 text-xs text-[var(--text-muted)]">
+              <MapPin className="h-3 w-3 shrink-0 text-amber-500" />
+              <span className="min-w-0 truncate">
+                {idea.placeName || idea.placeAddress}
+              </span>
+            </p>
+          ) : null}
+          <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
+              <span
+                aria-hidden="true"
+                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold text-white"
+                style={{ backgroundImage: creatorGradient }}
+              >
+                {creatorInitials}
+              </span>
+              <span className="truncate">
+                <LocalTimeAgo value={idea.createdAt} /> ·{" "}
+                <span className="font-medium">{creatorName}</span>
+              </span>
+            </span>
+            {commentCount > 0 ? (
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-[var(--text-tertiary)]">
+                <MessageSquare className="h-3.5 w-3.5" />
+                {commentCount}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden flex-1 gap-3 md:flex md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 flex-1 flex-col">
           <CardTitle className="text-lg">{idea.title}</CardTitle>
           {idea.description ? (
@@ -161,7 +238,7 @@ export default function IdeaCard({
               </span>
               {safePlaceLink ? (
                 <a
-                  className="shrink-0 font-semibold text-amber-600 transition hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="relative z-10 shrink-0 font-semibold text-amber-600 transition hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   href={safePlaceLink}
                   target="_blank"
                   rel="noreferrer"
@@ -178,8 +255,8 @@ export default function IdeaCard({
               ))}
             </div>
           ) : null}
-          <CardFooter className="mt-auto justify-start pt-3 text-xs text-[var(--text-tertiary)]">
-            <span className="inline-flex items-center gap-2">
+          <CardFooter className="mt-auto pt-3 text-xs text-[var(--text-tertiary)]">
+            <span className="inline-flex min-w-0 items-center gap-2">
               <span
                 aria-hidden="true"
                 className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
@@ -187,7 +264,7 @@ export default function IdeaCard({
               >
                 {creatorInitials}
               </span>
-              <span>
+              <span className="truncate">
                 <LocalTimeAgo value={idea.createdAt} /> ·{" "}
                 <span className="font-semibold text-[var(--text-primary)]">
                   {creatorName}
@@ -196,9 +273,9 @@ export default function IdeaCard({
             </span>
           </CardFooter>
         </div>
-        <div className="flex items-center gap-1.5 md:justify-end">
+        <div className="hidden items-center gap-1.5 md:flex md:justify-end">
           <button
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-200/90 bg-white/90 text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:pointer-events-none md:h-8 md:w-8 md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-amber-200/90 bg-white/90 text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Schedule as event"
             aria-label={`Schedule idea: ${idea.title}`}
             onClick={() => setIsScheduleOpen(true)}
@@ -207,7 +284,7 @@ export default function IdeaCard({
             <Calendar className="h-4 w-4" />
           </button>
           <button
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 md:pointer-events-none md:h-8 md:w-8 md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Edit idea"
             aria-label={`Edit idea: ${idea.title}`}
             onClick={() => setIsEditOpen(true)}
@@ -216,7 +293,7 @@ export default function IdeaCard({
             <Pencil className="h-4 w-4" />
           </button>
           <button
-            className="relative inline-flex h-10 min-w-10 items-center justify-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 text-gray-600 transition hover:shadow-[var(--shadow-sm)] md:pointer-events-none md:h-8 md:min-w-8 md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
+            className="relative inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 text-gray-600 transition hover:shadow-[var(--shadow-sm)] md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title={`Comments (${commentCount})`}
             onClick={() => setIsCommentsOpen((prev) => !prev)}
             type="button"
@@ -229,7 +306,7 @@ export default function IdeaCard({
             ) : null}
           </button>
           <button
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-red-50/80 text-red-600 transition hover:bg-red-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 md:pointer-events-none md:h-8 md:w-8 md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-red-50/80 text-red-600 transition hover:bg-red-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
             title="Delete idea"
             aria-label={`Delete idea: ${idea.title}`}
             type="button"
