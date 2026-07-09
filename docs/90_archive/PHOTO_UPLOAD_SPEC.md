@@ -1,5 +1,7 @@
 # Photo Upload Spec - Duet
 
+> **Archived 2026-07-09.** Feature shipped (EventPhotoGallery + Cloudinary); env setup lives in docs/00_current/DEPLOYMENT.md.
+
 **Created:** 2026-02-05
 **Status:** Draft
 **Owner:** Product + Engineering

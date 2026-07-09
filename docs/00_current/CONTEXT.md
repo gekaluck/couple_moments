@@ -28,12 +28,12 @@ src/
     spaces/[spaceId]/              # Main product surfaces
       calendar/                    # Primary hub (events, ideas, busy blocks)
       memories/                    # Past events and memory timeline
-      notes/                       # Shared notes
-      activity/                    # Change log / activity feed
+      ideas/[ideaId]/              # Idea detail (comments, schedule/edit/delete)
+      activity/                    # Change log / activity feed (absorbed Notes)
       settings/                    # Space settings + Google calendar settings
-      planning/                    # Legacy route redirects to calendar
+      notes/, planning/, inbox/    # Legacy redirect shims to calendar/activity
     events/[eventId]/              # Event detail (comments, ratings, photos)
-    login/, register/              # Auth pages
+    login/, register/              # Auth pages (+ forgot/reset password)
   components/                      # UI and feature components
   lib/                             # Domain logic, auth/session, integrations, helpers
 prisma/                            # Schema and migrations
@@ -60,4 +60,4 @@ docs/90_archive/                   # Historical docs
 - `docs/00_current/ARCHITECTURE.md`
 - `docs/00_current/DECISIONS.md`
 - `docs/00_current/rollout_plan.md`
-- `docs/00_current/PRE_RELEASE_USABILITY_TECH_PLAN.md`
+- `/REVIVAL_PLAN.md` (active plan) and `/REVIVAL_LOG.md`

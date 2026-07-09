@@ -6,8 +6,8 @@ This is the entry point for contributors and agents.
 1. [CONTEXT.md](CONTEXT.md) - commands, repo map, coding conventions
 2. [ARCHITECTURE.md](ARCHITECTURE.md) - boundaries, data flow, and integrations
 3. [DECISIONS.md](DECISIONS.md) - ADR index and decision history
-4. [rollout_plan.md](rollout_plan.md) - active delivery milestones
-5. [PRE_RELEASE_USABILITY_TECH_PLAN.md](PRE_RELEASE_USABILITY_TECH_PLAN.md) - pre-release implementation phases and status
+4. `/REVIVAL_PLAN.md` (repo root) - **the active plan**: phases, checkpoints, Q&A sessions
+5. [rollout_plan.md](rollout_plan.md) - backlog status and completed-cycle history
 
 ## What each doc is for
 - `CONTEXT.md`: operational working memory for daily development
@@ -15,7 +15,8 @@ This is the entry point for contributors and agents.
 - `DECISIONS.md`: links to ADRs and rationale history
 - `DEPLOYMENT.md`: production setup and release checklist
 - `rollout_plan.md`: milestone progress and backlog status
-- `PRE_RELEASE_USABILITY_TECH_PLAN.md`: implementation details for pre-release usability work
+- `/REVIVAL_PLAN.md` + `/REVIVAL_LOG.md` (repo root): active revival plan and its running log
+- `/AUDIT.md` (repo root): June 2026 fresh-eyes audit + July status addendum
 
 Do not use `docs/90_archive` for current-state decisions unless explicitly requested.
 

@@ -1,5 +1,7 @@
 # Duet — Mobile Wins: Technical Plan
 
+> **Archived 2026-07-09.** Fully shipped (merged to master via PR #39; follow-ups in PR #40).
+
 > Hand-off document for the coding assistant.
 > **Reference mockup:** `Duet Mobile Wins.html` — open it to see every screen on mobile + desktop with before/after.
 > **Scoping principle:** every change reuses components that already exist in the app. No new fonts, no new color ramps, no new card styles. We are tightening hierarchy and density, not redesigning.
