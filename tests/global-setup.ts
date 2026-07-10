@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { TEST_DATABASE_URL } from "../playwright.config";
+import { TEST_DATABASE_URL } from "./test-db";
 
 const CONTAINER = "duet-test-pg";
 
@@ -13,6 +13,14 @@ function sh(command: string, quiet = false) {
  * TEST_DATABASE_URL is set) the database is expected to already be running.
  */
 export default async function globalSetup() {
+  // Hard guard: never push schema at (or run tests against) anything that
+  // doesn't look like a disposable test database.
+  if (!/test/i.test(new URL(TEST_DATABASE_URL).pathname)) {
+    throw new Error(
+      `Refusing to run: TEST_DATABASE_URL database name must contain "test" (got ${new URL(TEST_DATABASE_URL).pathname.slice(1)}).`,
+    );
+  }
+
   if (!process.env.CI && !process.env.TEST_DATABASE_URL) {
     try {
       sh(`docker start ${CONTAINER}`, true);
