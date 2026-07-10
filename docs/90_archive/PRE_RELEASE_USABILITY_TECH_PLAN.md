@@ -1,5 +1,7 @@
 # Pre-Release Usability Technical Plan
 
+> **Archived 2026-07-09.** All phases of the February 2026 cycle are complete; several referenced files no longer exist.
+
 ## Implementation Status (Updated February 10, 2026)
 
 - [x] Phase 1.1 Auth failure handling in login/register forms

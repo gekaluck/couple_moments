@@ -1,5 +1,7 @@
 # Implementation Plan — June 2026 Cycle
 
+> **Archived 2026-07-09.** Workstreams A0/A1/A2 and most of A3/C1 shipped via PRs #39/#40 and `feat/whats-ahead-redesign`. Remaining open items were carried into the root `REVIVAL_PLAN.md`.
+
 Updated: 2026-06-11
 Inputs: `AUDIT.md` (repo root, fresh-eyes audit), user-reported production bugs (2026-06-11), `docs/Duet Mobile Wins Plan.md` status check, `docs/00_current/rollout_plan.md` leftovers.
 

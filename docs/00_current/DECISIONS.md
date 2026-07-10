@@ -62,6 +62,12 @@ This file records high-level decisions and trade-offs. Add dated entries as they
 - Alternatives considered: Overflow ("...") menu per card — rejected as it adds a tap for every action while still cluttering the card. Keeping a "Schedule" button on idea cards — rejected for symmetry with plan cards once the detail page exists.
 - Consequences: One consistent interaction model: card → page → act. Scheduling an idea from the detail page navigates to the created event. The old `ideas/[ideaId]` redirect is gone; `ideas/` (list) still redirects to the calendar.
 
+## 2026-07-09 - Revival: plan-first workflow, email/.ics invites over expanded Google OAuth
+- Context: App revival kicked off after a development pause. The brief assumed abandoned "Google sign-in" work and no email/test infrastructure; a re-audit showed the Google *Calendar* integration is complete and merged (freebusy + outbound push with partner attendees), Resend email and an ICS export feed already exist, and 8 of 22 June audit findings were already fixed (see `AUDIT.md` §6).
+- Decision: (1) New implementation and design work is planned first in `/REVIVAL_PLAN.md` (phases with checkpoints and screenshot-driven Q&A sessions) and executed phase-by-phase; docs actualization and hygiene planning were done directly. (2) Partner engagement ships via transactional email + invite-grade `.ics` attachments (METHOD:REQUEST/CANCEL, SEQUENCE, TZID) — no Google Calendar OAuth requirement for the partner. The existing Google Calendar integration stays as-is; nothing is stripped.
+- Alternatives considered: Expanding Google OAuth so the partner also connects — rejected (verification burden, forces a Google account, `.ics` invites land natively in Gmail/Apple/Outlook). Stripping the Google integration entirely — rejected (it works in production and already delivers Google-native invites for connected organizers).
+- Consequences: Phase 4 needs a mail module around `src/lib/email.ts` with attachment support, magic-link auth, an `icsSequence` field, and a space-level timezone decision. Completed June-cycle docs moved to `docs/90_archive/`; `rollout_plan.md` now defers to the revival plan.
+
 ## ADR Index
 - ADR-2026-01-30-custom-session-auth.md
 - ADR-2026-01-30-tags-json-string.md
