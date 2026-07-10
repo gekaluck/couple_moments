@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -66,15 +67,8 @@ type PageProps = {
   }>;
 };
 
-type GoogleSyncFeedback = {
-  attempted: boolean;
-  success: boolean;
-  message?: string;
-  info?: string;
-};
-
 type CalendarActionResult = {
-  googleSync?: GoogleSyncFeedback;
+  googleSync?: GoogleSyncStatus;
 };
 
 export default async function CalendarPage({ params, searchParams }: PageProps) {

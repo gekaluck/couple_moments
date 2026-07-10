@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -20,15 +21,8 @@ import { CalendarTimeFormat } from "@/lib/calendar";
 import { CREATOR_ACCENTS, getAvatarGradient } from "@/lib/creator-colors";
 import { getInitials } from "@/lib/formatters";
 
-type GoogleSyncFeedback = {
-  attempted: boolean;
-  success: boolean;
-  message?: string;
-  info?: string;
-};
-
 type PlanActionResult = {
-  googleSync?: GoogleSyncFeedback;
+  googleSync?: GoogleSyncStatus;
 };
 
 type PlanCardProps = {

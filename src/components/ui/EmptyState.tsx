@@ -6,9 +6,16 @@ type EmptyStateVariant = "calendar" | "memories" | "ideas" | "notes" | "activity
 
 type EmptyStateProps = {
   variant?: EmptyStateVariant;
+  /** Custom icon rendered in a tile instead of the variant illustration. */
+  icon?: ReactNode;
   title: string;
   description: string;
   action?: ReactNode;
+  /** Convenience action button (alternative to `action`). */
+  actionLabel?: string;
+  onAction?: () => void;
+  /** Card-style framed container (used inside planning rails). */
+  framed?: boolean;
 };
 
 function CalendarIllustration() {
@@ -101,24 +108,49 @@ const illustrations: Record<EmptyStateVariant, () => React.ReactElement> = {
 
 export default function EmptyState({
   variant = "generic",
+  icon,
   title,
   description,
   action,
+  actionLabel,
+  onAction,
+  framed = false,
 }: EmptyStateProps) {
   const Illustration = illustrations[variant];
 
+  const containerClass = framed
+    ? "flex flex-col items-center gap-4 rounded-3xl border border-[var(--panel-border)] bg-[rgba(255,255,255,0.72)] p-7 text-center shadow-[var(--shadow-soft)] backdrop-blur-sm"
+    : "flex flex-col items-center justify-center py-12 text-center animate-fade-in-up";
+
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in-up">
-      <div className="mb-6 opacity-80">
-        <Illustration />
+    <div className={containerClass}>
+      {icon ? (
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/80 bg-white shadow-[var(--shadow-sm)]">
+          {icon}
+        </div>
+      ) : (
+        <div className="mb-6 opacity-80">
+          <Illustration />
+        </div>
+      )}
+      <div>
+        <h3 className={framed ? "text-base font-semibold text-[var(--text-primary)]" : "text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]"}>
+          {title}
+        </h3>
+        <p className={framed ? "mt-1 max-w-xs text-sm text-[var(--text-muted)]" : "mt-2 max-w-xs text-sm text-[var(--text-muted)]"}>
+          {description}
+        </p>
       </div>
-      <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-        {title}
-      </h3>
-      <p className="mt-2 max-w-xs text-sm text-[var(--text-muted)]">
-        {description}
-      </p>
       {action && <div className="mt-6">{action}</div>}
+      {!action && actionLabel && onAction ? (
+        <button
+          className="button-hover rounded-full bg-[var(--action-primary)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-md)] transition hover:bg-[var(--action-primary-strong)]"
+          onClick={onAction}
+          type="button"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -17,9 +17,27 @@ Running log of the revival effort. One section per phase. Companion to `REVIVAL_
 
 **Waiting on:** ⛔ Checkpoint 1 — merge `feat/whats-ahead-redesign`, approve the deletion list (plan §Phase 1.1), branch disposition, Google decision confirmation.
 
-## Phase 1 — Hygiene
+## Phase 1 — Hygiene (2026-07-10, branch `hygiene`)
 
-_Not started._
+**Checkpoint 1 approvals received:** merge done (PRs #41/#42), deletion list approved, obsolete branches confirmed, Google integration stays.
+
+**Done:**
+- **Branch pruning (H6):** deleted 41 merged local branches + the two obsolete ones (`codex/ui-enhancements`, `feature/p0-2-revert-idea-on-event-delete` — local and remote, per approval). Local repo now has only `master` + the active phase branch.
+- **Dead CSS purge (H1):** `globals.css` 1046 → 487 lines. Removed ~35 classes re-verified as zero-reference (feedback-*, field/input-error, bg-tonal-*, bg-noise, calendar-today/weekend/now-marker/compact/comfortable, event-dot*, legend-*/calendar-legend, quick-action*, empty-description-prompt, panel-expand, modal-panel, card-selectable, badge-pulse, animate-wiggle/bounce-soft/pulse-soft/checkmark, focus-ring, image-fade, interactive, surface-strong, card-content, text-body/heading, section-divider, .card, .section, both dead `.section-title` defs) plus their orphaned keyframes; deduped `.section-subtitle` (kept the winning 0.875rem definition).
+- **Token collapse (H2):** deleted the unused short feedback palette (`--success/--warning/--error/--info` families) — `--status-*` is now the single canonical feedback palette. Also deleted zero-reference variable families (item-type tokens except the used `--idea-new*` + `--calendar-memory-dot`, partner colors, `--space-*`, legacy `--bg-*`/`--color-primary*`/`--border-light`, `--surface-100/200/900`, calendar-mode vars).
+- **EmptyState merge (H3):** `components/planning/EmptyState.tsx` deleted; `components/ui/EmptyState.tsx` gained `icon`/`framed`/`actionLabel`/`onAction` props; both planning consumers updated.
+- **Package rename (H4):** `codex` → `duet`.
+- **Type dedup (H5):** new `src/lib/google-sync.ts` exports `GoogleSyncStatus`; replaced 10 inline re-declarations across 9 files.
+- **Dependencies:** patch/minor updates via `npm update` + explicit Next 16.1.1→16.2.10, React 19.2.3→19.2.7. `npm audit`: 34 → 5. Remaining 5 moderate are transitive (prisma dev-CLI `@hono/node-server`, next's bundled `postcss`) with no non-breaking fix — accepted. **Majors flagged, not taken:** @types/node 26, eslint 10, googleapis 173, lucide-react 1.x, typescript 7.
+- **Lint fix from new rule:** `EventPhotoGallery` sync-from-props effects → render-phase state adjustment (`react-hooks/set-state-in-effect` shipped with eslint-config-next 16.2).
+- **Smoke tests (T-1..T-3):** `playwright.config.ts` + `tests/{auth,planning}.spec.ts` + helpers + `global-setup.ts`. Tests run against a dedicated docker Postgres (`duet-test-pg`, port 5533) — never the .env database; CI gets a service container + `smoke` job (build → `next start` → playwright, traces uploaded on failure). 5 tests: register→onboarding, logout+login, wrong-password inline error, auth redirect, and the full event→idea→schedule→delete-reverts-idea flow. All green locally.
+- `.gitignore`: added `test-results/`/`playwright-report/`; removed stale `docs/JS_WEB_DEV_GUIDE.md` entry (file now archived and tracked).
+
+**Removed:** see deletions above; every class/variable was grep-verified zero-reference at deletion time.
+
+**Kept/flagged, not removed:** redirect shims (`notes/`, `planning/`, `ideas/` list, `inbox/`) — they keep old links working.
+
+**Discovered, deferred:** the app uses Google Maps legacy `places.Autocomplete`, which Google deprecated for new customers (2025-03) — still functional, migration to `PlaceAutocompleteElement` should be scheduled (Phase 3 or later). Calendar/event page `actions.ts` extraction (D-2/D-3) intentionally left out of this PR for reviewability — **must land before Phase 4 touches event mutations.**
 
 ## Phase 2 — Mobile bug squash
 

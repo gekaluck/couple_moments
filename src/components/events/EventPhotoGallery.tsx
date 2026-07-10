@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -118,15 +118,15 @@ export default function EventPhotoGallery({
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
+  // Adjust state during render (instead of effects) when server data changes.
+  const [prevInitialPhotos, setPrevInitialPhotos] = useState(initialPhotos);
+  if (prevInitialPhotos !== initialPhotos) {
+    setPrevInitialPhotos(initialPhotos);
     setPhotos(initialPhotos);
-  }, [initialPhotos]);
-
-  useEffect(() => {
-    if (!canUploadDirectly && mode === "upload") {
-      setMode("url");
-    }
-  }, [canUploadDirectly, mode]);
+  }
+  if (!canUploadDirectly && mode === "upload") {
+    setMode("url");
+  }
 
   const hasReachedPhotoLimit = photos.length >= MAX_EVENT_PHOTOS;
   const helperText = useMemo(() => {

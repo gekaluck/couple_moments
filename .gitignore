@@ -50,6 +50,8 @@ next-env.d.ts
 
 # Testing
 coverage/
+test-results/
+playwright-report/
 
 # Vercel
 .vercel
@@ -58,7 +60,6 @@ coverage/
 *.pem
 chatgpt_reqs/
 nul
-docs/JS_WEB_DEV_GUIDE.md
 
 # Sentry Config File
 .env.sentry-build-plugin
