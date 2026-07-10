@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import { useRouter } from "next/navigation";
 import { Calendar, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -38,12 +39,7 @@ export type IdeaDto = {
 
 type ScheduleResult = {
   eventId?: string;
-  googleSync?: {
-    attempted: boolean;
-    success: boolean;
-    message?: string;
-    info?: string;
-  };
+  googleSync?: GoogleSyncStatus;
 };
 
 type IdeaActionsProps = {

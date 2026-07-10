@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
@@ -107,12 +108,7 @@ type PageProps = {
 };
 
 type EventActionResult = {
-  googleSync?: {
-    attempted: boolean;
-    success: boolean;
-    message?: string;
-    info?: string;
-  };
+  googleSync?: GoogleSyncStatus;
 };
 
 function isSameCalendarDay(left: Date, right: Date) {

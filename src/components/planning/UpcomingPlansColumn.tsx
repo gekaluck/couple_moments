@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import { Calendar } from "lucide-react";
 import Link from "next/link";
 
-import EmptyState from "./EmptyState";
+import EmptyState from "@/components/ui/EmptyState";
 import HorizontalRail from "./HorizontalRail";
 import PlanCard from "./PlanCard";
 import { CalendarTimeFormat } from "@/lib/calendar";
@@ -27,12 +28,7 @@ type UpcomingPlansColumnProps = {
   onDeleteEvent?: (formData: FormData) => Promise<
     | void
     | {
-        googleSync?: {
-          attempted: boolean;
-          success: boolean;
-          message?: string;
-          info?: string;
-        };
+        googleSync?: GoogleSyncStatus;
       }
   >;
 };
@@ -96,6 +92,7 @@ export default function UpcomingPlansColumn({
       </div>
       {plans.length === 0 ? (
         <EmptyState
+          framed
           icon={<Calendar className="h-8 w-8 text-rose-500" />}
           title="No upcoming plans"
           description="Create an event from the calendar to start planning!"

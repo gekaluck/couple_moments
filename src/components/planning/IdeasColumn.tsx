@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import { Lightbulb } from "lucide-react";
 
-import EmptyState from "./EmptyState";
+import EmptyState from "@/components/ui/EmptyState";
 import IdeaCard from "./IdeaCard";
 import CreateIdeaModal from "./CreateIdeaModal";
 import HorizontalRail from "./HorizontalRail";
@@ -48,12 +49,7 @@ type IdeasColumnProps = {
   onScheduleIdea: (formData: FormData) => Promise<
     | void
     | {
-        googleSync?: {
-          attempted: boolean;
-          success: boolean;
-          message?: string;
-          info?: string;
-        };
+        googleSync?: GoogleSyncStatus;
       }
   >;
   onAddComment: (formData: FormData) => Promise<void>;
@@ -108,6 +104,7 @@ export default function IdeasColumn({
       </div>
       {!hasIdeas ? (
         <EmptyState
+          framed
           icon={<Lightbulb className="h-8 w-8 text-amber-500" />}
           title="No ideas yet"
           description="Start planning your next adventure!"

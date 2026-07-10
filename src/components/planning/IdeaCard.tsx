@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import Link from "next/link";
 import { Calendar, ChevronRight, Lightbulb, MapPin, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import Modal from "@/components/Modal";
@@ -69,12 +70,7 @@ type IdeaCardProps = {
   onSchedule: (formData: FormData) => Promise<
     | void
     | {
-        googleSync?: {
-          attempted: boolean;
-          success: boolean;
-          message?: string;
-          info?: string;
-        };
+        googleSync?: GoogleSyncStatus;
       }
   >;
   onAddComment: (formData: FormData) => Promise<void>;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -30,12 +31,7 @@ type CalendarAddControlsProps = {
   onCreateEvent: (formData: FormData) => Promise<
     | void
     | {
-        googleSync?: {
-          attempted: boolean;
-          success: boolean;
-          message?: string;
-          info?: string;
-        };
+        googleSync?: GoogleSyncStatus;
       }
   >;
   onCreateBlock: (formData: FormData) => Promise<void>;

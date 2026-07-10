@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { GoogleSyncStatus } from "@/lib/google-sync";
 import { useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -21,23 +22,13 @@ type EventEditModalProps = {
   onSubmit: (formData: FormData) => Promise<
     | void
     | {
-        googleSync?: {
-          attempted: boolean;
-          success: boolean;
-          message?: string;
-          info?: string;
-        };
+        googleSync?: GoogleSyncStatus;
       }
   >;
   onDelete: () => Promise<
     | void
     | {
-        googleSync?: {
-          attempted: boolean;
-          success: boolean;
-          message?: string;
-          info?: string;
-        };
+        googleSync?: GoogleSyncStatus;
       }
   >;
   mapsApiKey?: string;
