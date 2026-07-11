@@ -28,6 +28,8 @@ import ConfirmForm from "@/components/ConfirmForm";
 import EventPhotoGallery from "@/components/events/EventPhotoGallery";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 import LocalTime from "@/components/time/LocalTime";
+import BottomTabBar from "@/components/mobile/BottomTabBar";
+import FloatingActionButton from "@/components/mobile/FloatingActionButton";
 import { createEventPhoto, deleteEventPhoto, setEventPhotoAsCover } from "@/lib/events";
 
 const PencilIcon = () => (
@@ -492,7 +494,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
+      <main className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-4 py-6 pb-24 md:px-6 md:py-8 md:pb-8">
         <section className="event-details-card rounded-2xl p-6 shadow-[var(--shadow-sm)]">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
@@ -793,6 +795,10 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             : null
         }
       />
+      {/* Restore the mobile app shell on this route (it lives outside the space
+          layout), so global navigation persists on the most-tapped screen. */}
+      <FloatingActionButton spaceId={spaceIdForActions} />
+      <BottomTabBar spaceId={spaceIdForActions} />
     </div>
   );
 }
