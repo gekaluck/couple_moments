@@ -42,4 +42,20 @@ test("memory card navigates to the event page", async ({ page }) => {
       page.getByRole("heading", { name: title }).first(),
     ).toBeVisible();
   });
+
+  await test.step("event page keeps the mobile nav shell (F15)", async () => {
+    // The bottom tab bar (md:hidden) must be present on the event route — it
+    // lives outside the space layout and previously lost all global navigation.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    const bottomNav = page.getByRole("navigation").filter({
+      has: page.getByRole("link", { name: "Activity" }),
+    });
+    await expect(
+      bottomNav.getByRole("link", { name: "Calendar" }),
+    ).toBeVisible();
+    await expect(
+      bottomNav.getByRole("link", { name: "Activity" }),
+    ).toBeVisible();
+  });
 });
