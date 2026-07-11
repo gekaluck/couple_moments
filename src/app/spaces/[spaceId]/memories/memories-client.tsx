@@ -445,7 +445,8 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               />
               <Link
                 href={`/events/${event.id}?from=memories&spaceId=${encodeURIComponent(spaceId)}`}
-                className="absolute inset-0 z-0"
+                aria-label={`Open ${event.title}`}
+                className="absolute inset-0 z-20"
               />
               <MemoryCover
                 coverUrl={event.coverUrl}

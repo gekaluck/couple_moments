@@ -39,9 +39,21 @@ Running log of the revival effort. One section per phase. Companion to `REVIVAL_
 
 **Discovered, deferred:** the app uses Google Maps legacy `places.Autocomplete`, which Google deprecated for new customers (2025-03) — still functional, migration to `PlaceAutocompleteElement` should be scheduled (Phase 3 or later). Calendar/event page `actions.ts` extraction (D-2/D-3) intentionally left out of this PR for reviewability — **must land before Phase 4 touches event mutations.**
 
-## Phase 2 — Mobile bug squash
+## Phase 2 — Mobile bug squash (in progress, branch `mobile-bugs`)
 
-_Not started. Root causes will be recorded here per fix._
+Repro method: seeded an isolated QA account/space in the dev DB (membership-scoped, does not touch real data) and drove it at 390px. Note: the in-app preview browser proved unreliable for interaction verification (screenshots time out; overlay-link clicks resolve to 0,0), so fixes are verified with Playwright (real click semantics) instead.
+
+**Bug 1 — memory click doesn't navigate (highest priority): FIXED.**
+- **Root cause:** the memory card's whole-card `<Link>` used the "stretched link" pattern but was layered *below* its own content. The link was `absolute inset-0 z-0`; the text wrapper was `relative z-[1]` and the `MemoryCover` came later in the DOM — both painted above the link and intercepted every tap, so the click never reached the anchor. It also had no accessible name (empty overlay link).
+- **Fix** (`memories-client.tsx:446`): raise the overlay to `z-20` (above all card content; max content z was 10) and add `aria-label={"Open " + title}`. Since the card has no other interactive descendants, the whole card is now one reliable tap target.
+- **Verified:** new `tests/memories.spec.ts` creates a past-dated event and asserts the memory card navigates to `/events/…`. Playwright confirms the overlay link now intercepts pointer events across the card (the exact inverse of the bug). Green.
+
+**Bug 3 — no "block" option in the mobile "+" menu: ALREADY FIXED in code (shipped PR #40), not a live defect on current master.**
+- The mobile `FloatingActionButton` has a "Block time" item → `?action=block` (`FloatingActionButton.tsx:36-42`); `calendar/page.tsx:99` maps `action=block` → `autoOpenBlock`, passed to `CalendarAddControls` which opens the block panel (`add-controls.tsx:64,143`). Block edit/delete on mobile (audit F2) also works via agenda `?editBlock=` rows. No code change needed; this was a stale-production symptom.
+
+**Bug 5 partial — F15 confirmed (event detail lacks the mobile shell):** `/events/[eventId]` renders outside `spaces/[spaceId]/layout.tsx`, so it has no `MobileTopBar`/`BottomTabBar`/`FAB`. On a phone, app navigation disappears on the most-tapped screen. Fix approach pending user input (add shell vs. move route — an IA decision flagged in REVIVAL_PLAN).
+
+**Bugs 2 & 4 (button cutoff; calendar mobile usability):** subjective/real-device — awaiting the user's screenshots per the plan's screenshot-review protocol.
 
 ## Phase 3 — Design & UX pass
 
