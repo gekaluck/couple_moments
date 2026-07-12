@@ -463,13 +463,13 @@ export default function ActivityFeed({
         <div
           aria-label="Activity type filter"
           className="-mx-1 flex gap-1.5 overflow-x-auto scrollbar-none px-1 pb-1"
-          role="tablist"
+          role="group"
         >
           {FILTERS.map((filter) => {
             const active = filter.key === activeFilter;
             return (
               <button
-                aria-selected={active}
+                aria-pressed={active}
                 className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                   active
                     ? "border-rose-500 bg-rose-500 text-white shadow-sm"
@@ -477,7 +477,6 @@ export default function ActivityFeed({
                 }`}
                 key={filter.key}
                 onClick={() => setActiveFilter(filter.key)}
-                role="tab"
                 type="button"
               >
                 {filter.label}
