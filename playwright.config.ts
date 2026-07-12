@@ -6,6 +6,9 @@ const PORT = 3100;
 export default defineConfig({
   testDir: "./tests",
   globalSetup: "./tests/global-setup.ts",
+  // The screenshot-capture spec is a dev tool, not a CI check. It only runs when
+  // CAPTURE_SCREENS is set: `CAPTURE_SCREENS=1 npx playwright test screens`.
+  testIgnore: process.env.CAPTURE_SCREENS ? [] : ["**/screens.spec.ts"],
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
