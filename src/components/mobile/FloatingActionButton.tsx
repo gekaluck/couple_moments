@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Plus, CalendarPlus, Lightbulb, Clock } from "lucide-react";
 
 type FloatingActionButtonProps = {
@@ -11,6 +12,11 @@ type FloatingActionButtonProps = {
 export default function FloatingActionButton({ spaceId }: FloatingActionButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
+  // The create shortcut belongs on the main surfaces (calendar/memories/activity),
+  // not on detail/reading pages, where it floats over content such as the event
+  // photo Upload/Paste-URL controls or the idea action buttons.
+  const isDetailPage = /\/(events|ideas)\/[^/]+$/.test(pathname);
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-${`${today.getDate()}`.padStart(2, "0")}`;
   const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
@@ -59,6 +65,10 @@ export default function FloatingActionButton({ spaceId }: FloatingActionButtonPr
       document.removeEventListener("keydown", handleEsc);
     };
   }, [isOpen]);
+
+  if (isDetailPage) {
+    return null;
+  }
 
   return (
     <>

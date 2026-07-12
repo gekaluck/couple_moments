@@ -29,7 +29,6 @@ import EventPhotoGallery from "@/components/events/EventPhotoGallery";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 import LocalTime from "@/components/time/LocalTime";
 import BottomTabBar from "@/components/mobile/BottomTabBar";
-import FloatingActionButton from "@/components/mobile/FloatingActionButton";
 import { createEventPhoto, deleteEventPhoto, setEventPhotoAsCover } from "@/lib/events";
 
 const PencilIcon = () => (
@@ -795,9 +794,9 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             : null
         }
       />
-      {/* Restore the mobile app shell on this route (it lives outside the space
-          layout), so global navigation persists on the most-tapped screen. */}
-      <FloatingActionButton spaceId={spaceIdForActions} />
+      {/* Restore the mobile bottom nav on this route (it lives outside the space
+          layout), so global navigation persists on the most-tapped screen.
+          The create FAB is intentionally omitted on detail pages. */}
       <BottomTabBar spaceId={spaceIdForActions} />
     </div>
   );
