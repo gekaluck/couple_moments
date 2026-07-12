@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type InviteCardProps = {
@@ -52,10 +52,15 @@ const ShareIcon = () => (
 export default function InviteCard({ inviteCode, isSpaceComplete = false, embedded = false }: InviteCardProps) {
   const [copied, setCopied] = useState<"link" | "code" | null>(null);
 
-  const inviteUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/spaces/onboarding?invite=${inviteCode}`
-      : `/spaces/onboarding?invite=${inviteCode}`;
+  // Build the absolute URL only after mount. Reading window.location during
+  // render makes the server (relative) and client (absolute) markup disagree,
+  // which triggers a hydration mismatch. SSR + first client render both use the
+  // relative path; the effect upgrades to the absolute URL post-hydration.
+  const relativeInvitePath = `/spaces/onboarding?invite=${inviteCode}`;
+  const [inviteUrl, setInviteUrl] = useState(relativeInvitePath);
+  useEffect(() => {
+    setInviteUrl(`${window.location.origin}${relativeInvitePath}`);
+  }, [relativeInvitePath]);
 
   const copyToClipboard = async (text: string, type: "link" | "code") => {
     try {
