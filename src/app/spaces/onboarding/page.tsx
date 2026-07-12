@@ -44,6 +44,9 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
   const search = (await searchParams) ?? {};
   const invitePrefill = search.invite ?? "";
   const error = search.error ?? "";
+  // A partner arriving from an invite link should land on the Join path first,
+  // not scroll past a "create a space" form to find it (mobile-first).
+  const hasInvite = Boolean(invitePrefill);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-16">
@@ -62,14 +65,16 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
             priority
           />
           <h1 className="relative mt-4 text-4xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-            Create your cozy space
+            {hasInvite ? "Join your partner on Duet" : "Create your cozy space"}
           </h1>
           <p className="relative mt-2 text-sm text-[var(--text-muted)]">
-            One place for planning dates, saving memories, and staying close.
+            {hasInvite
+              ? "You've been invited — enter the code below to open your shared space."
+              : "One place for planning dates, saving memories, and staying close."}
           </p>
           <div className="relative mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
             <span className="h-2 w-2 rounded-full bg-rose-500" />
-            Space setup
+            {hasInvite ? "Join space" : "Space setup"}
           </div>
           {error ? (
             <p className="relative mx-auto mt-4 max-w-md rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
@@ -100,7 +105,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
         <section className="grid gap-6 md:grid-cols-2">
           <form
             action={handleCreate}
-            className="surface flex h-full flex-col gap-6 border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.94),rgba(255,237,245,0.82))] p-8"
+            className={`surface flex h-full flex-col gap-6 border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.94),rgba(255,237,245,0.82))] p-8${hasInvite ? " order-2" : ""}`}
           >
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-700">
@@ -135,7 +140,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
 
           <form
             action={handleJoin}
-            className="surface flex h-full flex-col gap-6 border border-sky-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.94),rgba(234,246,255,0.82))] p-8"
+            className={`surface flex h-full flex-col gap-6 border border-sky-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.94),rgba(234,246,255,0.82))] p-8${hasInvite ? " order-1 ring-1 ring-sky-300" : ""}`}
           >
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
@@ -162,7 +167,11 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
               Tip: invite codes are case-insensitive and safe to paste directly.
             </p>
             <button
-              className="mt-auto rounded-full border border-sky-500 bg-white/80 px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-sky-700 transition hover:bg-sky-50"
+              className={
+                hasInvite
+                  ? "mt-auto rounded-full bg-sky-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-sky-700"
+                  : "mt-auto rounded-full border border-sky-500 bg-white/80 px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-sky-700 transition hover:bg-sky-50"
+              }
               type="submit"
             >
               Join space

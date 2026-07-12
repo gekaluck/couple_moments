@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   X,
   ChevronRight,
@@ -150,11 +151,19 @@ export default function OnboardingTour({
   const [currentStep, setCurrentStep] = useState(
     clampedInitialStep,
   );
+  const router = useRouter();
 
   const handleComplete = useCallback(() => {
     localStorage.setItem(`${STORAGE_KEY}_${spaceId}`, "true");
     setIsOpen(false);
   }, [spaceId]);
+
+  // Finishing the tour drops the user straight into adding their first idea —
+  // the lowest-friction first action for a newly joined partner.
+  const handleFinish = useCallback(() => {
+    handleComplete();
+    router.push(`/spaces/${spaceId}/calendar?action=idea`);
+  }, [handleComplete, router, spaceId]);
 
   const handlePrev = useCallback(() => {
     if (currentStep > 0) {
@@ -296,10 +305,10 @@ export default function OnboardingTour({
               Back
             </button>
             <button
-              onClick={handleNext}
+              onClick={isLastStep ? handleFinish : handleNext}
               className={`flex items-center gap-1 rounded-full bg-gradient-to-r ${step.color} px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg btn-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40`}
             >
-              {isLastStep ? "Start Planning" : "Next"}
+              {isLastStep ? "Add your first idea" : "Next"}
               {!isLastStep && <ChevronRight className="h-4 w-4" />}
             </button>
           </div>

@@ -61,9 +61,19 @@ Repro method: seeded an isolated QA account/space in the dev DB (membership-scop
 
 **Net Phase 2:** bug 1 fixed (core navigation), F15 fixed (event-page mobile nav), bug 3 confirmed already-fixed; bugs 2 & 4 carried to Phase 3. Two new regression tests. Six smoke tests green.
 
-## Phase 3 — Design & UX pass
+## Phase 3 — Design & UX pass (in progress, branch `design-pass`)
 
-_Not started. Before/after summary will live here._
+Mobile-first per Yevhenii's standing preference. Screenshots were unavailable this session (the preview browser's screenshot action times out), so the review is code-grounded and the visual/real-device items are documented for later in `docs/00_current/DESIGN_REVIEW_2026-07.md`.
+
+**Review:** produced `docs/00_current/DESIGN_REVIEW_2026-07.md` — mobile-first findings across consistency, cards, empty states, first-run, loading/error, plus a revised phase order. Headline: the June redesign already left the mobile calendar and empty states in good shape, so the highest-value work is first-run + consistency, not a card redesign.
+
+**Decisions (Yevhenii):** refine existing cards (no from-scratch redesign); a joining partner's first nudge = "add a date idea"; proceed with structural fixes now, pixel-polish after screenshots.
+
+**Implemented so far:**
+- **FR-1 — invite-first onboarding.** `spaces/onboarding/page.tsx`: when `?invite=` is present, the page leads with "Join your partner on Duet", orders the Join card first on mobile (CSS `order`, so no DOM/desktop regression), emphasizes its button, and prefills the code. Root problem it fixes: the joining partner (the exact "girlfriend joins" moment) previously had to scroll past the Create form to find Join. Verified in `tests/onboarding.spec.ts` (heading + Join-above-Create bounding-box order + prefill).
+- **First action = add an idea.** `OnboardingTour`: final-step CTA changed from "Start Planning" (just closed) to "Add your first idea", deep-linking to `?action=idea`.
+
+**Deferred to screenshot sessions:** bug #2 (button cutoff), bug #4 (calendar feel), and pixel-polish — checklist in the design-review doc. Remaining code-progressable items: FR-2 (onboarding length), C-1/C-2/C-3 (palette/type/tap-targets), CB-1 (card refinement), LE-1/LE-2 (loading/error, memory cover perf), F13/F21.
 
 ## Phase 4 — Email invites & notifications
 
