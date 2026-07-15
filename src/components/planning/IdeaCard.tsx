@@ -263,7 +263,7 @@ export default function IdeaCard({
             <CardDescription className="normal-case">{idea.description}</CardDescription>
           ) : null}
           {idea.placeName || idea.placeAddress ? (
-            <div className="mt-2 inline-flex max-w-full min-w-0 items-center gap-2 rounded-xl border border-amber-200/70 bg-white/80 px-3 py-1 text-xs text-[var(--text-tertiary)]">
+            <div className="mt-2 inline-flex w-fit max-w-full min-w-0 self-start items-center gap-2 rounded-xl border border-amber-200/70 bg-white/80 px-3 py-1 text-xs text-[var(--text-tertiary)]">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-amber-600" />
               <span className="min-w-0 truncate text-[var(--text-muted)]">
                 {idea.placeName || idea.placeAddress}

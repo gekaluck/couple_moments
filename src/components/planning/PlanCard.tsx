@@ -277,7 +277,7 @@ export default function PlanCard({
             ) : null}
           </div>
           {placeName ? (
-            <div className="inline-flex max-w-full min-w-0 items-center gap-2 rounded-xl border border-rose-200/70 bg-white/75 px-3 py-1 text-xs text-[var(--text-tertiary)]">
+            <div className="inline-flex w-fit max-w-full min-w-0 self-start items-center gap-2 rounded-xl border border-rose-200/70 bg-white/75 px-3 py-1 text-xs text-[var(--text-tertiary)]">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-rose-500" />
               <span className="min-w-0 truncate text-[var(--text-muted)]">{placeName}</span>
             </div>
