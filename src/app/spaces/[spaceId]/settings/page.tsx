@@ -263,7 +263,7 @@ export default async function SettingsPage({ params }: PageProps) {
                   This space works best when both of you are connected.
                 </p>
               </div>
-              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
                 {members.length}/2 linked
               </span>
             </div>
@@ -292,7 +292,7 @@ export default async function SettingsPage({ params }: PageProps) {
                     <p className="hidden truncate text-xs text-[var(--text-muted)] md:block">
                       {currentMember?.user.email}
                     </p>
-                    <span className="mt-0.5 inline-block rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-sky-700 md:mt-1 md:px-2 md:text-[10px]">
+                    <span className="mt-0.5 inline-block rounded-full bg-sky-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-sky-700 md:mt-1 md:px-2 md:text-[11px]">
                       You
                     </span>
                   </div>
@@ -323,7 +323,7 @@ export default async function SettingsPage({ params }: PageProps) {
                       <p className="hidden truncate text-xs text-[var(--text-muted)] md:block">
                         {partner.user.email}
                       </p>
-                      <span className="mt-0.5 inline-block rounded-full bg-rose-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-rose-700 md:mt-1 md:px-2 md:text-[10px]">
+                      <span className="mt-0.5 inline-block rounded-full bg-rose-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-rose-700 md:mt-1 md:px-2 md:text-[11px]">
                         Partner
                       </span>
                     </div>

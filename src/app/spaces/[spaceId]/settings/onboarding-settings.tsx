@@ -51,7 +51,7 @@ export default function OnboardingSettings({ spaceId }: OnboardingSettingsProps)
             </p>
           </div>
         </div>
-        <span className="hidden rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-700 md:inline-flex">
+        <span className="hidden rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-700 md:inline-flex">
           Guided
         </span>
       </div>

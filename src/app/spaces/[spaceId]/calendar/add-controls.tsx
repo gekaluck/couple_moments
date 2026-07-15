@@ -118,8 +118,10 @@ export default function CalendarAddControls({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
+        {/* Adding an event is the primary action; blocking time is the
+            secondary/negative one. Both meet the 44px touch floor (C-3). */}
         <button
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-3.5 py-2 text-xs font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-medium)] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
+          className="button-hover inline-flex min-h-11 items-center gap-2 rounded-full bg-cta px-4 py-2.5 text-meta font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
           aria-label="Create a new event"
           onClick={() => {
             setPlace(null);
@@ -137,7 +139,7 @@ export default function CalendarAddControls({
           + Event
         </button>
         <button
-          className="button-hover inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/90 px-4 py-2.5 text-meta font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-medium)] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
           onClick={() => {
             setErrors({});
             setOpenPanel("block");
