@@ -184,7 +184,7 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
         </div>
       </div>
       <span
-        className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+        className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
           data
             ? "border-emerald-200 bg-emerald-100 text-emerald-700"
             : "border-slate-200 bg-white/85 text-slate-600"
@@ -289,7 +289,7 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
                 {data.account.email}
               </p>
               {data.account.isRevoked && (
-                <p className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700">
+                <p className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700">
                   Reconnect required
                 </p>
               )}
@@ -363,7 +363,7 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
                           {calendar.summary}
                         </p>
                         {calendar.primary && (
-                          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700">
+                          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-700">
                             Primary
                           </span>
                         )}

@@ -607,8 +607,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       <section className="surface overflow-hidden p-4 md:p-8">
         <div className="grid gap-5 xl:grid-cols-[1fr_auto_1fr] xl:items-start">
           <div className="space-y-4">
-            <p className="section-kicker">Calendar</p>
-            <p className="section-subtitle">
+            {/* The bottom tab bar already labels this screen on mobile; the
+                kicker + helper line cost ~90px of the first screen there. */}
+            <p className="section-kicker hidden md:block">Calendar</p>
+            <p className="section-subtitle hidden md:block">
               Add an event or block time from the calendar.
             </p>
             <CalendarAddControls
@@ -622,7 +624,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               mapsApiKey={mapsApiKey}
             />
           </div>
-          <div className="flex flex-col items-center gap-3 xl:justify-self-center">
+          {/* On mobile the month nav lives inside the agenda's month strip. */}
+          <div className="hidden flex-col items-center gap-3 md:flex xl:justify-self-center">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--panel-border)] bg-white/90 p-1 shadow-[var(--shadow-sm)] md:gap-2 md:p-1.5">
               <Link
                 className="pill-button button-hover min-w-[54px] justify-center text-xs md:min-w-[70px] md:text-sm"
@@ -652,14 +655,14 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)] xl:justify-end">
             <div className="hidden items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] sm:flex">
               <Link
-                className={`rounded-full px-3 py-1 transition ${isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
+                className={`rounded-full px-3 py-1 transition ${isCompact ? "bg-[var(--action-primary)] text-white" : "text-[var(--text-muted)]"
                   }`}
                 href={buildCalendarHref(monthParam(now), { density: "compact" })}
               >
                 Compact
               </Link>
               <Link
-                className={`rounded-full px-3 py-1 transition ${!isCompact ? "bg-slate-900 text-white" : "text-[var(--text-muted)]"
+                className={`rounded-full px-3 py-1 transition ${!isCompact ? "bg-[var(--action-primary)] text-white" : "text-[var(--text-muted)]"
                   }`}
                 href={buildCalendarHref(monthParam(now), { density: "comfortable" })}
               >
@@ -716,6 +719,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             timeFormat={calendarTimeFormat}
             monthTitle={formatMonthTitle(now)}
             monthGrid={agendaMonthGrid}
+            prevHref={buildCalendarHref(monthParam(prevMonth))}
+            nextHref={buildCalendarHref(monthParam(nextMonth))}
           />
         </div>
 

@@ -71,7 +71,7 @@ export default function EventBubble({
       />
       <div className="min-w-0">
         {timeLabel ? (
-          <div className="truncate text-[9px] font-semibold uppercase tracking-[0.08em] text-current/75">
+          <div className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-current/75">
             {timeLabel}
           </div>
         ) : null}

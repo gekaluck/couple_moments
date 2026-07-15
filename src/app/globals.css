@@ -59,6 +59,9 @@
   --accent-strong: #b83a48;
   --action-primary: #d94f5c;
   --action-primary-strong: #b83a48;
+  /* The only sanctioned CTA gradient; rose→peach reserved for hero moments. */
+  --gradient-cta: linear-gradient(135deg, #d94f5c, #b83a48);
+  --gradient-hero: linear-gradient(135deg, #d94f5c, #d4944c);
 }
 
 @theme inline {
@@ -165,6 +168,37 @@ h3,
 .pill-button.primary:hover {
   background: var(--action-primary-strong);
   color: white;
+}
+
+/* Brand CTA fill — replaces ad-hoc rose/pink Tailwind gradients (C-1) */
+.bg-cta {
+  background-image: var(--gradient-cta);
+}
+
+.bg-hero {
+  background-image: var(--gradient-hero);
+}
+
+/* Mobile type scale (C-2): caption 11 / meta 13 / body 15 / title 17.
+   Nothing user-facing renders below 11px. */
+.text-caption {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.text-meta {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.text-body {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.text-title {
+  font-size: 17px;
+  line-height: 1.35;
 }
 
 @supports not (backdrop-filter: blur(12px)) {

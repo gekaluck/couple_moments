@@ -177,7 +177,7 @@ export default function DayCell({
         </span>
         {totalItems > 0 ? (
           <span
-            className="inline-flex items-center rounded-full border border-[var(--panel-border)] bg-white/88 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]"
+            className="inline-flex items-center rounded-full border border-[var(--panel-border)] bg-white/88 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]"
             title={countLabel}
           >
             {totalItems}
@@ -229,7 +229,7 @@ export default function DayCell({
               <div className="min-w-0">
                 <div className="truncate text-[10px] font-medium">{blockLabel}</div>
                 {notePreview ? (
-                  <div className="truncate text-[9px] text-current/75">
+                  <div className="truncate text-[10px] text-current/75">
                     {notePreview}
                   </div>
                 ) : null}

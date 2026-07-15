@@ -182,25 +182,27 @@ function MemoryCover({
   );
 }
 
+// Dusty, brand-adjacent tones (shared vocabulary with TagBadge): a list of
+// photo-less memories no longer reads as a wall of saturated magenta (C-1).
 const TAG_GRADIENTS: Record<string, string> = {
-  date: "from-rose-500 to-pink-600",
-  together: "from-rose-500 to-pink-600",
-  romantic: "from-rose-500 to-pink-600",
-  anniversary: "from-rose-500 to-pink-600",
-  cozy: "from-orange-400 to-amber-500",
-  home: "from-orange-400 to-amber-500",
-  weekend: "from-slate-500 to-slate-600",
-  outdoor: "from-emerald-500 to-teal-600",
-  hiking: "from-emerald-500 to-teal-600",
-  nature: "from-emerald-500 to-teal-600",
-  dinner: "from-amber-500 to-orange-500",
-  food: "from-amber-500 to-orange-500",
-  restaurant: "from-amber-500 to-orange-500",
-  movie: "from-amber-500 to-rose-500",
-  concert: "from-amber-500 to-rose-500",
-  travel: "from-sky-500 to-blue-600",
-  trip: "from-sky-500 to-blue-600",
-  vacation: "from-sky-500 to-blue-600",
+  date: "from-[#d94f5c] to-[#b83a48]",
+  together: "from-[#d94f5c] to-[#b83a48]",
+  romantic: "from-[#d94f5c] to-[#b83a48]",
+  anniversary: "from-[#d94f5c] to-[#b83a48]",
+  cozy: "from-[#dd9f57] to-[#c98a3f]",
+  home: "from-[#dd9f57] to-[#c98a3f]",
+  weekend: "from-[#b06a8f] to-[#96527a]",
+  outdoor: "from-[#729b63] to-[#5c7f50]",
+  hiking: "from-[#729b63] to-[#5c7f50]",
+  nature: "from-[#729b63] to-[#5c7f50]",
+  dinner: "from-[#d4944c] to-[#b87a35]",
+  food: "from-[#d4944c] to-[#b87a35]",
+  restaurant: "from-[#d4944c] to-[#b87a35]",
+  movie: "from-[#b06a8f] to-[#96527a]",
+  concert: "from-[#b06a8f] to-[#96527a]",
+  travel: "from-[#5f8fa3] to-[#4a7488]",
+  trip: "from-[#5f8fa3] to-[#4a7488]",
+  vacation: "from-[#5f8fa3] to-[#4a7488]",
 };
 
 export default function MemoriesClient({ memories, spaceId }: MemoriesClientProps) {
@@ -432,7 +434,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           const gradient =
             event.tags
               .map((value) => TAG_GRADIENTS[value.toLowerCase()])
-              .find(Boolean) ?? "from-slate-500 to-slate-600";
+              .find(Boolean) ?? "from-[#8b7f76] to-[#6f6259]";
           const primaryTag = event.tags[0] ?? null;
           return (
             <div
@@ -466,7 +468,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 ) : null}
                 <div className="mt-1.5 flex items-center gap-2 md:mt-3 md:flex-wrap">
                   {primaryTag ? (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)]">
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-tertiary)]">
                       <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
                       {primaryTag}
                     </span>
@@ -474,14 +476,14 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                   {event.tags.slice(1).map((value) => (
                     <span
                       key={value}
-                      className="hidden items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-tertiary)] md:inline-flex"
+                      className="hidden items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-tertiary)] md:inline-flex"
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
                       {value}
                     </span>
                   ))}
                   <LocalTime
-                    className="ml-auto shrink-0 rounded-full bg-white/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)] shadow-sm md:px-3 md:py-1 md:text-xs md:tracking-[0.2em]"
+                    className="ml-auto shrink-0 rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)] shadow-sm md:px-3 md:py-1 md:text-xs md:tracking-[0.2em]"
                     options={{
                       month: "short",
                       day: "numeric",

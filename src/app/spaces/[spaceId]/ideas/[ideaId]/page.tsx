@@ -341,7 +341,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
               <span className="event-details-label">Created by</span>
               <span className="event-details-value inline-flex items-center gap-2">
                 <span
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold text-white"
                   style={{
                     backgroundImage: creatorVisual
                       ? getAvatarGradient(creatorVisual.accent)
@@ -368,7 +368,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
 
           {idea.description ? (
             <div className="mt-4 rounded-xl border border-amber-100/80 bg-white/70 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
                 Description
               </p>
               <p className="mt-2 text-sm leading-relaxed text-[var(--text-primary)]">

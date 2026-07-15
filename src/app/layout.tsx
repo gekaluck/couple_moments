@@ -19,11 +19,18 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#faf7f5",
 };
 
 export const metadata: Metadata = {
   title: "Duet",
   description: "Plan dates, save memories, and keep ideas together.",
+  manifest: "/site.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Duet",
+  },
   icons: {
     icon: [
       { url: "/duet-favicon-16.png", type: "image/png", sizes: "16x16" },
