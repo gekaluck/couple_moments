@@ -749,27 +749,29 @@ export default async function EventPage({ params, searchParams }: PageProps) {
           </section>
         ) : null}
 
-        <EventPhotoGallery
-          canUploadDirectly={Boolean(cloudinaryCloudName && cloudinaryUploadPreset)}
-          currentUser={{
-            name: currentUser.name,
-            email: currentUser.email,
-          }}
-          initialPhotos={photos.map((photo) => ({
-            id: photo.id,
-            storageUrl: photo.storageUrl,
-            createdAtIso: photo.createdAt.toISOString(),
-            isCover: photo.isCover,
-            uploadedBy: {
-              name: photo.uploadedBy.name,
-              email: photo.uploadedBy.email,
-            },
-          }))}
-          onCreatePhoto={handleCreatePhoto}
-          onUploadPhoto={handleUploadPhoto}
-          onDeletePhoto={handleDeletePhoto}
-          onSetPhotoAsCover={handleSetPhotoAsCover}
-        />
+        {isPast ? (
+          <EventPhotoGallery
+            canUploadDirectly={Boolean(cloudinaryCloudName && cloudinaryUploadPreset)}
+            currentUser={{
+              name: currentUser.name,
+              email: currentUser.email,
+            }}
+            initialPhotos={photos.map((photo) => ({
+              id: photo.id,
+              storageUrl: photo.storageUrl,
+              createdAtIso: photo.createdAt.toISOString(),
+              isCover: photo.isCover,
+              uploadedBy: {
+                name: photo.uploadedBy.name,
+                email: photo.uploadedBy.email,
+              },
+            }))}
+            onCreatePhoto={handleCreatePhoto}
+            onUploadPhoto={handleUploadPhoto}
+            onDeletePhoto={handleDeletePhoto}
+            onSetPhotoAsCover={handleSetPhotoAsCover}
+          />
+        ) : null}
 
         <EventComments
           eventId={event.id}
