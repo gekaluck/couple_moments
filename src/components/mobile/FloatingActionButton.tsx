@@ -17,8 +17,9 @@ export default function FloatingActionButton({ spaceId }: FloatingActionButtonPr
   // not on detail/reading pages, where it floats over content such as the event
   // photo Upload/Paste-URL controls or the idea action buttons. Settings has
   // nothing to create either — there it just covered the info rows.
-  const isDetailPage =
-    /\/(events|ideas)\/[^/]+$/.test(pathname) || pathname.endsWith("/settings");
+  const isDetailPage = pathname
+    ? /\/(events|ideas)\/[^/]+$/.test(pathname) || pathname.endsWith("/settings")
+    : false;
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}-${`${today.getDate()}`.padStart(2, "0")}`;
   const monthParam = `${today.getFullYear()}-${`${today.getMonth() + 1}`.padStart(2, "0")}`;
