@@ -291,7 +291,7 @@ export default function IdeaCard({
             <span className="inline-flex min-w-0 items-center gap-2">
               <span
                 aria-hidden="true"
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
                 style={{ backgroundImage: creatorGradient }}
               >
                 {creatorInitials}
@@ -332,7 +332,7 @@ export default function IdeaCard({
           >
             <MessageSquare className="h-4 w-4" />
             {commentCount > 0 ? (
-              <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+              <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
                 {commentCount}
               </span>
             ) : null}
@@ -533,18 +533,28 @@ export default function IdeaCard({
               value={idea.placeLng?.toString() ?? ""}
             />
             <input type="hidden" name="placeUrl" value={idea.placeUrl ?? ""} />
-            <input
-              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
-              name="date"
-              type="date"
-              min={todayStr}
-              required
-            />
-            <input
-              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
-              name="time"
-              type="time"
-            />
+            {/* Labeled + prefilled: an empty native date/time input renders as
+                a blank pill on iOS, which reads as broken. */}
+            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              Date
+              <input
+                className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
+                name="date"
+                type="date"
+                min={todayStr}
+                defaultValue={todayStr}
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              Time
+              <input
+                className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
+                name="time"
+                type="time"
+                defaultValue="19:00"
+              />
+            </label>
             {hasGoogleCalendar && (
               <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 <input
