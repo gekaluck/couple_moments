@@ -57,5 +57,11 @@ test("memory card navigates to the event page", async ({ page }) => {
     await expect(
       bottomNav.getByRole("link", { name: "Activity" }),
     ).toBeVisible();
+
+    // ...but the create FAB is intentionally hidden on detail pages, where it
+    // used to float over the photo Upload / Paste-URL controls (bug #2).
+    await expect(
+      page.getByRole("button", { name: "Create new item" }),
+    ).toHaveCount(0);
   });
 });

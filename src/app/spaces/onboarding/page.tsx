@@ -54,7 +54,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
         <header className="surface relative overflow-hidden p-8 text-center">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[linear-gradient(120deg,rgba(255,226,236,0.36),rgba(255,244,220,0.3),rgba(222,240,255,0.28))]"
+            className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-[linear-gradient(120deg,rgba(255,226,236,0.36),rgba(255,244,220,0.3),rgba(250,238,226,0.3))]"
           />
           <Image
             src="/duet-logo.png"
@@ -72,7 +72,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
               ? "You've been invited — enter the code below to open your shared space."
               : "One place for planning dates, saving memories, and staying close."}
           </p>
-          <div className="relative mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+          <div className="relative mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
             <span className="h-2 w-2 rounded-full bg-rose-500" />
             {hasInvite ? "Join space" : "Space setup"}
           </div>
@@ -108,7 +108,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
             className={`surface flex h-full flex-col gap-6 border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.94),rgba(255,237,245,0.82))] p-8${hasInvite ? " order-2" : ""}`}
           >
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
                 New space
               </p>
               <h2 className="mt-2 text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
@@ -131,7 +131,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
               You can rename your space later from Settings.
             </p>
             <button
-              className="mt-auto rounded-full bg-[var(--accent-strong)] px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-[var(--accent)]"
+              className="mt-auto min-h-11 rounded-full bg-[var(--accent-strong)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent)]"
               type="submit"
             >
               Create space
@@ -140,10 +140,10 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
 
           <form
             action={handleJoin}
-            className={`surface flex h-full flex-col gap-6 border border-sky-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.94),rgba(234,246,255,0.82))] p-8${hasInvite ? " order-1 ring-1 ring-sky-300" : ""}`}
+            className={`surface flex h-full flex-col gap-6 border border-amber-200/70 bg-[linear-gradient(165deg,rgba(255,255,255,0.94),rgba(255,248,240,0.85))] p-8${hasInvite ? " order-1 ring-1 ring-[var(--idea-new-border)]" : ""}`}
           >
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--idea-new-text)]">
                 Existing space
               </p>
               <h2 className="mt-2 text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
@@ -169,8 +169,8 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
             <button
               className={
                 hasInvite
-                  ? "mt-auto rounded-full bg-sky-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-sky-700"
-                  : "mt-auto rounded-full border border-sky-500 bg-white/80 px-4 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-sky-700 transition hover:bg-sky-50"
+                  ? "mt-auto min-h-11 rounded-full bg-[var(--accent-strong)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent)]"
+                  : "mt-auto min-h-11 rounded-full border border-[var(--accent)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-[var(--accent-soft)]"
               }
               type="submit"
             >
@@ -179,98 +179,92 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
           </form>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <article className="surface border border-[var(--panel-border)] bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(245,242,255,0.74))] p-8">
-            <p className="section-kicker">How Duet Works</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
-              One shared home for planning and memory-keeping
-            </h2>
-            <p className="mt-3 max-w-3xl text-sm text-[var(--text-muted)]">
-              Duet is calendar-centric: ideas become plans, plans become memories, and both of
-              you can add context as you go.
-            </p>
+        {/* Secondary reading, collapsed by default so the forms stay the page
+            (the create/join screen was a ~2,700px scroll on 390px). */}
+        <details className="surface group border border-[var(--panel-border)] p-6 md:p-8">
+          <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4 [&::-webkit-details-marker]:hidden">
+            <span>
+              <span className="section-kicker">How Duet works</span>
+              <span className="mt-1 block text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+                One shared home for planning and memory-keeping
+              </span>
+            </span>
+            <span
+              aria-hidden="true"
+              className="text-sm font-semibold text-[var(--accent-strong)] group-open:hidden"
+            >
+              Show
+            </span>
+            <span
+              aria-hidden="true"
+              className="hidden text-sm font-semibold text-[var(--accent-strong)] group-open:inline"
+            >
+              Hide
+            </span>
+          </summary>
 
-            <ol className="mt-6 grid gap-3 text-sm">
-              <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-rose-700">
-                  1. Calendar first
-                </p>
-                <p className="mt-1 text-[var(--text-secondary)]">
-                  Add events or unavailability blocks directly from the month view so both of you
-                  can see your shared rhythm at a glance.
-                </p>
-              </li>
-              <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
-                  2. Capture ideas
-                </p>
-                <p className="mt-1 text-[var(--text-secondary)]">
-                  Drop date ideas in the &quot;What&apos;s ahead&quot; lane, then schedule them when timing feels
-                  right.
-                </p>
-              </li>
-              <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-violet-700">
-                  3. Keep context
-                </p>
-                <p className="mt-1 text-[var(--text-secondary)]">
-                  Add place details and comments to plans so details stay attached to the
-                  right moment.
-                </p>
-              </li>
-              <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-700">
-                  4. Build your memory map
-                </p>
-                <p className="mt-1 text-[var(--text-secondary)]">
-                  Past plans become memories where you can rate, reflect, and revisit favorite
-                  experiences.
-                </p>
-              </li>
-            </ol>
-          </article>
+          <p className="mt-3 max-w-3xl text-sm text-[var(--text-muted)]">
+            Duet is calendar-centric: ideas become plans, plans become memories, and both of
+            you can add context as you go.
+          </p>
 
-          <aside className="surface border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.93),rgba(255,238,245,0.8),rgba(236,247,255,0.76))] p-8">
-            <p className="section-kicker">First 5 Minutes</p>
-            <h3 className="mt-1 text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
-              Release-ready setup checklist
+          <ol className="mt-5 grid gap-3 text-sm md:grid-cols-2">
+            <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent-strong)]">
+                1. Calendar first
+              </p>
+              <p className="mt-1 text-[var(--text-secondary)]">
+                Add events or unavailability blocks directly from the month view so both of you
+                can see your shared rhythm at a glance.
+              </p>
+            </li>
+            <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent-strong)]">
+                2. Capture ideas
+              </p>
+              <p className="mt-1 text-[var(--text-secondary)]">
+                Drop date ideas in the &quot;What&apos;s ahead&quot; lane, then schedule them when timing feels
+                right.
+              </p>
+            </li>
+            <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent-strong)]">
+                3. Keep context
+              </p>
+              <p className="mt-1 text-[var(--text-secondary)]">
+                Add place details and comments to plans so details stay attached to the
+                right moment.
+              </p>
+            </li>
+            <li className="rounded-2xl border border-white/90 bg-white/78 p-4 shadow-[var(--shadow-sm)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--accent-strong)]">
+                4. Build your memory map
+              </p>
+              <p className="mt-1 text-[var(--text-secondary)]">
+                Past plans become memories where you can rate, reflect, and revisit favorite
+                experiences.
+              </p>
+            </li>
+          </ol>
+
+          <div className="mt-6 rounded-2xl border border-rose-200/60 bg-white/70 p-5">
+            <p className="section-kicker">First 5 minutes</p>
+            <h3 className="mt-1 text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+              Set up your space together
             </h3>
-            <ul className="mt-4 space-y-3 text-sm text-[var(--text-secondary)]">
+            <ul className="mt-3 space-y-2 text-sm text-[var(--text-secondary)]">
               <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
-                Invite your partner and confirm both members appear in Settings.
+                Invite your partner and confirm both of you appear in Settings.
               </li>
               <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
-                Connect Google Calendar to sync events and invitations.
+                Add your first date idea — or schedule a date right away.
               </li>
               <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
-                Add one idea, schedule one event, and create one unavailable block.
-              </li>
-              <li className="rounded-xl border border-white/90 bg-white/78 px-3 py-2">
-                Check Memories and Activity so the whole flow feels clear end-to-end.
+                Connect Google Calendar if you want events synced automatically.
               </li>
             </ul>
-
-            <div className="mt-5 rounded-2xl border border-white/90 bg-white/82 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
-                Main Tabs
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-[var(--text-muted)]">
-                <span className="rounded-lg border border-rose-100 bg-rose-50/80 px-2 py-1">
-                  Calendar
-                </span>
-                <span className="rounded-lg border border-violet-100 bg-violet-50/80 px-2 py-1">
-                  Memories
-                </span>
-                <span className="rounded-lg border border-amber-100 bg-amber-50/80 px-2 py-1">
-                  Activity
-                </span>
-                <span className="rounded-lg border border-slate-100 bg-slate-50/80 px-2 py-1">
-                  Settings
-                </span>
-              </div>
-            </div>
-          </aside>
-        </section>
+          </div>
+        </details>
       </main>
     </div>
   );

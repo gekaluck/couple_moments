@@ -123,7 +123,7 @@ export default function IdeaActions({
   return (
     <>
       <button
-        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:flex-none md:py-2"
+        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--idea-new)] px-4 py-2.5 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition hover:bg-[#b87a35] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:flex-none md:py-2"
         type="button"
         onClick={() => setIsScheduleOpen(true)}
       >
@@ -131,7 +131,7 @@ export default function IdeaActions({
         Schedule
       </button>
       <button
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
         type="button"
         title="Edit idea"
         aria-label="Edit idea"
@@ -140,7 +140,7 @@ export default function IdeaActions({
         <Pencil className="h-4 w-4" />
       </button>
       <button
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-white/90 text-red-600 shadow-[var(--shadow-sm)] transition hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-red-200 bg-white/90 text-red-600 shadow-[var(--shadow-sm)] transition hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
         type="button"
         title="Delete idea"
         aria-label="Delete idea"
@@ -201,18 +201,28 @@ export default function IdeaActions({
             }}
           >
             <input type="hidden" name="ideaId" value={idea.id} />
-            <input
-              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
-              name="date"
-              type="date"
-              min={todayStr}
-              required
-            />
-            <input
-              className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
-              name="time"
-              type="time"
-            />
+            {/* Labeled + prefilled: an empty native date/time input renders as
+                a blank pill on iOS, which reads as broken. */}
+            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              Date
+              <input
+                className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
+                name="date"
+                type="date"
+                min={todayStr}
+                defaultValue={todayStr}
+                required
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              Time
+              <input
+                className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
+                name="time"
+                type="time"
+                defaultValue="19:00"
+              />
+            </label>
             {hasGoogleCalendar && (
               <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 <input

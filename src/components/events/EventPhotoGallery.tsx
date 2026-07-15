@@ -285,7 +285,7 @@ export default function EventPhotoGallery({
                 type="button"
                 className={`rounded-full px-3 py-1 transition ${
                   mode === "upload"
-                    ? "bg-slate-900 text-white"
+                    ? "bg-[var(--action-primary)] text-white"
                     : "text-[var(--text-muted)]"
                 }`}
                 onClick={() => {
@@ -300,7 +300,7 @@ export default function EventPhotoGallery({
               type="button"
               className={`rounded-full px-3 py-1 transition ${
                 mode === "url"
-                  ? "bg-slate-900 text-white"
+                  ? "bg-[var(--action-primary)] text-white"
                   : "text-[var(--text-muted)]"
               }`}
               onClick={() => {
@@ -336,7 +336,7 @@ export default function EventPhotoGallery({
                 <div className="space-y-2">
                   <div className="h-2 overflow-hidden rounded-full bg-rose-100">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-rose-500 to-pink-600 transition-[width]"
+                      className="h-full rounded-full bg-cta transition-[width]"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -421,7 +421,7 @@ export default function EventPhotoGallery({
                         {getUploaderLabel(photo)}
                       </p>
                       {photo.isCover ? (
-                        <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-700">
+                        <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-rose-700">
                           Thumbnail
                         </span>
                       ) : null}

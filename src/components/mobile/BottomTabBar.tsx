@@ -31,7 +31,7 @@ export default function BottomTabBar({ spaceId }: { spaceId: string }) {
             <Link
               key={tab.id}
               href={tab.href}
-              className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium transition-all duration-200 active:scale-95 ${
+              className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] font-medium transition-all duration-200 active:scale-95 ${
                 isActive
                   ? "text-[var(--action-primary)]"
                   : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"

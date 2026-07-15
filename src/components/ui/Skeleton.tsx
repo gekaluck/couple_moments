@@ -67,7 +67,7 @@ export function SkeletonIdeaCard() {
 
 export function SkeletonNoteCard() {
   return (
-    <div className="surface border-l-4 border-l-violet-400 bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(243,238,255,0.78))] p-4">
+    <div className="surface border-l-4 border-l-rose-300 bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(255,240,240,0.78))] p-4">
       <div className="flex items-start gap-3">
         <Skeleton className="h-9 w-9 rounded-full" />
         <div className="flex-1 space-y-2">
@@ -82,7 +82,7 @@ export function SkeletonNoteCard() {
 
 export function SkeletonActivityItem() {
   return (
-    <div className="surface bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(235,246,255,0.78))] p-5">
+    <div className="surface bg-[linear-gradient(165deg,rgba(255,255,255,0.95),rgba(250,242,236,0.78))] p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Skeleton className="h-4 w-4 rounded" />

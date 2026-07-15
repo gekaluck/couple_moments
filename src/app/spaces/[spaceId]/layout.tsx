@@ -73,7 +73,9 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
       <div className="mx-auto mt-4 w-full max-w-[1220px] px-3 md:px-6">
         <BetaNoticeBar spaceId={space.id} />
       </div>
-      <main className="mx-auto flex w-full max-w-[1220px] flex-col gap-6 overflow-x-hidden px-3 pb-24 pt-4 md:gap-10 md:px-6 md:pb-12 md:pt-10">
+      {/* pb-36 clears the tab bar AND the FAB (bottom ~136px on mobile) so the
+          last list item is never trapped underneath them. */}
+      <main className="mx-auto flex w-full max-w-[1220px] flex-col gap-6 overflow-x-hidden px-3 pb-36 pt-4 md:gap-10 md:px-6 md:pb-12 md:pt-10">
         {children}
       </main>
       <FloatingActionButton spaceId={space.id} />

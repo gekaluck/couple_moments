@@ -155,7 +155,7 @@ export default function EventComments({
           />
           <div className="flex justify-end">
             <button
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl bg-cta px-4 py-2 text-xs font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)] disabled:opacity-50"
               type="submit"
               disabled={isPending}
             >

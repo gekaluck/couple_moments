@@ -83,7 +83,7 @@ export default function MobileTopBar({
             <p className="truncate text-sm font-semibold tracking-[-0.01em] text-[var(--accent-strong)] brand-text">
               {spaceName}
             </p>
-            <div className="flex items-center gap-1 text-[10px] text-[var(--text-muted)]" suppressHydrationWarning>
+            <div className="flex items-center gap-1 text-[11px] text-[var(--text-muted)]" suppressHydrationWarning>
               <span suppressHydrationWarning>
                 {today.toLocaleDateString(undefined, { month: "short", day: "numeric" })}
               </span>
@@ -113,7 +113,7 @@ export default function MobileTopBar({
         </Link>
         <Link
           href={`/spaces/${spaceId}/settings`}
-          className="flex-shrink-0 rounded-full p-2 text-[var(--text-secondary)] transition hover:bg-white/80 hover:text-[var(--text-primary)] active:scale-95"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-white/80 hover:text-[var(--text-primary)] active:scale-95"
           aria-label="Settings"
         >
           <Settings size={20} strokeWidth={1.8} />

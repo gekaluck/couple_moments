@@ -6,14 +6,9 @@ import {
   X,
   ChevronRight,
   ChevronLeft,
-  Calendar,
   Lightbulb,
   Camera,
   Heart,
-  Activity,
-  Settings2,
-  Link2,
-  MessageSquare,
 } from "lucide-react";
 
 type OnboardingStep = {
@@ -22,112 +17,43 @@ type OnboardingStep = {
   description: string;
   highlights: string[];
   icon: React.ReactNode;
-  color: string;
 };
 
+// Three steps, one brand palette. The previous 8-step, five-gradient version
+// was a long read on a phone before the user could do anything (FR-2).
 const steps: OnboardingStep[] = [
   {
     title: "Welcome to Duet",
     kicker: "Your shared home",
     description:
-      "Duet keeps planning and memory-keeping in one place, so both of you always see the same timeline.",
+      "One calendar for the two of you — plans, ideas, and memories all live on the same timeline.",
     highlights: [
-      "Calendar is the source of truth.",
-      "Ideas and comments stay linked to moments.",
-      "Memories preserve what happened after each date.",
+      "Both of you always see the same calendar.",
+      "Tap any day to add a date or block time.",
     ],
     icon: <Heart className="h-8 w-8" />,
-    color: "from-rose-500 to-pink-600",
   },
   {
-    title: "Plan Your Dates",
-    kicker: "Calendar flow",
-    description:
-      "Start in Calendar: add events, mark unavailability, and quickly scan your month with partner context.",
-    highlights: [
-      "Click any day to create an event.",
-      "Add availability blocks before booking plans.",
-      "Use day cards to jump into event details.",
-    ],
-    icon: <Calendar className="h-8 w-8" />,
-    color: "from-teal-500 to-emerald-600",
-  },
-  {
-    title: "Capture Ideas",
+    title: "Ideas become plans",
     kicker: "What's ahead",
     description:
-      "Use the ideas lane for unscheduled plans, then schedule them in one step when the date is set.",
+      "Collect date ideas whenever inspiration hits, then schedule them in one tap when the timing works.",
     highlights: [
-      "Store title, notes, and place details.",
-      "Comment directly on ideas together.",
-      "Convert an idea into a calendar event when ready.",
+      "Save a place, notes, and tags with each idea.",
+      "Comment on ideas to plan together.",
     ],
     icon: <Lightbulb className="h-8 w-8" />,
-    color: "from-amber-500 to-orange-600",
   },
   {
-    title: "Use comments as your shared context",
-    kicker: "Attached conversations",
-    description:
-      "Keep planning conversation attached directly to the idea or event it belongs to, then use Activity to catch up quickly.",
-    highlights: [
-      "Comment directly on ideas together.",
-      "Add event-specific context where it will still be visible later.",
-      "Use Activity to skim recent comment history without hunting.",
-    ],
-    icon: <MessageSquare className="h-8 w-8" />,
-    color: "from-sky-500 to-indigo-600",
-  },
-  {
-    title: "Save memories after each date",
+    title: "Plans become memories",
     kicker: "Memories",
     description:
-      "Completed events become memories where you can rate the date, add reflections, and keep photo/place history.",
+      "After each date, the event turns into a memory — add photos, rate it, and revisit your favorites.",
     highlights: [
-      "Rate each memory so favorites are easy to revisit.",
-      "Keep place and map context attached.",
-      "Build a meaningful timeline over time.",
+      "Rate dates so favorites are easy to find.",
+      "Photos and places stay attached to the moment.",
     ],
     icon: <Camera className="h-8 w-8" />,
-    color: "from-violet-500 to-purple-600",
-  },
-  {
-    title: "Track momentum in Activity",
-    kicker: "Recent updates",
-    description:
-      "Activity gives both of you visibility into what changed recently: edits, comments, and new planning items.",
-    highlights: [
-      "Spot partner updates quickly.",
-      "Catch up without opening every tab.",
-      "Use it as your quick daily sync view.",
-    ],
-    icon: <Activity className="h-8 w-8" />,
-    color: "from-cyan-500 to-blue-600",
-  },
-  {
-    title: "Customize your space in Settings",
-    kicker: "Control panel",
-    description:
-      "Settings lets you tune profile appearance, calendar preferences, partner membership, and Google integration.",
-    highlights: [
-      "Choose alias, initials, and personal color.",
-      "Set week start and 12h/24h time format.",
-      "Connect Google Calendar for sync and invites.",
-    ],
-    icon: <Settings2 className="h-8 w-8" />,
-    color: "from-slate-500 to-slate-700",
-  },
-  {
-    title: "You're ready",
-    kicker: "First actions",
-    description: "Recommended first run: add one idea, schedule one date, and leave one comment together.",
-    highlights: [
-      "Create your next date right now.",
-      "Open one idea and leave a comment each.",
-      "Keep onboarding available in Settings any time.",
-    ],
-    icon: <Link2 className="h-8 w-8" />,
-    color: "from-rose-500 to-fuchsia-600",
   },
 ];
 
@@ -224,7 +150,7 @@ export default function OnboardingTour({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(30,41,59,0.32),rgba(2,6,23,0.62))] backdrop-blur-sm animate-fade-in-up">
       <div className="relative mx-4 w-full max-w-md overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
-        <div className={`bg-gradient-to-r ${step.color} px-6 pb-8 pt-7 text-white`}>
+        <div className="bg-hero px-6 pb-8 pt-7 text-white">
           <button
             onClick={handleSkip}
             className="absolute right-4 top-4 rounded-full p-1 text-white/80 transition hover:bg-white/20 hover:text-white"
@@ -233,10 +159,10 @@ export default function OnboardingTour({
             <X className="h-5 w-5" />
           </button>
           <div className="flex items-center justify-between gap-3">
-            <span className="rounded-full border border-white/35 bg-white/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]">
+            <span className="rounded-full border border-white/35 bg-white/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]">
               Step {currentStep + 1}/{steps.length}
             </span>
-            <span className="rounded-full border border-white/35 bg-white/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]">
+            <span className="rounded-full border border-white/35 bg-white/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]">
               {step.kicker}
             </span>
           </div>
@@ -267,14 +193,7 @@ export default function OnboardingTour({
             ))}
           </ul>
 
-          <div className="mt-5 h-1.5 rounded-full bg-slate-100">
-            <div
-              className={`h-1.5 rounded-full bg-gradient-to-r ${step.color} transition-all duration-300`}
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-            />
-          </div>
-
-          <div className="mt-4 flex justify-center gap-2">
+          <div className="mt-5 flex justify-center gap-2">
             {steps.map((_, index) => (
               <button
                 key={index}
@@ -289,7 +208,8 @@ export default function OnboardingTour({
             ))}
           </div>
 
-          <p className="mt-3 text-[11px] text-[var(--text-tertiary)]">
+          {/* Keyboard advice is meaningless on touch devices */}
+          <p className="mt-3 hidden text-[11px] text-[var(--text-tertiary)] md:block">
             Tip: Use <span className="font-semibold">←</span>/<span className="font-semibold">→</span> to
             navigate and <span className="font-semibold">Esc</span> to close.
           </p>
@@ -306,7 +226,7 @@ export default function OnboardingTour({
             </button>
             <button
               onClick={isLastStep ? handleFinish : handleNext}
-              className={`flex items-center gap-1 rounded-full bg-gradient-to-r ${step.color} px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg btn-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40`}
+              className="flex min-h-11 items-center gap-1 rounded-full bg-cta px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg btn-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
             >
               {isLastStep ? "Add your first idea" : "Next"}
               {!isLastStep && <ChevronRight className="h-4 w-4" />}

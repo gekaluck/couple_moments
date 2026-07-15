@@ -29,7 +29,6 @@ import EventPhotoGallery from "@/components/events/EventPhotoGallery";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 import LocalTime from "@/components/time/LocalTime";
 import BottomTabBar from "@/components/mobile/BottomTabBar";
-import FloatingActionButton from "@/components/mobile/FloatingActionButton";
 import { createEventPhoto, deleteEventPhoto, setEventPhotoAsCover } from "@/lib/events";
 
 const PencilIcon = () => (
@@ -458,7 +457,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
           <div className="flex flex-wrap items-center justify-end gap-2">
             {isPast ? (
               <Link
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-200 bg-white/90 text-rose-600 shadow-[var(--shadow-sm)] transition hover:border-rose-300 hover:bg-rose-50"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rose-200 bg-white/90 text-rose-600 shadow-[var(--shadow-sm)] transition hover:border-rose-300 hover:bg-rose-50"
                 href={`/spaces/${event.coupleSpaceId}/calendar?repeat=${event.id}`}
                 title="Do this again"
                 aria-label="Do this again"
@@ -467,7 +466,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
               </Link>
             ) : null}
             <Link
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-slate-300 hover:bg-white"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-slate-300 hover:bg-white"
               href={`/events/${event.id}?edit=1`}
               title="Edit event"
               aria-label="Edit event"
@@ -476,7 +475,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             </Link>
             <ConfirmForm action={handleDeleteFromHeader} message="Delete this event?">
               <button
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-white/90 text-red-600 shadow-[var(--shadow-sm)] transition hover:border-red-300 hover:bg-red-50"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-red-200 bg-white/90 text-red-600 shadow-[var(--shadow-sm)] transition hover:border-red-300 hover:bg-red-50"
                 type="submit"
                 title="Delete event"
                 aria-label="Delete event"
@@ -539,7 +538,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
               <span className="event-details-label">Created by</span>
               <span className="event-details-value inline-flex items-center gap-2">
                 <span
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold text-white"
                   style={{
                     backgroundImage: creatorVisual
                       ? getAvatarGradient(creatorVisual.accent)
@@ -585,7 +584,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
           {event.description ? (
             <div className="mt-4 rounded-xl border border-rose-100/80 bg-white/70 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
                 Description
               </p>
               <p className="mt-2 text-sm leading-relaxed text-[var(--text-primary)]">
@@ -596,7 +595,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
           {isPast && partnerMembers.length > 0 ? (
             <div className="mt-3 rounded-xl border border-rose-100/80 bg-white/70 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
                 Partner ratings
               </p>
               <div className="mt-2 space-y-2">
@@ -719,6 +718,10 @@ export default async function EventPage({ params, searchParams }: PageProps) {
           </section>
         ) : null}
 
+        {/* Memory photos belong to dates that already happened. Upcoming events
+            only show the section if photos somehow already exist (e.g. the
+            event was rescheduled after an upload). */}
+        {isPast || photos.length > 0 ? (
         <EventPhotoGallery
           canUploadDirectly={Boolean(cloudinaryCloudName && cloudinaryUploadPreset)}
           cloudName={cloudinaryCloudName}
@@ -741,6 +744,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
           onSetPhotoAsCover={handleSetPhotoAsCover}
           uploadPreset={cloudinaryUploadPreset}
         />
+        ) : null}
 
         <EventComments
           eventId={event.id}
@@ -795,9 +799,9 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             : null
         }
       />
-      {/* Restore the mobile app shell on this route (it lives outside the space
-          layout), so global navigation persists on the most-tapped screen. */}
-      <FloatingActionButton spaceId={spaceIdForActions} />
+      {/* Restore the mobile bottom nav on this route (it lives outside the space
+          layout), so global navigation persists on the most-tapped screen.
+          The create FAB is intentionally omitted on detail pages. */}
       <BottomTabBar spaceId={spaceIdForActions} />
     </div>
   );

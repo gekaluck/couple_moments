@@ -169,7 +169,7 @@ export default function SpaceNav({
               <p className="max-w-[260px] truncate text-lg font-semibold tracking-[-0.015em] text-[var(--accent-strong)] brand-text">
                 {spaceName}
               </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
                 <span className="rounded-full border border-rose-200/80 bg-rose-50/80 px-2 py-0.5 text-rose-700">
                   Cozy space
                 </span>

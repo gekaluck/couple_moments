@@ -2,7 +2,16 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Clock, MapPin, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
+import {
+  Clock,
+  MapPin,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Plus,
+  X,
+} from "lucide-react";
 
 type AgendaEvent = {
   id: string;
@@ -59,6 +68,10 @@ type MobileAgendaViewProps = {
   timeFormat: "12h" | "24h";
   monthTitle: string;
   monthGrid?: MonthGrid;
+  /** Month navigation, folded into the strip header on mobile so the page
+      doesn't need a separate Prev/Next pill row. */
+  prevHref?: string;
+  nextHref?: string;
 };
 
 const DEFAULT_DAYS_SHOWN = 7;
@@ -135,9 +148,19 @@ type MonthStripProps = {
   grid: MonthGrid;
   selectedKey: string | null;
   onSelectDay: (dateKey: string) => void;
+  monthTitle?: string;
+  prevHref?: string;
+  nextHref?: string;
 };
 
-function MonthStrip({ grid, selectedKey, onSelectDay }: MonthStripProps) {
+function MonthStrip({
+  grid,
+  selectedKey,
+  onSelectDay,
+  monthTitle,
+  prevHref,
+  nextHref,
+}: MonthStripProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const weeks = useMemo(() => {
@@ -187,12 +210,41 @@ function MonthStrip({ grid, selectedKey, onSelectDay }: MonthStripProps) {
   ];
 
   return (
-    <div className="mb-3 rounded-2xl border border-[var(--panel-border)] bg-white/75 px-2 pt-2 shadow-[var(--shadow-xs)]">
+    <div className="mb-3 rounded-2xl border border-[var(--panel-border)] bg-white/75 px-2 pt-1 shadow-[var(--shadow-xs)]">
+      {monthTitle ? (
+        <div className="flex items-center justify-between">
+          {prevHref ? (
+            <Link
+              href={prevHref}
+              aria-label="Previous month"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-white active:scale-95"
+            >
+              <ChevronLeft size={18} />
+            </Link>
+          ) : (
+            <span className="h-11 w-11" />
+          )}
+          <span className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)] font-[var(--font-display)]">
+            {monthTitle}
+          </span>
+          {nextHref ? (
+            <Link
+              href={nextHref}
+              aria-label="Next month"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-white active:scale-95"
+            >
+              <ChevronRight size={18} />
+            </Link>
+          ) : (
+            <span className="h-11 w-11" />
+          )}
+        </div>
+      ) : null}
       <div className="grid grid-cols-7">
         {labels.map((label) => (
           <span
             key={label}
-            className="py-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
+            className="py-1 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]"
           >
             {label}
           </span>
@@ -277,6 +329,8 @@ export default function MobileAgendaView({
   timeFormat,
   monthTitle,
   monthGrid,
+  prevHref,
+  nextHref,
 }: MobileAgendaViewProps) {
   const [showPast, setShowPast] = useState(false);
   const [showAllUpcoming, setShowAllUpcoming] = useState(false);
@@ -465,6 +519,9 @@ export default function MobileAgendaView({
       grid={monthGrid}
       selectedKey={selectedKey}
       onSelectDay={handleSelectDay}
+      monthTitle={monthTitle}
+      prevHref={prevHref}
+      nextHref={nextHref}
     />
   ) : null;
 

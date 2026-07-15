@@ -78,7 +78,7 @@ export default function BetaChecklist({ spaceId }: BetaChecklistProps) {
   const percent = Math.round((completedCount / ITEMS.length) * 100);
 
   return (
-    <div id="beta-checklist" className="rounded-2xl border border-violet-100/90 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
+    <div id="beta-checklist" className="rounded-2xl border border-rose-100/90 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-[var(--text-primary)]">Beta Tester Checklist</p>
@@ -86,15 +86,15 @@ export default function BetaChecklist({ spaceId }: BetaChecklistProps) {
             Track high-signal flows before wider release.
           </p>
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700">
+        <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-[var(--accent-strong)]">
           <CheckCircle2 className="h-3.5 w-3.5" />
           {completedCount}/{ITEMS.length} done
         </div>
       </div>
 
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-violet-100/80">
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-rose-100/80">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all"
+          className="h-full rounded-full bg-cta transition-all"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -103,11 +103,11 @@ export default function BetaChecklist({ spaceId }: BetaChecklistProps) {
         {ITEMS.map((item) => {
           const checked = Boolean(state[item.id]);
           return (
-            <li key={item.id} className="rounded-xl border border-violet-100/80 bg-violet-50/60 px-3 py-2">
+            <li key={item.id} className="rounded-xl border border-rose-100/80 bg-rose-50/50 px-3 py-2">
               <label className="flex cursor-pointer items-start gap-2">
                 <input
                   type="checkbox"
-                  className="mt-0.5 h-4 w-4 rounded border-violet-300 accent-violet-600"
+                  className="mt-0.5 h-4 w-4 rounded border-rose-300 accent-[#d94f5c]"
                   checked={checked}
                   onChange={(event) =>
                     setState((prev) => {
@@ -138,7 +138,7 @@ export default function BetaChecklist({ spaceId }: BetaChecklistProps) {
               window.localStorage.removeItem(storageKey);
             }
           }}
-          className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50"
+          className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-[var(--accent-strong)] transition hover:bg-rose-50"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Reset checklist

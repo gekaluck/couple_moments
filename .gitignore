@@ -63,3 +63,6 @@ nul
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Screenshot capture harness output
+.screenshots/
