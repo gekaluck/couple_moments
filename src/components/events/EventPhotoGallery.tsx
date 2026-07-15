@@ -24,13 +24,16 @@ type EventPhoto = {
 type EventPhotoGalleryProps = {
   initialPhotos: EventPhoto[];
   canUploadDirectly: boolean;
-  cloudName?: string;
-  uploadPreset?: string;
   currentUser: {
     name: string | null;
     email: string;
   };
   onCreatePhoto: (input: { storageUrl: string }) => Promise<{
+    id: string;
+    storageUrl: string;
+    createdAtIso: string;
+  }>;
+  onUploadPhoto: (formData: FormData) => Promise<{
     id: string;
     storageUrl: string;
     createdAtIso: string;
@@ -49,62 +52,12 @@ function getUploaderLabel(photo: EventPhoto) {
   return photo.uploadedBy.name || photo.uploadedBy.email;
 }
 
-function uploadToCloudinary(params: {
-  file: File;
-  cloudName: string;
-  uploadPreset: string;
-  onProgress: (value: number) => void;
-}) {
-  const { file, cloudName, uploadPreset, onProgress } = params;
-
-  return new Promise<string>((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open(
-      "POST",
-      `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`,
-    );
-
-    request.upload.onprogress = (event) => {
-      if (!event.lengthComputable) {
-        return;
-      }
-      onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
-    };
-
-    request.onload = () => {
-      try {
-        const payload = JSON.parse(request.responseText) as {
-          secure_url?: string;
-          error?: { message?: string };
-        };
-        if (request.status >= 200 && request.status < 300 && payload.secure_url) {
-          resolve(payload.secure_url);
-          return;
-        }
-        reject(new Error(payload.error?.message || "Cloudinary upload failed."));
-      } catch {
-        reject(new Error("Cloudinary upload failed."));
-      }
-    };
-
-    request.onerror = () => {
-      reject(new Error("Cloudinary upload failed."));
-    };
-
-    const body = new FormData();
-    body.set("file", file);
-    body.set("upload_preset", uploadPreset);
-    request.send(body);
-  });
-}
-
 export default function EventPhotoGallery({
   initialPhotos,
   canUploadDirectly,
-  cloudName,
-  uploadPreset,
   currentUser,
   onCreatePhoto,
+  onUploadPhoto,
   onDeletePhoto,
   onSetPhotoAsCover,
 }: EventPhotoGalleryProps) {
@@ -113,7 +66,6 @@ export default function EventPhotoGallery({
   const [urlValue, setUrlValue] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [photoPendingDelete, setPhotoPendingDelete] = useState<EventPhoto | null>(null);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -139,8 +91,11 @@ export default function EventPhotoGallery({
     return `Upload images up to ${formatFileSize(MAX_EVENT_PHOTO_FILE_SIZE_BYTES)} or paste an HTTPS image URL.`;
   }, [canUploadDirectly, hasReachedPhotoLimit]);
 
-  async function persistPhoto(storageUrl: string) {
-    const createdPhoto = await onCreatePhoto({ storageUrl });
+  function appendCreatedPhoto(createdPhoto: {
+    id: string;
+    storageUrl: string;
+    createdAtIso: string;
+  }) {
     setPhotos((current) => [
       ...current,
       {
@@ -156,10 +111,14 @@ export default function EventPhotoGallery({
     ]);
   }
 
+  async function persistPhoto(storageUrl: string) {
+    const createdPhoto = await onCreatePhoto({ storageUrl });
+    appendCreatedPhoto(createdPhoto);
+  }
+
   function resetUploadState() {
     setSelectedFile(null);
     setUrlValue("");
-    setUploadProgress(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -195,7 +154,7 @@ export default function EventPhotoGallery({
     if (hasReachedPhotoLimit) {
       return;
     }
-    if (!selectedFile || !cloudName || !uploadPreset) {
+    if (!selectedFile) {
       setInlineError("Select an image first.");
       return;
     }
@@ -207,16 +166,12 @@ export default function EventPhotoGallery({
     }
 
     setInlineError(null);
-    setUploadProgress(0);
     startTransition(async () => {
       try {
-        const storageUrl = await uploadToCloudinary({
-          file: selectedFile,
-          cloudName,
-          uploadPreset,
-          onProgress: setUploadProgress,
-        });
-        await persistPhoto(storageUrl);
+        const body = new FormData();
+        body.set("photo", selectedFile);
+        const createdPhoto = await onUploadPhoto(body);
+        appendCreatedPhoto(createdPhoto);
         resetUploadState();
         toast.success("Photo uploaded.");
       } catch (error) {
@@ -224,8 +179,6 @@ export default function EventPhotoGallery({
           error instanceof Error ? error.message : "Failed to upload photo.";
         setInlineError(message);
         toast.error(message);
-      } finally {
-        setUploadProgress(null);
       }
     });
   }
@@ -332,18 +285,8 @@ export default function EventPhotoGallery({
                   {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)
                 </p>
               ) : null}
-              {uploadProgress !== null ? (
-                <div className="space-y-2">
-                  <div className="h-2 overflow-hidden rounded-full bg-rose-100">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-rose-500 to-pink-600 transition-[width]"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Uploading... {uploadProgress}%
-                  </p>
-                </div>
+              {isPending ? (
+                <p className="text-xs text-[var(--text-muted)]">Uploading photo...</p>
               ) : null}
               <div className="flex flex-wrap justify-end gap-2">
                 <Button

@@ -4,7 +4,16 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import { createEventComment, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
+import {
+  createEventComment,
+  createEventPhoto,
+  createEventPhotoFromFile,
+  deleteEvent,
+  deleteEventPhoto,
+  setEventPhotoAsCover,
+  updateEvent,
+  updateEventRating,
+} from "@/lib/events";
 import {
   cancelGoogleCalendarEvent,
   getGoogleEventDeleteContext,
@@ -30,7 +39,6 @@ import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 import LocalTime from "@/components/time/LocalTime";
 import BottomTabBar from "@/components/mobile/BottomTabBar";
 import FloatingActionButton from "@/components/mobile/FloatingActionButton";
-import { createEventPhoto, deleteEventPhoto, setEventPhotoAsCover } from "@/lib/events";
 
 const PencilIcon = () => (
   <svg
@@ -306,6 +314,28 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       eventIdForActions,
       currentUserId,
       input.storageUrl,
+    );
+    revalidatePath(`/events/${eventIdForActions}`);
+    revalidatePath(`/spaces/${spaceIdForActions}/memories`);
+
+    return {
+      id: photo.id,
+      storageUrl: photo.storageUrl,
+      createdAtIso: photo.createdAt.toISOString(),
+    };
+  }
+
+  async function handleUploadPhoto(formData: FormData) {
+    "use server";
+    const currentUserId = await requireUserId();
+    const file = formData.get("photo");
+    if (!(file instanceof File)) {
+      throw new Error("Select an image first.");
+    }
+    const photo = await createEventPhotoFromFile(
+      eventIdForActions,
+      currentUserId,
+      file,
     );
     revalidatePath(`/events/${eventIdForActions}`);
     revalidatePath(`/spaces/${spaceIdForActions}/memories`);
@@ -721,7 +751,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
         <EventPhotoGallery
           canUploadDirectly={Boolean(cloudinaryCloudName && cloudinaryUploadPreset)}
-          cloudName={cloudinaryCloudName}
           currentUser={{
             name: currentUser.name,
             email: currentUser.email,
@@ -737,9 +766,9 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             },
           }))}
           onCreatePhoto={handleCreatePhoto}
+          onUploadPhoto={handleUploadPhoto}
           onDeletePhoto={handleDeletePhoto}
           onSetPhotoAsCover={handleSetPhotoAsCover}
-          uploadPreset={cloudinaryUploadPreset}
         />
 
         <EventComments

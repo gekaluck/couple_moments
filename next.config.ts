@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   // Acknowledge Sentry uses webpack while Next.js 16 defaults to Turbopack
   // This silences the build error while Sentry adds full Turbopack support
   turbopack: {},
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 export default process.env.NODE_ENV === "development"
