@@ -45,7 +45,9 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
           </span>
           <div>
             <p className="text-sm font-semibold text-amber-900">Private Beta</p>
-            <p className="text-xs text-amber-800/90">
+            {/* Secondary copy is desktop-only: on a phone this bar was ~118px of
+                the first screen on every tab until dismissed. */}
+            <p className="hidden text-xs text-amber-800/90 sm:block">
               Features are stable but still being tuned. Please report anything confusing or broken.
             </p>
           </div>
@@ -53,7 +55,7 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
         <div className="flex items-center gap-2">
           <Link
             href={`/spaces/${spaceId}/settings#beta-checklist`}
-            className="rounded-full border border-amber-300 bg-white/90 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-50"
+            className="hidden rounded-full border border-amber-300 bg-white/90 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-50 sm:inline-block"
           >
             Open checklist
           </Link>
