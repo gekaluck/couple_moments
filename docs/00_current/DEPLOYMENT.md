@@ -33,7 +33,7 @@ Required if Google Maps place search is enabled:
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...
 ```
 
-Required if Cloudinary photo upload is enabled:
+Required if event photo file upload is enabled. The app receives the uploaded file in a server action, sends it to Cloudinary, and stores the returned URL:
 
 ```bash
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...

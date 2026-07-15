@@ -70,7 +70,8 @@ Main entities:
 - Event detail handles comments, ratings, place metadata, and photos.
 
 ### Photo uploads
-- Cloudinary upload path is supported when env vars are configured.
+- Event detail accepts file uploads through a server action when Cloudinary env vars are configured.
+- The server validates membership, file size/type, uploads the file bytes to Cloudinary, and persists the returned image URL.
 - URL-based photo add fallback is also supported.
 
 ### Calendar availability

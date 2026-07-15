@@ -32,8 +32,8 @@ The app will be available at `http://localhost:3000`.
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | No | Cloudinary cloud name for photo uploads |
-| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | No | Cloudinary unsigned upload preset |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | No | Cloudinary cloud name for server-side photo file uploads |
+| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | No | Cloudinary unsigned upload preset for server-side photo file uploads |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | No | Google Maps API key for place search |
 
 ### Useful Commands

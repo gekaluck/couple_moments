@@ -4,7 +4,16 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import { createEventComment, deleteEvent, updateEvent, updateEventRating } from "@/lib/events";
+import {
+  createEventComment,
+  createEventPhoto,
+  createEventPhotoFromFile,
+  deleteEvent,
+  deleteEventPhoto,
+  setEventPhotoAsCover,
+  updateEvent,
+  updateEventRating,
+} from "@/lib/events";
 import {
   cancelGoogleCalendarEvent,
   getGoogleEventDeleteContext,
@@ -29,7 +38,6 @@ import EventPhotoGallery from "@/components/events/EventPhotoGallery";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 import LocalTime from "@/components/time/LocalTime";
 import BottomTabBar from "@/components/mobile/BottomTabBar";
-import { createEventPhoto, deleteEventPhoto, setEventPhotoAsCover } from "@/lib/events";
 
 const PencilIcon = () => (
   <svg
@@ -314,6 +322,38 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       storageUrl: photo.storageUrl,
       createdAtIso: photo.createdAt.toISOString(),
     };
+  }
+
+  async function handleUploadPhoto(formData: FormData) {
+    "use server";
+    try {
+      const currentUserId = await requireUserId();
+      const file = formData.get("photo");
+      if (!(file instanceof File)) {
+        return { success: false as const, error: "Select an image first." };
+      }
+      const photo = await createEventPhotoFromFile(
+        eventIdForActions,
+        currentUserId,
+        file,
+      );
+      revalidatePath(`/events/${eventIdForActions}`);
+      revalidatePath(`/spaces/${spaceIdForActions}/memories`);
+
+      return {
+        success: true as const,
+        data: {
+          id: photo.id,
+          storageUrl: photo.storageUrl,
+          createdAtIso: photo.createdAt.toISOString(),
+        },
+      };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : "Failed to upload photo.",
+      };
+    }
   }
 
   async function handleDeletePhoto(input: { photoId: string }) {
@@ -718,32 +758,28 @@ export default async function EventPage({ params, searchParams }: PageProps) {
           </section>
         ) : null}
 
-        {/* Memory photos belong to dates that already happened. Upcoming events
-            only show the section if photos somehow already exist (e.g. the
-            event was rescheduled after an upload). */}
-        {isPast || photos.length > 0 ? (
-        <EventPhotoGallery
-          canUploadDirectly={Boolean(cloudinaryCloudName && cloudinaryUploadPreset)}
-          cloudName={cloudinaryCloudName}
-          currentUser={{
-            name: currentUser.name,
-            email: currentUser.email,
-          }}
-          initialPhotos={photos.map((photo) => ({
-            id: photo.id,
-            storageUrl: photo.storageUrl,
-            createdAtIso: photo.createdAt.toISOString(),
-            isCover: photo.isCover,
-            uploadedBy: {
-              name: photo.uploadedBy.name,
-              email: photo.uploadedBy.email,
-            },
-          }))}
-          onCreatePhoto={handleCreatePhoto}
-          onDeletePhoto={handleDeletePhoto}
-          onSetPhotoAsCover={handleSetPhotoAsCover}
-          uploadPreset={cloudinaryUploadPreset}
-        />
+        {isPast ? (
+          <EventPhotoGallery
+            canUploadDirectly={Boolean(cloudinaryCloudName && cloudinaryUploadPreset)}
+            currentUser={{
+              name: currentUser.name,
+              email: currentUser.email,
+            }}
+            initialPhotos={photos.map((photo) => ({
+              id: photo.id,
+              storageUrl: photo.storageUrl,
+              createdAtIso: photo.createdAt.toISOString(),
+              isCover: photo.isCover,
+              uploadedBy: {
+                name: photo.uploadedBy.name,
+                email: photo.uploadedBy.email,
+              },
+            }))}
+            onCreatePhoto={handleCreatePhoto}
+            onUploadPhoto={handleUploadPhoto}
+            onDeletePhoto={handleDeletePhoto}
+            onSetPhotoAsCover={handleSetPhotoAsCover}
+          />
         ) : null}
 
         <EventComments

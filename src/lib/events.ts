@@ -11,11 +11,14 @@ import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { sanitizeHttpUrl } from "@/lib/parsers";
 import {
   isCloudinaryAssetUrl,
+  isSupportedImageFile,
   isSupportedImagePath,
   MAX_EVENT_PHOTOS,
+  MAX_EVENT_PHOTO_FILE_SIZE_BYTES,
 } from "@/lib/event-photos";
 
 const PHOTO_VALIDATION_TIMEOUT_MS = 5000;
+const PHOTO_UPLOAD_TIMEOUT_MS = 30000;
 
 type EventInput = {
   title: string;
@@ -395,6 +398,37 @@ export async function createEventPhoto(
   userId: string,
   storageUrl: string,
 ) {
+  const event = await getEventForPhotoMutation(eventId, userId);
+  const normalizedUrl = await validateEventPhotoUrl(storageUrl);
+  const existingPhotoCount = await ensureEventPhotoCapacity(eventId);
+  return persistEventPhoto({
+    event,
+    userId,
+    storageUrl: normalizedUrl,
+    existingPhotoCount,
+  });
+}
+
+export async function createEventPhotoFromFile(
+  eventId: string,
+  userId: string,
+  file: File,
+) {
+  const event = await getEventForPhotoMutation(eventId, userId);
+  validateEventPhotoFile(file);
+  const existingPhotoCount = await ensureEventPhotoCapacity(eventId);
+  const storageUrl = await uploadEventPhotoFile(file);
+  const normalizedUrl = await validateEventPhotoUrl(storageUrl);
+
+  return persistEventPhoto({
+    event,
+    userId,
+    storageUrl: normalizedUrl,
+    existingPhotoCount,
+  });
+}
+
+async function getEventForPhotoMutation(eventId: string, userId: string) {
   const event = await prisma.event.findFirst({
     where: {
       id: eventId,
@@ -408,18 +442,31 @@ export async function createEventPhoto(
   if (!event) {
     throw new Error("Event not found");
   }
-  const normalizedUrl = await validateEventPhotoUrl(storageUrl);
+  return event;
+}
+
+async function ensureEventPhotoCapacity(eventId: string) {
   const existingPhotoCount = await prisma.photo.count({
     where: { eventId },
   });
   if (existingPhotoCount >= MAX_EVENT_PHOTOS) {
     throw new Error(`You can add up to ${MAX_EVENT_PHOTOS} photos to one memory.`);
   }
+  return existingPhotoCount;
+}
+
+async function persistEventPhoto(params: {
+  event: Awaited<ReturnType<typeof getEventForPhotoMutation>>;
+  userId: string;
+  storageUrl: string;
+  existingPhotoCount: number;
+}) {
+  const { event, userId, storageUrl, existingPhotoCount } = params;
   const photo = await prisma.photo.create({
     data: {
-      eventId,
+      eventId: event.id,
       uploadedByUserId: userId,
-      storageUrl: normalizedUrl,
+      storageUrl,
       isCover: existingPhotoCount === 0,
     },
   });
@@ -434,6 +481,63 @@ export async function createEventPhoto(
   });
 
   return photo;
+}
+
+function validateEventPhotoFile(file: File) {
+  if (!file || file.size === 0) {
+    throw new Error("Select an image first.");
+  }
+  if (file.size > MAX_EVENT_PHOTO_FILE_SIZE_BYTES) {
+    throw new Error("Image is too large. Use a file under 10 MB.");
+  }
+  if (!isSupportedImageFile(file)) {
+    throw new Error("Photo must be a JPG, PNG, WebP, GIF, AVIF, or HEIC image.");
+  }
+}
+
+async function uploadEventPhotoFile(file: File) {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME?.trim();
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET?.trim();
+  if (!cloudName || !uploadPreset) {
+    throw new Error("Photo uploads are not configured.");
+  }
+
+  const body = new FormData();
+  body.set("file", file);
+  body.set("upload_preset", uploadPreset);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PHOTO_UPLOAD_TIMEOUT_MS);
+  try {
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`,
+      {
+        method: "POST",
+        body,
+        signal: controller.signal,
+      },
+    );
+    const payload = (await response.json().catch(() => null)) as {
+      secure_url?: string;
+      error?: { message?: string };
+    } | null;
+
+    if (response.ok && payload?.secure_url) {
+      return payload.secure_url;
+    }
+
+    throw new Error(payload?.error?.message || "Cloudinary upload failed.");
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === "AbortError") {
+        throw new Error("Upload timed out. Please try again.");
+      }
+      throw error;
+    }
+    throw new Error("Cloudinary upload failed.");
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function deleteEventPhoto(photoId: string, userId: string) {
