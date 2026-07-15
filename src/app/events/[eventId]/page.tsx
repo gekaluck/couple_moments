@@ -327,24 +327,34 @@ export default async function EventPage({ params, searchParams }: PageProps) {
 
   async function handleUploadPhoto(formData: FormData) {
     "use server";
-    const currentUserId = await requireUserId();
-    const file = formData.get("photo");
-    if (!(file instanceof File)) {
-      throw new Error("Select an image first.");
-    }
-    const photo = await createEventPhotoFromFile(
-      eventIdForActions,
-      currentUserId,
-      file,
-    );
-    revalidatePath(`/events/${eventIdForActions}`);
-    revalidatePath(`/spaces/${spaceIdForActions}/memories`);
+    try {
+      const currentUserId = await requireUserId();
+      const file = formData.get("photo");
+      if (!(file instanceof File)) {
+        return { success: false as const, error: "Select an image first." };
+      }
+      const photo = await createEventPhotoFromFile(
+        eventIdForActions,
+        currentUserId,
+        file,
+      );
+      revalidatePath(`/events/${eventIdForActions}`);
+      revalidatePath(`/spaces/${spaceIdForActions}/memories`);
 
-    return {
-      id: photo.id,
-      storageUrl: photo.storageUrl,
-      createdAtIso: photo.createdAt.toISOString(),
-    };
+      return {
+        success: true as const,
+        data: {
+          id: photo.id,
+          storageUrl: photo.storageUrl,
+          createdAtIso: photo.createdAt.toISOString(),
+        },
+      };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : "Failed to upload photo.",
+      };
+    }
   }
 
   async function handleDeletePhoto(input: { photoId: string }) {

@@ -529,6 +529,9 @@ async function uploadEventPhotoFile(file: File) {
     throw new Error(payload?.error?.message || "Cloudinary upload failed.");
   } catch (error) {
     if (error instanceof Error) {
+      if (error.name === "AbortError") {
+        throw new Error("Upload timed out. Please try again.");
+      }
       throw error;
     }
     throw new Error("Cloudinary upload failed.");

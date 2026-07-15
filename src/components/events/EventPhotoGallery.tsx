@@ -33,11 +33,20 @@ type EventPhotoGalleryProps = {
     storageUrl: string;
     createdAtIso: string;
   }>;
-  onUploadPhoto: (formData: FormData) => Promise<{
-    id: string;
-    storageUrl: string;
-    createdAtIso: string;
-  }>;
+  onUploadPhoto: (formData: FormData) => Promise<
+    | {
+        success: true;
+        data: {
+          id: string;
+          storageUrl: string;
+          createdAtIso: string;
+        };
+      }
+    | {
+        success: false;
+        error: string;
+      }
+  >;
   onDeletePhoto: (input: { photoId: string }) => Promise<void>;
   onSetPhotoAsCover: (input: { photoId: string }) => Promise<void>;
 };
@@ -170,8 +179,14 @@ export default function EventPhotoGallery({
       try {
         const body = new FormData();
         body.set("photo", selectedFile);
-        const createdPhoto = await onUploadPhoto(body);
-        appendCreatedPhoto(createdPhoto);
+        const result = await onUploadPhoto(body);
+        if (!result.success) {
+          const message = result.error || "Failed to upload photo.";
+          setInlineError(message);
+          toast.error(message);
+          return;
+        }
+        appendCreatedPhoto(result.data);
         resetUploadState();
         toast.success("Photo uploaded.");
       } catch (error) {
