@@ -96,7 +96,7 @@ export default async function ActivityPage({ params, searchParams }: PageProps) 
           </div>
             {hasNextPage ? (
               <Link
-                className="rounded-full border border-transparent bg-gradient-to-r from-rose-500 to-pink-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
+                className="rounded-full border border-transparent bg-cta px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
                 href={buildActivityHref(currentPage + 1)}
               >
                 Load more

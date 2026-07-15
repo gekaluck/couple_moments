@@ -21,13 +21,13 @@ export default function LoggedOutPage() {
         </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            className="rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-5 py-2 text-sm font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
+            className="rounded-full bg-cta px-5 py-2 text-sm font-semibold text-white shadow-[var(--shadow-md)] transition hover:shadow-[var(--shadow-lg)]"
             href="/login"
           >
             Log in again
           </Link>
           <Link
-            className="text-sm font-semibold text-rose-600 transition hover:text-rose-700 hover:underline"
+            className="text-sm font-semibold text-[var(--action-primary)] transition hover:text-[var(--action-primary-strong)] hover:underline"
             href="/"
           >
             Go to home

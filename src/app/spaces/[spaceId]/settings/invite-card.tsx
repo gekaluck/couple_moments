@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
+
+function subscribeNoop() {
+  return () => {};
+}
 
 type InviteCardProps = {
   inviteCode: string;
@@ -52,15 +56,16 @@ const ShareIcon = () => (
 export default function InviteCard({ inviteCode, isSpaceComplete = false, embedded = false }: InviteCardProps) {
   const [copied, setCopied] = useState<"link" | "code" | null>(null);
 
-  // Build the absolute URL only after mount. Reading window.location during
-  // render makes the server (relative) and client (absolute) markup disagree,
-  // which triggers a hydration mismatch. SSR + first client render both use the
-  // relative path; the effect upgrades to the absolute URL post-hydration.
+  // Reading window.location during render makes the server (relative) and
+  // client (absolute) markup disagree → hydration mismatch. The store snapshot
+  // pattern keeps SSR on the relative path and upgrades to the absolute URL on
+  // the client without a setState-in-effect (same approach as BetaNoticeBar).
   const relativeInvitePath = `/spaces/onboarding?invite=${inviteCode}`;
-  const [inviteUrl, setInviteUrl] = useState(relativeInvitePath);
-  useEffect(() => {
-    setInviteUrl(`${window.location.origin}${relativeInvitePath}`);
-  }, [relativeInvitePath]);
+  const inviteUrl = useSyncExternalStore(
+    subscribeNoop,
+    () => `${window.location.origin}${relativeInvitePath}`,
+    () => relativeInvitePath,
+  );
 
   const copyToClipboard = async (text: string, type: "link" | "code") => {
     try {
@@ -93,7 +98,7 @@ export default function InviteCard({ inviteCode, isSpaceComplete = false, embedd
     <>
       {!embedded ? (
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-lg shadow-rose-500/25">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cta text-white shadow-lg shadow-rose-500/25">
             <svg
               className="h-6 w-6"
               viewBox="0 0 24 24"

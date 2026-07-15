@@ -17,23 +17,23 @@ const SUGGESTED_TAGS = [
   { label: "cooking", category: "Food", color: "bg-amber-100 text-amber-700" },
 
   // Outdoor
-  { label: "outdoor", category: "Outdoor", color: "bg-emerald-100 text-emerald-700" },
-  { label: "hiking", category: "Outdoor", color: "bg-emerald-100 text-emerald-700" },
-  { label: "beach", category: "Outdoor", color: "bg-emerald-100 text-emerald-700" },
-  { label: "picnic", category: "Outdoor", color: "bg-emerald-100 text-emerald-700" },
-  { label: "nature", category: "Outdoor", color: "bg-emerald-100 text-emerald-700" },
+  { label: "outdoor", category: "Outdoor", color: "bg-[#ebf1e7] text-[#5c7f50]" },
+  { label: "hiking", category: "Outdoor", color: "bg-[#ebf1e7] text-[#5c7f50]" },
+  { label: "beach", category: "Outdoor", color: "bg-[#ebf1e7] text-[#5c7f50]" },
+  { label: "picnic", category: "Outdoor", color: "bg-[#ebf1e7] text-[#5c7f50]" },
+  { label: "nature", category: "Outdoor", color: "bg-[#ebf1e7] text-[#5c7f50]" },
 
   // Entertainment
-  { label: "movie", category: "Entertainment", color: "bg-violet-100 text-violet-700" },
-  { label: "concert", category: "Entertainment", color: "bg-violet-100 text-violet-700" },
-  { label: "show", category: "Entertainment", color: "bg-violet-100 text-violet-700" },
-  { label: "weekend", category: "Entertainment", color: "bg-violet-100 text-violet-700" },
+  { label: "movie", category: "Entertainment", color: "bg-[#f3e6ee] text-[#96527a]" },
+  { label: "concert", category: "Entertainment", color: "bg-[#f3e6ee] text-[#96527a]" },
+  { label: "show", category: "Entertainment", color: "bg-[#f3e6ee] text-[#96527a]" },
+  { label: "weekend", category: "Entertainment", color: "bg-[#f3e6ee] text-[#96527a]" },
 
   // Travel
-  { label: "travel", category: "Travel", color: "bg-sky-100 text-sky-700" },
-  { label: "trip", category: "Travel", color: "bg-sky-100 text-sky-700" },
-  { label: "vacation", category: "Travel", color: "bg-sky-100 text-sky-700" },
-  { label: "adventure", category: "Travel", color: "bg-sky-100 text-sky-700" },
+  { label: "travel", category: "Travel", color: "bg-[#e5eef2] text-[#4a7488]" },
+  { label: "trip", category: "Travel", color: "bg-[#e5eef2] text-[#4a7488]" },
+  { label: "vacation", category: "Travel", color: "bg-[#e5eef2] text-[#4a7488]" },
+  { label: "adventure", category: "Travel", color: "bg-[#e5eef2] text-[#4a7488]" },
 
   // Cozy
   { label: "cozy", category: "Cozy", color: "bg-orange-100 text-orange-700" },

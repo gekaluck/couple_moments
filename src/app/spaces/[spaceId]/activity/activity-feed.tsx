@@ -91,8 +91,8 @@ const ACTIVITY_PRESENTATION: Record<ActivityType, ActivityPresentation> = {
   },
   comment_added: {
     eyebrow: "NOTED",
-    iconColorClass: "text-teal-600",
-    eyebrowColorClass: "text-teal-700",
+    iconColorClass: "text-[#4a7488]",
+    eyebrowColorClass: "text-[#4a7488]",
     icon: MessageCircle,
   },
   memory_completed: {
@@ -103,8 +103,8 @@ const ACTIVITY_PRESENTATION: Record<ActivityType, ActivityPresentation> = {
   },
   photo_added: {
     eyebrow: "ADDED PHOTOS",
-    iconColorClass: "text-violet-600",
-    eyebrowColorClass: "text-violet-700",
+    iconColorClass: "text-[#96527a]",
+    eyebrowColorClass: "text-[#96527a]",
     icon: Camera,
   },
 };
@@ -262,7 +262,7 @@ function ActivityRow({
           />
         ) : null}
         <LocalTime
-          className="ml-auto rounded-full border border-[var(--panel-border)] bg-white px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]"
+          className="ml-auto rounded-full border border-[var(--panel-border)] bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]"
           options={{ hour: "numeric", minute: "2-digit" }}
           timeFormat={timeFormat}
           value={entry.createdAt}
@@ -305,7 +305,7 @@ function ActivityRow({
               </p>
             ) : null}
             {entry.memory.photoCount > 0 ? (
-              <p className="text-[9.5px] font-medium uppercase tracking-[0.05em] text-[var(--text-tertiary)]">
+              <p className="text-[11px] font-medium uppercase tracking-[0.05em] text-[var(--text-tertiary)]">
                 {entry.memory.photoCount}{" "}
                 {entry.memory.photoCount === 1 ? "photo" : "photos"}
               </p>
@@ -361,7 +361,7 @@ function ActivityEmptyState({ spaceId }: { spaceId: string }) {
         </span>
       </div>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-rose-600">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-600">
           Nothing yet
         </p>
         <h3 className="mt-1.5 text-xl font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
@@ -374,7 +374,7 @@ function ActivityEmptyState({ spaceId }: { spaceId: string }) {
       </div>
       <div className="flex flex-wrap justify-center gap-2">
         <Link
-          className="rounded-full bg-gradient-to-r from-rose-500 to-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
+          className="rounded-full bg-cta px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
           href={`/spaces/${spaceId}/calendar`}
         >
           Plan a date
@@ -448,7 +448,7 @@ export default function ActivityFeed({
   return (
     <>
       <section className="px-1 pb-3 pt-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)]">
           Activity
         </p>
         <h1 className="mt-1 text-[22px] font-bold tracking-[-0.02em] text-[var(--text-primary)] md:text-[28px]">

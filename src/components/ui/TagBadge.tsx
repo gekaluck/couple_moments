@@ -12,14 +12,16 @@ type TagBadgeProps = {
   category?: TagCategory;
 };
 
+// Brand-adjacent tones (dusty, warm) instead of raw Tailwind hues — the
+// variety stays, the saturation matches the rose/peach palette (C-1).
 const CATEGORY_CLASS: Record<TagCategory, string> = {
-  romantic: "from-rose-500 to-pink-600",
-  food: "from-amber-500 to-orange-500",
-  outdoor: "from-emerald-500 to-teal-600",
-  entertainment: "from-violet-500 to-purple-600",
-  travel: "from-sky-500 to-blue-600",
-  cozy: "from-orange-400 to-amber-500",
-  default: "from-slate-500 to-slate-600",
+  romantic: "from-[#d94f5c] to-[#b83a48]",
+  food: "from-[#d4944c] to-[#b87a35]",
+  outdoor: "from-[#729b63] to-[#5c7f50]",
+  entertainment: "from-[#b06a8f] to-[#96527a]",
+  travel: "from-[#5f8fa3] to-[#4a7488]",
+  cozy: "from-[#dd9f57] to-[#c98a3f]",
+  default: "from-[#8b7f76] to-[#6f6259]",
 };
 
 const TAG_TO_CATEGORY: Record<string, TagCategory> = {

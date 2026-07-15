@@ -100,9 +100,9 @@ export default function PlanCard({
 
         {/* Mobile: compact tile with date block */}
         <div className="relative z-0 flex flex-1 gap-3 md:hidden">
-          <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-[var(--shadow-sm)]">
+          <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl bg-cta text-white shadow-[var(--shadow-sm)]">
             <LocalTime
-              className="text-[10px] font-bold uppercase leading-none tracking-[0.08em]"
+              className="text-[11px] font-bold uppercase leading-none tracking-[0.08em]"
               options={{ month: "short" }}
               value={dateTimeStart}
             />
@@ -183,7 +183,7 @@ export default function PlanCard({
         <CardHeader className="relative z-10">
           <div className="min-w-0 flex-1 space-y-1">
             {proximityLabel ? (
-              <span className="inline-flex rounded-full border border-rose-200/70 bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-rose-700">
+              <span className="inline-flex rounded-full border border-rose-200/70 bg-white/80 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-rose-700">
                 {proximityLabel}
               </span>
             ) : null}
@@ -212,7 +212,7 @@ export default function PlanCard({
             >
               <MessageSquare className="h-4 w-4" />
               {commentCount > 0 ? (
-                <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-semibold text-white">
                   {commentCount}
                 </span>
               ) : null}
@@ -256,7 +256,7 @@ export default function PlanCard({
                 value={dateTimeStart}
               />
               {!timeIsSet ? (
-                <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                <span className="rounded-full border border-rose-200 bg-white/80 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
                   Anytime
                 </span>
               ) : null}
@@ -265,7 +265,7 @@ export default function PlanCard({
               <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
                 <span
                   aria-hidden="true"
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
                   style={{ backgroundImage: getAvatarGradient(CREATOR_ACCENTS.rose) }}
                 >
                   {getInitials(createdBy.name, createdBy.email)}
