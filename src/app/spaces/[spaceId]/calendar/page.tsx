@@ -52,6 +52,7 @@ import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { CalendarEmptyState } from "@/components/calendar/CalendarEmptyState";
 import DayCell from "./day-cell";
 import MobileAgendaView from "@/components/calendar/MobileAgendaView";
+import { ChevronLeft, ChevronRight, Download } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ spaceId: string }>;
@@ -605,64 +606,56 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   return (
     <>
       <section className="surface overflow-hidden p-4 md:p-8">
-        <div className="grid gap-5 xl:grid-cols-[1fr_auto_1fr] xl:items-start">
-          <div className="space-y-4">
-            {/* The bottom tab bar already labels this screen on mobile; the
-                kicker + helper line cost ~90px of the first screen there. */}
-            <p className="section-kicker hidden md:block">Calendar</p>
-            <p className="section-subtitle hidden md:block">
-              Add an event or block time from the calendar.
-            </p>
-            <CalendarAddControls
-              key={`add-controls-${initialEventDate ?? "none"}-${repeatEventId ?? "none"}-${openAction || "none"}`}
-              onCreateEvent={handleCreate}
-              onCreateBlock={handleCreateBlock}
-              initialEventDate={initialEventDate}
-              prefillData={prefillData}
-              autoOpenBlock={autoOpenBlock}
-              hasGoogleCalendar={hasGoogleCalendar}
-              mapsApiKey={mapsApiKey}
-            />
-          </div>
+        {/* One-row header: create actions · month nav · view tools. The old
+            version stacked kicker + helper + two mini-rows into a ~110px band. */}
+        <div className="grid items-center gap-4 xl:grid-cols-[1fr_auto_1fr]">
+          <CalendarAddControls
+            key={`add-controls-${initialEventDate ?? "none"}-${repeatEventId ?? "none"}-${openAction || "none"}`}
+            onCreateEvent={handleCreate}
+            onCreateBlock={handleCreateBlock}
+            initialEventDate={initialEventDate}
+            prefillData={prefillData}
+            autoOpenBlock={autoOpenBlock}
+            hasGoogleCalendar={hasGoogleCalendar}
+            mapsApiKey={mapsApiKey}
+          />
           {/* On mobile the month nav lives inside the agenda's month strip. */}
-          <div className="hidden flex-col items-center gap-3 md:flex xl:justify-self-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--panel-border)] bg-white/90 p-1 shadow-[var(--shadow-sm)] md:gap-2 md:p-1.5">
-              <Link
-                className="pill-button button-hover min-w-[54px] justify-center text-xs md:min-w-[70px] md:text-sm"
-                href={buildCalendarHref(monthParam(prevMonth))}
-              >
-                Prev
-              </Link>
-              <div className="min-w-0 px-2 text-center md:min-w-[220px] md:px-3">
-                <h2 className="whitespace-nowrap text-lg font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl">
-                  {formatMonthTitle(now)}
-                </h2>
-              </div>
-              <Link
-                className="pill-button button-hover min-w-[54px] justify-center text-xs md:min-w-[70px] md:text-sm"
-                href={buildCalendarHref(monthParam(nextMonth))}
-              >
-                Next
-              </Link>
-            </div>
+          <div className="hidden items-center gap-1 md:flex xl:justify-self-center">
             <Link
-              className="pill-button button-hover hidden md:inline-flex"
+              aria-label="Previous month"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-white hover:text-[var(--text-primary)] hover:shadow-[var(--shadow-sm)]"
+              href={buildCalendarHref(monthParam(prevMonth))}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Link>
+            <h2 className="min-w-[220px] whitespace-nowrap px-2 text-center text-3xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
+              {formatMonthTitle(now)}
+            </h2>
+            <Link
+              aria-label="Next month"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-white hover:text-[var(--text-primary)] hover:shadow-[var(--shadow-sm)]"
+              href={buildCalendarHref(monthParam(nextMonth))}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Link>
+            <Link
+              className="pill-button button-hover ml-2 px-3 py-1.5 text-xs"
               href={buildCalendarHref(monthParam(today))}
             >
-              Jump to today
+              Today
             </Link>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)] xl:justify-end">
-            <div className="hidden items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 p-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)] sm:flex">
+          <div className="hidden flex-wrap items-center gap-2 md:flex xl:justify-self-end">
+            <div className="flex items-center gap-0.5 rounded-full border border-[var(--panel-border)] bg-white/80 p-0.5 text-xs font-medium">
               <Link
-                className={`rounded-full px-3 py-1 transition ${isCompact ? "bg-[var(--action-primary)] text-white" : "text-[var(--text-muted)]"
+                className={`rounded-full px-3 py-1.5 transition ${isCompact ? "bg-[var(--action-primary)] text-white" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}
                 href={buildCalendarHref(monthParam(now), { density: "compact" })}
               >
                 Compact
               </Link>
               <Link
-                className={`rounded-full px-3 py-1 transition ${!isCompact ? "bg-[var(--action-primary)] text-white" : "text-[var(--text-muted)]"
+                className={`rounded-full px-3 py-1.5 transition ${!isCompact ? "bg-[var(--action-primary)] text-white" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}
                 href={buildCalendarHref(monthParam(now), { density: "comfortable" })}
               >
@@ -670,24 +663,13 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               </Link>
             </div>
             <a
-              className="hidden items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--accent-strong)] sm:inline-flex pill-button button-hover"
+              aria-label="Export to calendar app"
+              className="pill-button button-hover flex h-9 w-9 items-center justify-center !p-0"
               href={`/api/spaces/${space.id}/calendar.ics`}
               download
               title="Export to calendar app"
             >
-              <svg
-                aria-hidden="true"
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M7 10l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 15V3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Export
+              <Download className="h-4 w-4" />
             </a>
           </div>
         </div>
