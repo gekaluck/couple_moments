@@ -4,6 +4,7 @@ import { type FocusEventHandler, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 import type { CalendarTimeFormat } from "@/lib/calendar";
 import LocalTime from "@/components/time/LocalTime";
@@ -152,16 +153,18 @@ export default function SpaceNav({
 
   return (
     <nav className="site-nav sticky top-3 z-50 px-4 hidden md:block">
-      <div className="mx-auto w-full max-w-[1220px] rounded-[32px] border border-white/70 bg-[linear-gradient(155deg,rgba(255,255,255,0.9),rgba(255,241,247,0.8),rgba(242,248,255,0.78))] px-4 py-3 shadow-[var(--shadow-soft)] backdrop-blur-xl md:px-5">
+      <div className="mx-auto w-full max-w-[1220px] rounded-[32px] border border-white/70 bg-[linear-gradient(155deg,rgba(255,255,255,0.9),rgba(255,241,247,0.8),rgba(252,242,232,0.78))] px-4 py-3 shadow-[var(--shadow-soft)] backdrop-blur-xl md:px-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href={`/spaces/${spaceId}/calendar`} className="flex-shrink-0 -my-3">
+            {/* Icon-only mark: the full logo PNG bakes in a "duet" wordmark
+                that fought with the space name sitting right next to it. */}
+            <Link href={`/spaces/${spaceId}/calendar`} className="flex-shrink-0">
               <Image
-                src="/duet-logo.png"
+                src="/duet-icon.png"
                 alt="Duet"
-                width={300}
-                height={88}
-                className="h-16 w-auto transition-transform duration-200 hover:scale-[1.03]"
+                width={192}
+                height={192}
+                className="h-10 w-10 transition-transform duration-200 hover:scale-[1.05]"
                 priority
               />
             </Link>
@@ -169,10 +172,7 @@ export default function SpaceNav({
               <p className="max-w-[260px] truncate text-lg font-semibold tracking-[-0.015em] text-[var(--accent-strong)] brand-text">
                 {spaceName}
               </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                <span className="rounded-full border border-rose-200/80 bg-rose-50/80 px-2 py-0.5 text-rose-700">
-                  Cozy space
-                </span>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[var(--text-muted)]">
                 <Link
                   href={todaySummary.href}
                   className="inline-flex max-w-[280px] items-center gap-1 rounded-full border border-[var(--panel-border)] bg-white/80 px-2 py-0.5 normal-case tracking-normal text-[11px] transition hover:border-rose-300"
@@ -216,7 +216,7 @@ export default function SpaceNav({
                     key={item.id}
                     className={`rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
                       isActive
-                        ? "bg-[var(--action-primary)] text-white shadow-[var(--shadow-sm)]"
+                        ? "bg-[var(--accent-soft)] font-semibold text-[var(--accent-strong)] shadow-[var(--shadow-sm)]"
                         : "text-[var(--text-secondary)] hover:bg-white hover:text-[var(--text-primary)]"
                     }`}
                     href={item.href}
@@ -231,10 +231,10 @@ export default function SpaceNav({
               <div className="relative" ref={createMenuRef} onBlur={handleCreateBlur}>
                 <button
                   ref={createButtonRef}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                     isCreateOpen
-                      ? "border-[var(--action-primary)] bg-[var(--accent-soft)] text-[var(--accent-strong)] shadow-[var(--shadow-sm)]"
-                      : "border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] hover:border-[var(--border-medium)] hover:bg-white"
+                      ? "bg-[var(--action-primary-strong)] text-white shadow-[var(--shadow-sm)]"
+                      : "bg-cta text-white shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)]"
                   }`}
                   type="button"
                   aria-label="Create new item"
@@ -302,12 +302,16 @@ export default function SpaceNav({
 
               <div className="hidden h-7 w-px bg-[var(--panel-border)] lg:block" />
 
+              {/* Quiet icon: an every-session pill next to "+ Create" gave
+                  sign-out the same visual weight as the primary action. */}
               <form action="/api/auth/logout" method="post" className="lg:ml-1">
                 <button
-                  className="rounded-full border border-[var(--border-medium)] bg-white/65 px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-all duration-200 hover:bg-white hover:text-[var(--text-primary)]"
                   type="submit"
+                  aria-label="Log out"
+                  title="Log out"
                 >
-                  Log out
+                  <LogOut className="h-4 w-4" />
                 </button>
               </form>
             </div>

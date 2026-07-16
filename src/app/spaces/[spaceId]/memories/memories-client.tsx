@@ -20,24 +20,6 @@ const CalendarIcon = () => (
   </svg>
 );
 
-const TagIcon = () => (
-  <svg
-    aria-hidden="true"
-    className="h-4 w-4"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-  >
-    <path
-      d="M20 10.5 13.5 4H6a2 2 0 0 0-2 2v7.5L10.5 20a2 2 0 0 0 2.8 0l6.7-6.7a2 2 0 0 0 0-2.8Z"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <circle cx="7.5" cy="7.5" r="1.5" strokeWidth="1.5" />
-  </svg>
-);
-
 type Memory = {
   id: string;
   title: string;
@@ -268,17 +250,19 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
     <div className="page-enter-stagger">
       <section className="surface-muted p-4 md:p-6">
         <div>
-          <p className="section-kicker uppercase tracking-[0.18em]">
-            Memories · {memories.length}
-          </p>
+          {/* One count, not three: the kicker count and permanent subtitle
+              duplicated the headline; a count only matters while filtering. */}
+          <p className="section-kicker uppercase tracking-[0.18em]">Memories</p>
           <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)] md:text-2xl">
             Revisit your highlights
           </h2>
-          <p className="mt-1 hidden text-sm text-[var(--text-muted)] md:block">
-            {memoriesCountLabel}
-          </p>
+          {hasActiveFilters ? (
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              {memoriesCountLabel}
+            </p>
+          ) : null}
         </div>
-        <div className="mt-4 rounded-2xl border border-[var(--panel-border)] bg-white/70 p-3">
+        <div className="mt-4">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative flex h-10 min-w-[220px] flex-1 items-center">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
@@ -323,29 +307,11 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 ))}
               </select>
             </div>
-            <div className="relative hidden h-10 items-center md:flex">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent-strong)]">
-                <TagIcon />
-              </span>
-              <select
-                className="h-10 rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
-                onChange={(event) => {
-                  setTag(event.target.value);
-                  setVisibleCount(12);
-                }}
-                value={tag}
-              >
-                <option value="all">All tags</option>
-                {tags.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
+          {/* The tag chips below are the single tag filter — the old "All
+              tags" dropdown duplicated them on desktop. */}
           {tags.length > 0 ? (
-            <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-[var(--panel-border)] px-1 pt-3 md:flex-wrap md:overflow-visible">
+            <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 md:flex-wrap md:overflow-visible">
               <button
                 className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   tag === "all"
@@ -380,7 +346,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             </div>
           ) : null}
           {years.length > 0 ? (
-            <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-[var(--panel-border)] px-1 pt-3 md:hidden">
+            <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 md:hidden">
               <button
                 className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   year === "all"
@@ -429,7 +395,9 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           />
         </div>
       ) : null}
-      <div className="stagger-children mx-auto flex max-w-4xl flex-col gap-2 md:gap-6">
+      {/* Desktop uses the full container width as a grid — the old
+          single-column max-w-4xl rows were ~1100px of mostly whitespace. */}
+      <div className="stagger-children flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-4 xl:grid-cols-3">
         {visibleMemories.map((event) => {
           const gradient =
             event.tags
@@ -439,11 +407,11 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           return (
             <div
               key={event.id}
-              className="group surface relative flex flex-row items-center gap-3 overflow-hidden p-3 transition-all duration-200 hover:shadow-lg md:min-h-[156px] md:items-center md:gap-4 md:p-6 md:hover:scale-[1.01]"
+              className="group surface relative flex flex-row items-center gap-3 overflow-hidden p-3 transition-all duration-200 hover:shadow-lg md:gap-4 md:p-4 md:hover:scale-[1.01]"
             >
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[linear-gradient(125deg,rgba(255,255,255,0),rgba(255,230,240,0.2),rgba(224,242,254,0.18))]"
+                className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[linear-gradient(125deg,rgba(255,255,255,0),rgba(255,230,240,0.2),rgba(253,240,226,0.18))]"
               />
               <Link
                 href={`/events/${event.id}?from=memories&spaceId=${encodeURIComponent(spaceId)}`}
@@ -456,13 +424,14 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 placeId={event.placeId}
                 title={event.title}
                 gradient={gradient}
+                sizeClass="h-[72px] w-[72px] min-h-[72px] min-w-[72px] md:h-[96px] md:w-[96px] md:min-h-[96px] md:min-w-[96px]"
               />
               <div className="relative z-[1] min-w-0 flex-1">
-                <h2 className="truncate text-[14.5px] font-semibold leading-tight tracking-[-0.01em] text-[var(--text-primary)] md:whitespace-normal md:text-xl md:font-[var(--font-display)]">
+                <h2 className="truncate text-[14.5px] font-semibold leading-tight tracking-[-0.01em] text-[var(--text-primary)] md:whitespace-normal md:text-lg md:font-[var(--font-display)]">
                   {event.title}
                 </h2>
                 {event.description ? (
-                  <p className="mt-0.5 truncate text-xs text-[var(--text-muted)] md:mt-2 md:whitespace-normal md:text-sm md:leading-relaxed">
+                  <p className="mt-0.5 truncate text-xs text-[var(--text-muted)] md:mt-1.5 md:line-clamp-2 md:whitespace-normal md:text-sm md:leading-relaxed">
                     {event.description}
                   </p>
                 ) : null}
@@ -483,7 +452,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                     </span>
                   ))}
                   <LocalTime
-                    className="ml-auto shrink-0 rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)] shadow-sm md:px-3 md:py-1 md:text-xs md:tracking-[0.2em]"
+                    className="ml-auto shrink-0 rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--text-muted)] shadow-sm md:px-3 md:py-1 md:text-xs"
                     options={{
                       month: "short",
                       day: "numeric",
