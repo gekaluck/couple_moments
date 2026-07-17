@@ -80,14 +80,15 @@ test("capture mobile screens", async ({ page }) => {
     .getByRole("button", { name: "Skip tour" })
     .click({ timeout: 3_000 })
     .catch(() => {});
-  await shoot(page, "07-calendar-agenda");
+  await shoot(page, "07-calendar-month");
 
-  // Expand the month strip.
+  // Open a day with a plan to capture the focused detail state.
   await page
-    .getByRole("button", { name: /full month/i })
+    .locator('button[data-has-plan="true"]')
+    .first()
     .click({ timeout: 3_000 })
     .catch(() => {});
-  await shoot(page, "08-calendar-month-expanded");
+  await shoot(page, "08-calendar-day-detail");
 
   // Event detail (first agenda event link).
   const eventHref = await page
@@ -126,7 +127,7 @@ test("capture mobile screens", async ({ page }) => {
     .getByRole("button", { name: "Skip tour" })
     .click({ timeout: 3_000 })
     .catch(() => {});
-  await shoot(page, "14-calendar-agenda-360");
+  await shoot(page, "14-calendar-month-360");
   await page.goto(`/spaces/${spaceId}/memories`);
   await shoot(page, "15-memories-list-360");
 });
