@@ -54,6 +54,7 @@ export type MonthGridDay = {
   hasBlock: boolean;
   blockSpansPrev: boolean;
   blockSpansNext: boolean;
+  blockAccentColors: string[];
   addHref: string;
 };
 
@@ -260,6 +261,13 @@ function MonthStrip({
             const isMultiDayBlock =
               day.hasBlock && (day.blockSpansPrev || day.blockSpansNext);
             const isSelected = day.dateKey === selectedKey;
+            const blockColors = day.blockAccentColors.length
+              ? day.blockAccentColors
+              : ["var(--color-secondary)"];
+            const blockSpanBackground =
+              blockColors.length === 1
+                ? blockColors[0]
+                : `linear-gradient(90deg, ${blockColors.join(", ")})`;
             const numberClasses = day.isToday
               ? "flex h-6 w-6 items-center justify-center rounded-full bg-[var(--action-primary)] text-xs font-bold text-white"
               : `flex h-6 w-6 items-center justify-center text-xs ${
@@ -287,16 +295,23 @@ function MonthStrip({
                   {day.hasMemory ? (
                     <span className="h-1 w-1 rounded-full bg-[var(--calendar-memory-dot)]" />
                   ) : null}
-                  {day.hasBlock && !isMultiDayBlock ? (
-                    <span className="h-1 w-1 rounded-full bg-[var(--color-secondary)]" />
-                  ) : null}
+                  {day.hasBlock && !isMultiDayBlock
+                    ? blockColors.slice(0, 2).map((color) => (
+                        <span
+                          key={color}
+                          className="h-1 w-1 rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))
+                    : null}
                 </span>
                 {isMultiDayBlock ? (
                   <span
                     aria-hidden="true"
-                    className={`absolute bottom-1 left-0 right-0 h-[3px] bg-[var(--color-secondary)] ${
+                    className={`absolute bottom-1 left-0 right-0 h-[3px] ${
                       day.blockSpansPrev ? "" : "ml-2 rounded-l-full"
                     } ${day.blockSpansNext ? "" : "mr-2 rounded-r-full"}`}
+                    style={{ background: blockSpanBackground }}
                   />
                 ) : null}
               </button>
@@ -407,12 +422,16 @@ export default function MobileAgendaView({
                     {block.title}
                   </p>
                   <div className="mt-0.5 flex items-center gap-2 text-xs" style={{ color: block.accentText, opacity: 0.7 }}>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock size={11} />
-                      {formatTime(block.startAtIso, timeFormat)}
-                      {" - "}
-                      {formatTime(block.endAtIso, timeFormat)}
-                    </span>
+                    {block.source === "GOOGLE" ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Clock size={11} />
+                        {formatTime(block.startAtIso, timeFormat)}
+                        {" - "}
+                        {formatTime(block.endAtIso, timeFormat)}
+                      </span>
+                    ) : (
+                      <span>All day</span>
+                    )}
                     <span>
                       {block.creatorName}
                       {block.source === "GOOGLE" && " · Google"}

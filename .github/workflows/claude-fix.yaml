@@ -1,0 +1,32 @@
+name: Claude Auto-Fix
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:        # lets you trigger manually too
+    inputs:
+      issue_number: { required: true }
+
+jobs:
+  fix:
+    if: github.event.label.name == 'claude-fix' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # push the fix branch
+      pull-requests: write   # open the PR
+      issues: write          # comment back on the issue
+    steps:
+      - uses: actions/checkout@v4
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Bug filed as issue #${{ github.event.issue.number }}.
+            Title: ${{ github.event.issue.title }}
+            Body: ${{ github.event.issue.body }}
+
+            Use the fix-ui-bug skill to reproduce, fix, and verify this.
+            Open a pull request that closes #${{ github.event.issue.number }},
+            with a short description of the root cause and the change.
+          claude_args: |
+            --max-turns 20
+            --model claude-sonnet-5

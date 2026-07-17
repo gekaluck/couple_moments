@@ -8,9 +8,13 @@ import { getCoupleSpaceForUser } from "@/lib/couple-spaces";
 import { requireUserId } from "@/lib/current-user";
 import {
   dateKey,
+  dateKeyInTimeZone,
   formatMonthTitle,
   getMonthGrid,
   resolveCalendarTimeFormat,
+  resolveCalendarTimeZone,
+  shiftDateKey,
+  utcDateKey,
 } from "@/lib/calendar";
 import {
   createAvailabilityBlock,
@@ -50,6 +54,7 @@ import UpcomingPlansColumn from "@/components/planning/UpcomingPlansColumn";
 import AvailabilityBlockModal from "./availability-block-modal";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { CalendarEmptyState } from "@/components/calendar/CalendarEmptyState";
+import CalendarTimeZoneSync from "@/components/calendar/CalendarTimeZoneSync";
 import DayCell from "./day-cell";
 import MobileAgendaView from "@/components/calendar/MobileAgendaView";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
@@ -81,13 +86,18 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const calendarTimeFormat = resolveCalendarTimeFormat(
     cookieStore.get("cm_calendar_time_format")?.value,
   );
+  const calendarTimeZone = resolveCalendarTimeZone(
+    cookieStore.get("cm_time_zone")?.value,
+  );
   const weekStartsOn: 0 | 1 = calendarWeekStart === "monday" ? 1 : 0;
   const userId = await requireUserId();
   const { spaceId } = await params;
   const search = (await searchParams) ?? {};
+  const actualToday = new Date();
+  const localTodayKey = dateKeyInTimeZone(actualToday, calendarTimeZone);
   const selectedMonth = search.month
     ? new Date(`${search.month}-01T00:00:00`)
-    : new Date();
+    : new Date(`${localTodayKey}T00:00:00`);
   const now = Number.isNaN(selectedMonth.getTime()) ? new Date() : selectedMonth;
   const density = search.density === "compact" ? "compact" : "comfortable";
   const isCompact = density === "compact";
@@ -108,9 +118,12 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   // Store space ID for use in server actions (avoids TypeScript narrowing issues)
   const spaceIdForActions = space.id;
 
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-  const actualToday = new Date();
+  // Widen the UTC query window so events near a month boundary are still
+  // available for grouping in the viewer's local time zone.
+  const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 0));
+  const monthEnd = new Date(
+    Date.UTC(now.getFullYear(), now.getMonth() + 1, 2, 23, 59, 59, 999),
+  );
   const {
     events,
     blocks,
@@ -130,7 +143,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     actualToday,
   });
 
-  const eventsByDay = buildEventsByDay(events);
+  const eventsByDay = buildEventsByDay(events, calendarTimeZone);
 
   async function handleCreate(formData: FormData): Promise<CalendarActionResult | void> {
     "use server";
@@ -200,8 +213,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       throw new Error("Title and start/end dates are required.");
     }
 
-    const startAt = new Date(`${start}T00:00:00`);
-    const endAt = new Date(`${end}T23:59:59`);
+    const startAt = new Date(`${start}T00:00:00.000Z`);
+    const endAt = new Date(`${end}T23:59:59.999Z`);
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
       throw new Error("Invalid date range. Please try again.");
     }
@@ -230,8 +243,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       throw new Error("Title and start/end dates are required.");
     }
 
-    const startAt = new Date(`${start}T00:00:00`);
-    const endAt = new Date(`${end}T23:59:59`);
+    const startAt = new Date(`${start}T00:00:00.000Z`);
+    const endAt = new Date(`${end}T23:59:59.999Z`);
     if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) {
       throw new Error("Invalid date range. Please try again.");
     }
@@ -451,7 +464,8 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   const monthDays = getMonthGrid(now, weekStartsOn);
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const today = new Date();
+  const agendaTodayKey = dateKeyInTimeZone(actualToday, calendarTimeZone);
+  const today = new Date(`${agendaTodayKey}T00:00:00`);
   const dayLabels = calendarWeekStart === "monday"
     ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -471,7 +485,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     return `/spaces/${space.id}/calendar?${params.toString()}`;
   };
 
-  const blocksByDay = buildBlocksByDay(blocks);
+  const blocksByDay = buildBlocksByDay(blocks, calendarTimeZone);
   const { ideaCommentCounts, ideaCommentsByIdea } = buildIdeaCommentAggregates(
     ideaComments,
   );
@@ -508,15 +522,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     ? blocks.manual.find((block) => block.id === editBlockId)
     : null;
 
-  const formatDateInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = `${date.getMonth() + 1}`.padStart(2, "0");
-    const day = `${date.getDate()}`.padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+  const formatDateInput = (date: Date) => utcDateKey(date);
 
   // Build serialized agenda data for mobile view
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const todayStart = actualToday;
   const agendaDays = (() => {
     const dayMap = new Map<string, { events: typeof events; blocks: ReturnType<typeof blocksByDay.get> }>();
 
@@ -534,7 +543,9 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, data]) => ({
         dateKey: key,
-        dateIso: new Date(key + "T00:00:00").toISOString(),
+        // No trailing Z: the client intentionally parses this as a local
+        // calendar date instead of shifting it across a UTC boundary.
+        dateIso: `${key}T00:00:00`,
         events: (data.events ?? []).map((event) => ({
           id: event.id,
           title: event.title,
@@ -567,14 +578,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         }),
       }));
   })();
-  const agendaTodayKey = dateKey(today);
-
   // Compact month grid for the mobile calendar strip
-  const shiftDateKey = (key: string, deltaDays: number) => {
-    const date = new Date(key + "T00:00:00");
-    date.setDate(date.getDate() + deltaDays);
-    return dateKey(date);
-  };
   const agendaMonthGrid = {
     weekStartsOn,
     days: monthDays
@@ -589,6 +593,17 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         const nextIds = new Set(
           (blocksByDay.get(shiftDateKey(key, 1)) ?? []).map((block) => block.id),
         );
+        const blockAccentColors = Array.from(
+          new Set(
+            dayBlocks.map((block) => {
+              const createdByUserId = block.createdByUserId || "external";
+              return (
+                memberVisuals[createdByUserId]?.accent.accent ??
+                "var(--color-secondary)"
+              );
+            }),
+          ),
+        );
         return {
           dateKey: key,
           dayOfMonth: day.date.getDate(),
@@ -598,6 +613,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           hasBlock: dayBlocks.length > 0,
           blockSpansPrev: dayBlocks.some((block) => prevIds.has(block.id)),
           blockSpansNext: dayBlocks.some((block) => nextIds.has(block.id)),
+          blockAccentColors,
           addHref: buildCalendarHref(monthParam(now), { new: key }),
         };
       }),
@@ -605,6 +621,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
 
   return (
     <>
+      <CalendarTimeZoneSync serverTimeZone={calendarTimeZone} />
       <section className="surface overflow-hidden p-4 md:p-8">
         {/* One-row header: create actions · month nav · view tools. The old
             version stacked kicker + helper + two mini-rows into a ~110px band. */}
@@ -742,6 +759,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                 events={dayEvents}
                 blocks={dayBlocks}
                 timeFormat={calendarTimeFormat}
+                timeZone={calendarTimeZone}
                 addEventHref={buildCalendarHref(monthParam(now), { new: key })}
                 currentUserId={userId}
                 memberVisuals={memberVisuals}
