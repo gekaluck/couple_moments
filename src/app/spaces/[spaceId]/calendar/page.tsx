@@ -779,49 +779,51 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
         ) : null}
       </section>
-      <PlanningSection>
-        <div className="flex flex-col gap-8">
-          <IdeasColumn
-            key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
-            ideas={ideasForPlanning}
-            spaceId={space.id}
-            commentCounts={ideaCommentCounts}
-            commentsByIdea={ideaCommentsByIdea}
-            currentUserId={userId}
-            memberVisuals={memberVisuals}
-            mapsApiKey={mapsApiKey}
-            hasGoogleCalendar={hasGoogleCalendar}
-            onCreateIdea={handleCreateIdea}
-            onScheduleIdea={handleScheduleIdea}
-            onAddComment={handleIdeaComment}
-            onDeleteIdea={handleDeleteIdea}
-            onEditIdea={handleUpdateIdea}
-            autoOpen={autoOpenIdea}
-          />
-          <UpcomingPlansColumn
-            plans={upcomingEvents.map((event) => ({
-              id: event.id,
-              title: event.title,
-              description: event.description,
-              dateTimeStart: event.dateTimeStart,
-              timeIsSet: event.timeIsSet,
-              createdBy: event.createdBy
-                ? {
-                    name:
-                      memberVisuals[event.createdByUserId]?.displayName ??
-                      event.createdBy.name,
-                    email: event.createdBy.email,
-                  }
-                : undefined,
-              placeName: event.placeName,
-            }))}
-            commentCounts={eventCommentCounts}
-            newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
-            timeFormat={calendarTimeFormat}
-            onDeleteEvent={handleDeleteEvent}
-          />
-        </div>
-      </PlanningSection>
+      <div className="hidden md:block">
+        <PlanningSection>
+          <div className="flex flex-col gap-8">
+            <IdeasColumn
+              key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
+              ideas={ideasForPlanning}
+              spaceId={space.id}
+              commentCounts={ideaCommentCounts}
+              commentsByIdea={ideaCommentsByIdea}
+              currentUserId={userId}
+              memberVisuals={memberVisuals}
+              mapsApiKey={mapsApiKey}
+              hasGoogleCalendar={hasGoogleCalendar}
+              onCreateIdea={handleCreateIdea}
+              onScheduleIdea={handleScheduleIdea}
+              onAddComment={handleIdeaComment}
+              onDeleteIdea={handleDeleteIdea}
+              onEditIdea={handleUpdateIdea}
+              autoOpen={autoOpenIdea}
+            />
+            <UpcomingPlansColumn
+              plans={upcomingEvents.map((event) => ({
+                id: event.id,
+                title: event.title,
+                description: event.description,
+                dateTimeStart: event.dateTimeStart,
+                timeIsSet: event.timeIsSet,
+                createdBy: event.createdBy
+                  ? {
+                      name:
+                        memberVisuals[event.createdByUserId]?.displayName ??
+                        event.createdBy.name,
+                      email: event.createdBy.email,
+                    }
+                  : undefined,
+                placeName: event.placeName,
+              }))}
+              commentCounts={eventCommentCounts}
+              newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
+              timeFormat={calendarTimeFormat}
+              onDeleteEvent={handleDeleteEvent}
+            />
+          </div>
+        </PlanningSection>
+      </div>
       <AvailabilityBlockModal
         isOpen={Boolean(editBlock)}
         onCloseHref={buildCalendarHref(monthParam(now))}

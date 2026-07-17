@@ -5,10 +5,8 @@ import Link from "next/link";
 import {
   Clock,
   MapPin,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Plus,
   X,
 } from "lucide-react";
@@ -75,7 +73,6 @@ type MobileAgendaViewProps = {
   nextHref?: string;
 };
 
-const DEFAULT_DAYS_SHOWN = 7;
 const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 function formatTime(isoString: string, timeFormat: "12h" | "24h"): string {
@@ -162,8 +159,6 @@ function MonthStrip({
   prevHref,
   nextHref,
 }: MonthStripProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   const weeks = useMemo(() => {
     if (grid.days.length === 0) {
       return [] as (MonthGridDay | null)[][];
@@ -187,23 +182,6 @@ function MonthStrip({
   if (weeks.length === 0) {
     return null;
   }
-
-  const focusKey = selectedKey ?? null;
-  const focusWeekIndex = (() => {
-    if (focusKey) {
-      const index = weeks.findIndex((week) =>
-        week.some((day) => day?.dateKey === focusKey),
-      );
-      if (index !== -1) {
-        return index;
-      }
-    }
-    const todayIndex = weeks.findIndex((week) =>
-      week.some((day) => day?.isToday),
-    );
-    return todayIndex === -1 ? 0 : todayIndex;
-  })();
-  const visibleWeeks = isExpanded ? weeks : [weeks[focusWeekIndex]];
 
   const labels = [
     ...WEEKDAY_LABELS.slice(grid.weekStartsOn),
@@ -251,7 +229,7 @@ function MonthStrip({
           </span>
         ))}
       </div>
-      {visibleWeeks.map((week, weekIndex) => (
+      {weeks.map((week, weekIndex) => (
         <div key={weekIndex} className="grid grid-cols-7">
           {week.map((day, dayIndex) => {
             if (!day) {
@@ -282,6 +260,7 @@ function MonthStrip({
                 type="button"
                 aria-pressed={isSelected}
                 aria-label={`${formatFullDayLabel(day.dateKey)}${isSelected ? " (selected)" : ""}`}
+                data-has-plan={day.hasPlan || undefined}
                 className={`relative flex h-12 w-full flex-col items-center rounded-xl pt-1 transition active:scale-95 ${
                   isSelected ? "bg-rose-50 ring-1 ring-rose-300" : ""
                 }`}
@@ -319,21 +298,6 @@ function MonthStrip({
           })}
         </div>
       ))}
-      <button
-        type="button"
-        className="flex w-full items-center justify-center gap-1 py-1.5 text-[11px] font-medium text-[var(--text-tertiary)] transition hover:text-[var(--text-secondary)]"
-        onClick={() => setIsExpanded((prev) => !prev)}
-      >
-        {isExpanded ? (
-          <>
-            This week <ChevronUp size={12} />
-          </>
-        ) : (
-          <>
-            Full month <ChevronDown size={12} />
-          </>
-        )}
-      </button>
     </div>
   );
 }
@@ -347,8 +311,6 @@ export default function MobileAgendaView({
   prevHref,
   nextHref,
 }: MobileAgendaViewProps) {
-  const [showPast, setShowPast] = useState(false);
-  const [showAllUpcoming, setShowAllUpcoming] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const resolvedTodayKey = todayKey;
 
@@ -356,22 +318,9 @@ export default function MobileAgendaView({
     (day) => day.events.length > 0 || day.blocks.length > 0,
   );
 
-  // Split into past (before today) and from-today-onwards
-  const todayIndex = daysWithContent.findIndex(
-    (day) => day.dateKey >= resolvedTodayKey,
-  );
-  const splitAt = todayIndex === -1 ? daysWithContent.length : todayIndex;
-  const pastDays = daysWithContent.slice(0, splitAt);
-  const upcomingDays = daysWithContent.slice(splitAt);
-
   function handleSelectDay(dateKey: string) {
-    setSelectedKey((prev) => (prev === dateKey ? null : dateKey));
+    setSelectedKey(dateKey);
   }
-
-  const visibleUpcoming = showAllUpcoming
-    ? upcomingDays
-    : upcomingDays.slice(0, DEFAULT_DAYS_SHOWN);
-  const hiddenUpcomingCount = upcomingDays.length - DEFAULT_DAYS_SHOWN;
 
   function renderDay(day: AgendaDayData) {
     const header = formatDayHeader(day.dateIso, resolvedTodayKey, day.dateKey);
@@ -576,7 +525,7 @@ export default function MobileAgendaView({
               className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-rose-700 transition active:scale-95"
             >
               <X size={12} />
-              All days
+              Close
             </button>
           </span>
         </div>
@@ -599,92 +548,5 @@ export default function MobileAgendaView({
     );
   }
 
-  if (daysWithContent.length === 0) {
-    return (
-      <div className="flex flex-col">
-        {monthStrip}
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="mb-3 rounded-2xl bg-rose-50 p-4">
-            <Clock size={28} className="text-rose-400" />
-          </div>
-          <p className="text-base font-semibold text-[var(--text-primary)]">
-            No events in {monthTitle}
-          </p>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            Tap a day above to add your first event, or use the controls at the
-            top
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col">
-      {monthStrip}
-
-      {/* Earlier days toggle */}
-      {pastDays.length > 0 && (
-        <>
-          {!showPast && (
-            <button
-              type="button"
-              onClick={() => setShowPast(true)}
-              className="mx-auto mb-3 flex items-center gap-1.5 rounded-full border border-[var(--panel-border)] bg-white/80 px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition hover:bg-white active:scale-95"
-            >
-              <ChevronUp size={14} />
-              Show {pastDays.length} earlier day{pastDays.length > 1 ? "s" : ""}
-            </button>
-          )}
-          {showPast && (
-            <>
-              <button
-                type="button"
-                onClick={() => setShowPast(false)}
-                className="mx-auto mb-3 flex items-center gap-1.5 rounded-full border border-[var(--panel-border)] bg-white/80 px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition hover:bg-white active:scale-95"
-              >
-                <ChevronUp size={14} />
-                Hide earlier days
-              </button>
-              <div className="opacity-60">
-                {pastDays.map(renderDay)}
-              </div>
-            </>
-          )}
-        </>
-      )}
-
-      {/* Today onwards */}
-      {visibleUpcoming.map(renderDay)}
-
-      {/* Show more upcoming */}
-      {hiddenUpcomingCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowAllUpcoming((prev) => !prev)}
-          className="mx-auto mt-1 flex items-center gap-1.5 rounded-full border border-[var(--panel-border)] bg-white/80 px-4 py-2 text-xs font-medium text-[var(--text-secondary)] transition hover:bg-white active:scale-95"
-        >
-          {showAllUpcoming ? (
-            <>
-              Show less <ChevronUp size={14} />
-            </>
-          ) : (
-            <>
-              Show {hiddenUpcomingCount} more day{hiddenUpcomingCount > 1 ? "s" : ""}{" "}
-              <ChevronDown size={14} />
-            </>
-          )}
-        </button>
-      )}
-
-      {/* No upcoming content */}
-      {upcomingDays.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <p className="text-sm text-[var(--text-muted)]">
-            No upcoming events this month
-          </p>
-        </div>
-      )}
-    </div>
-  );
+  return <div className="flex flex-col">{monthStrip}</div>;
 }

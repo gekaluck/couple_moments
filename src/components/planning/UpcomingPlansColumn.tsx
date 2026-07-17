@@ -99,33 +99,55 @@ export default function UpcomingPlansColumn({
         />
       ) : (
         <>
-          <HorizontalRail
-            items={visiblePlans}
-            getKey={(plan) => plan.id}
-            renderItem={(plan) => (
-            <PlanCard
-              id={plan.id}
-              title={plan.title}
-              description={plan.description}
-              dateTimeStart={plan.dateTimeStart}
-              timeIsSet={plan.timeIsSet}
-              commentCount={commentCounts[plan.id] ?? 0}
-              createdBy={plan.createdBy}
-              placeName={plan.placeName}
-              timeFormat={timeFormat}
-              onDelete={onDeleteEvent}
+          <div className="md:hidden">
+            <HorizontalRail
+              items={plans}
+              getKey={(plan) => plan.id}
+              renderItem={(plan) => (
+                <PlanCard
+                  id={plan.id}
+                  title={plan.title}
+                  description={plan.description}
+                  dateTimeStart={plan.dateTimeStart}
+                  timeIsSet={plan.timeIsSet}
+                  commentCount={commentCounts[plan.id] ?? 0}
+                  createdBy={plan.createdBy}
+                  placeName={plan.placeName}
+                  timeFormat={timeFormat}
+                  onDelete={onDeleteEvent}
+                />
+              )}
             />
-            )}
-          />
-          {hasMore ? (
-            <button
-              type="button"
-              onClick={() => setVisibleCount((prev) => prev + 5)}
-              className="rounded-2xl border border-rose-200/80 bg-rose-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-rose-700 transition hover:bg-rose-100/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
-            >
-              Show more ({plans.length - visibleCount} remaining)
-            </button>
-          ) : null}
+          </div>
+          <div className="hidden md:block">
+            <HorizontalRail
+              items={visiblePlans}
+              getKey={(plan) => plan.id}
+              renderItem={(plan) => (
+                <PlanCard
+                  id={plan.id}
+                  title={plan.title}
+                  description={plan.description}
+                  dateTimeStart={plan.dateTimeStart}
+                  timeIsSet={plan.timeIsSet}
+                  commentCount={commentCounts[plan.id] ?? 0}
+                  createdBy={plan.createdBy}
+                  placeName={plan.placeName}
+                  timeFormat={timeFormat}
+                  onDelete={onDeleteEvent}
+                />
+              )}
+            />
+            {hasMore ? (
+              <button
+                type="button"
+                onClick={() => setVisibleCount((prev) => prev + 5)}
+                className="mt-4 w-full rounded-2xl border border-rose-200/80 bg-rose-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-rose-700 transition hover:bg-rose-100/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+              >
+                Show more ({plans.length - visibleCount} remaining)
+              </button>
+            ) : null}
+          </div>
         </>
       )}
     </div>
