@@ -1,4 +1,8 @@
-import { dateKey } from "@/lib/calendar";
+import {
+  dateKeyInTimeZone,
+  shiftDateKey,
+  utcDateKey,
+} from "@/lib/calendar";
 import { listSpaceMembers } from "@/lib/couple-spaces";
 import { buildCreatorVisuals } from "@/lib/creator-colors";
 import { listAvailabilityBlocks } from "@/lib/availability";
@@ -125,37 +129,37 @@ export async function loadCalendarPageData(params: {
   };
 }
 
-export function buildEventsByDay(events: CalendarEvents) {
+function addItemForDateKey<T>(map: Map<string, T[]>, key: string, item: T) {
+  const list = map.get(key) ?? [];
+  list.push(item);
+  map.set(key, list);
+}
+
+export function buildEventsByDay(events: CalendarEvents, timeZone: string) {
   const eventsByDay = new Map<string, CalendarEvents>();
   for (const event of events) {
-    const cursor = new Date(event.dateTimeStart);
-    cursor.setHours(0, 0, 0, 0);
-    const end = new Date(event.dateTimeEnd ?? event.dateTimeStart);
-    end.setHours(0, 0, 0, 0);
+    let key = dateKeyInTimeZone(event.dateTimeStart, timeZone);
+    const endKey = dateKeyInTimeZone(
+      event.dateTimeEnd ?? event.dateTimeStart,
+      timeZone,
+    );
 
-    while (cursor <= end) {
-      const key = dateKey(cursor);
-      const list = eventsByDay.get(key) ?? [];
-      list.push(event);
-      eventsByDay.set(key, list);
-      cursor.setDate(cursor.getDate() + 1);
+    while (key <= endKey) {
+      addItemForDateKey(eventsByDay, key, event);
+      key = shiftDateKey(key, 1);
     }
   }
   return eventsByDay;
 }
 
-export function buildBlocksByDay(blocks: CalendarBlocks) {
+export function buildBlocksByDay(blocks: CalendarBlocks, timeZone: string) {
   const blocksByDay = new Map<string, CalendarDayBlock[]>();
 
   for (const block of blocks.manual) {
-    const cursor = new Date(block.startAt);
-    cursor.setHours(0, 0, 0, 0);
-    const end = new Date(block.endAt);
-    end.setHours(0, 0, 0, 0);
-    while (cursor <= end) {
-      const key = dateKey(cursor);
-      const list = blocksByDay.get(key) ?? [];
-      list.push({
+    let key = utcDateKey(block.startAt);
+    const endKey = utcDateKey(block.endAt);
+    while (key <= endKey) {
+      addItemForDateKey(blocksByDay, key, {
         id: block.id,
         startAt: block.startAt,
         endAt: block.endAt,
@@ -164,20 +168,15 @@ export function buildBlocksByDay(blocks: CalendarBlocks) {
         createdBy: { name: block.createdBy.name, email: block.createdBy.email },
         createdByUserId: block.createdByUserId,
       });
-      blocksByDay.set(key, list);
-      cursor.setDate(cursor.getDate() + 1);
+      key = shiftDateKey(key, 1);
     }
   }
 
   for (const block of blocks.external) {
-    const cursor = new Date(block.startAt);
-    cursor.setHours(0, 0, 0, 0);
-    const end = new Date(block.endAt);
-    end.setHours(0, 0, 0, 0);
-    while (cursor <= end) {
-      const key = dateKey(cursor);
-      const list = blocksByDay.get(key) ?? [];
-      list.push({
+    let key = dateKeyInTimeZone(block.startAt, timeZone);
+    const endKey = dateKeyInTimeZone(block.endAt, timeZone);
+    while (key <= endKey) {
+      addItemForDateKey(blocksByDay, key, {
         id: block.id,
         startAt: block.startAt,
         endAt: block.endAt,
@@ -186,8 +185,7 @@ export function buildBlocksByDay(blocks: CalendarBlocks) {
         createdByUserId: block.userId,
         source: block.source,
       });
-      blocksByDay.set(key, list);
-      cursor.setDate(cursor.getDate() + 1);
+      key = shiftDateKey(key, 1);
     }
   }
 

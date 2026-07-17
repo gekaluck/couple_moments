@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-import { CalendarTimeFormat, formatEventTime } from "@/lib/calendar";
+import {
+  CalendarTimeFormat,
+  dateKeyInTimeZone,
+  formatEventTime,
+} from "@/lib/calendar";
 import { CreatorVisualMap, getCreatorInitials } from "@/lib/creator-colors";
 
 import EventBubble from "./event-bubble";
@@ -34,6 +38,7 @@ type DayCellProps = {
   events: EventSummary[];
   blocks: BlockSummary[];
   timeFormat: CalendarTimeFormat;
+  timeZone: string;
   addEventHref: string;
   currentUserId: string;
   memberVisuals: CreatorVisualMap;
@@ -51,10 +56,11 @@ function getEventSpanPosition(
   currentDay: Date,
   startAt: Date,
   endAt: Date | null,
+  timeZone: string,
 ): "single" | "start" | "middle" | "end" {
-  const day = getDayStart(currentDay).getTime();
-  const startDay = getDayStart(startAt).getTime();
-  const endDay = getDayStart(endAt ?? startAt).getTime();
+  const day = dateKeyInTimeZone(currentDay, "UTC");
+  const startDay = dateKeyInTimeZone(startAt, timeZone);
+  const endDay = dateKeyInTimeZone(endAt ?? startAt, timeZone);
 
   if (startDay === endDay) {
     return "single";
@@ -72,11 +78,13 @@ function formatTimeRange(
   startAt: Date,
   endAt: Date,
   timeFormat: CalendarTimeFormat,
+  timeZone: string,
 ) {
   const formatter = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: timeFormat === "12h",
+    timeZone,
   });
 
   return `${formatter.format(startAt)} to ${formatter.format(endAt)}`;
@@ -86,21 +94,22 @@ function getEventTimeLabel(
   event: EventSummary,
   timeFormat: CalendarTimeFormat,
   spanPosition: "single" | "start" | "middle" | "end",
+  timeZone: string,
 ) {
   if (!event.timeIsSet) {
     return spanPosition === "middle" ? "Continues" : "Anytime";
   }
 
   if (spanPosition === "single") {
-    return formatEventTime(event.dateTimeStart, timeFormat);
+    return formatEventTime(event.dateTimeStart, timeFormat, timeZone);
   }
 
   if (spanPosition === "start") {
-    return `Starts ${formatEventTime(event.dateTimeStart, timeFormat)}`;
+    return `Starts ${formatEventTime(event.dateTimeStart, timeFormat, timeZone)}`;
   }
 
   if (spanPosition === "end" && event.dateTimeEnd) {
-    return `Ends ${formatEventTime(event.dateTimeEnd, timeFormat)}`;
+    return `Ends ${formatEventTime(event.dateTimeEnd, timeFormat, timeZone)}`;
   }
 
   return "Continues";
@@ -109,14 +118,15 @@ function getEventTimeLabel(
 function getEventTooltip(
   event: EventSummary,
   timeFormat: CalendarTimeFormat,
+  timeZone: string,
 ) {
   if (!event.timeIsSet) {
     return event.title;
   }
 
   const range = event.dateTimeEnd
-    ? formatTimeRange(event.dateTimeStart, event.dateTimeEnd, timeFormat)
-    : formatEventTime(event.dateTimeStart, timeFormat);
+    ? formatTimeRange(event.dateTimeStart, event.dateTimeEnd, timeFormat, timeZone)
+    : formatEventTime(event.dateTimeStart, timeFormat, timeZone);
 
   return `${event.title} | ${range}`;
 }
@@ -131,6 +141,7 @@ export default function DayCell({
   events,
   blocks,
   timeFormat,
+  timeZone,
   addEventHref,
   currentUserId,
   memberVisuals,
@@ -215,7 +226,7 @@ export default function DayCell({
           const tooltipText = isExternal
             ? `${creatorLabel} is busy${
                 block.startAt && block.endAt
-                  ? ` from ${formatTimeRange(block.startAt, block.endAt, timeFormat)}`
+                  ? ` from ${formatTimeRange(block.startAt, block.endAt, timeFormat, timeZone)}`
                   : ""
               }`
             : `${block.title}${creatorLabel ? ` | ${creatorLabel}` : ""}`;
@@ -293,6 +304,7 @@ export default function DayCell({
             date,
             event.dateTimeStart,
             event.dateTimeEnd,
+            timeZone,
           );
 
           return (
@@ -302,8 +314,8 @@ export default function DayCell({
               title={event.title}
               isPast={(event.dateTimeEnd ?? event.dateTimeStart) < referenceNow}
               spanPosition={spanPosition}
-              timeLabel={getEventTimeLabel(event, timeFormat, spanPosition)}
-              tooltipLabel={getEventTooltip(event, timeFormat)}
+              timeLabel={getEventTimeLabel(event, timeFormat, spanPosition, timeZone)}
+              tooltipLabel={getEventTooltip(event, timeFormat, timeZone)}
             />
           );
         })}
