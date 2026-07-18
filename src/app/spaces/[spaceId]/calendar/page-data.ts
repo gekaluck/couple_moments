@@ -12,6 +12,7 @@ import {
   listEventsForSpace,
 } from "@/lib/events";
 import { hasGoogleCalendarWithEventsScope } from "@/lib/integrations/google/events";
+import { getGoogleAvailabilitySyncStatus } from "@/lib/integrations/google/freebusy";
 import { listIdeaCommentsForIdeas, listIdeasForSpace } from "@/lib/ideas";
 import { parseTags } from "@/lib/tags";
 
@@ -56,8 +57,16 @@ export async function loadCalendarPageData(params: {
 }) {
   const { spaceId, userId, monthStart, monthEnd, repeatEventId, actualToday } = params;
 
-  const [repeatEvent, events, members, hasGoogleCalendar, blocks, ideas, upcomingEvents] =
-    await Promise.all([
+  const [
+    repeatEvent,
+    events,
+    members,
+    hasGoogleCalendar,
+    googleAvailabilitySync,
+    blocks,
+    ideas,
+    upcomingEvents,
+  ] = await Promise.all([
       repeatEventId ? getEventForUser(repeatEventId, userId) : Promise.resolve(null),
       listEventsForSpace({
         spaceId,
@@ -66,6 +75,7 @@ export async function loadCalendarPageData(params: {
       }),
       listSpaceMembers(spaceId),
       hasGoogleCalendarWithEventsScope(userId),
+      getGoogleAvailabilitySyncStatus(userId),
       listAvailabilityBlocks({
         spaceId,
         from: monthStart,
@@ -124,6 +134,7 @@ export async function loadCalendarPageData(params: {
     ideaComments,
     eventComments,
     hasGoogleCalendar,
+    googleAvailabilitySync,
     memberVisuals,
     prefillData,
   };
