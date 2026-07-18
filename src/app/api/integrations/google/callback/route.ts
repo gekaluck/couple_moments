@@ -90,7 +90,11 @@ export async function GET(request: Request) {
       update: {
         providerAccountId: accountInfo.email,
         accessToken: encryptToken(tokens.accessToken),
-        refreshToken: tokens.refreshToken ? encryptToken(tokens.refreshToken) : null,
+        // Google does not always return a new refresh token when a user
+        // reconnects. Preserve the existing one unless a replacement arrives.
+        ...(tokens.refreshToken
+          ? { refreshToken: encryptToken(tokens.refreshToken) }
+          : {}),
         tokenExpiresAt: tokens.expiresAt,
         scope: tokens.scope || null,
         revokedAt: null, // Clear any previous revocation

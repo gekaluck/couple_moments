@@ -55,6 +55,7 @@ import AvailabilityBlockModal from "./availability-block-modal";
 import OnboardingTour from "@/components/onboarding/OnboardingTour";
 import { CalendarEmptyState } from "@/components/calendar/CalendarEmptyState";
 import CalendarTimeZoneSync from "@/components/calendar/CalendarTimeZoneSync";
+import GoogleCalendarAutoSync from "@/components/calendar/GoogleCalendarAutoSync";
 import DayCell from "./day-cell";
 import MobileAgendaView from "@/components/calendar/MobileAgendaView";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
@@ -132,6 +133,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
     ideaComments,
     eventComments,
     hasGoogleCalendar,
+    googleAvailabilitySync,
     memberVisuals,
     prefillData,
   } = await loadCalendarPageData({
@@ -622,6 +624,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
   return (
     <>
       <CalendarTimeZoneSync serverTimeZone={calendarTimeZone} />
+      <GoogleCalendarAutoSync
+        {...googleAvailabilitySync}
+        settingsHref={`/spaces/${space.id}/settings`}
+      />
       <section className="surface overflow-hidden p-4 md:p-8">
         {/* One-row header: create actions · month nav · view tools. The old
             version stacked kicker + helper + two mini-rows into a ~110px band. */}

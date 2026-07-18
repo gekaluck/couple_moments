@@ -50,7 +50,9 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
   const hasSuccessfulSync = Boolean(data?.syncState?.lastSyncedAt);
   const healthState = !data
     ? "disconnected"
-    : hasSyncError
+    : data.account.isRevoked
+      ? "revoked"
+      : hasSyncError
       ? "error"
       : selectedCalendarsCount === 0
         ? "no-calendars"
@@ -185,13 +187,23 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
       </div>
       <span
         className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
-          data
+          data && !data.account.isRevoked
             ? "border-emerald-200 bg-emerald-100 text-emerald-700"
-            : "border-slate-200 bg-white/85 text-slate-600"
+            : data?.account.isRevoked
+              ? "border-amber-200 bg-amber-100 text-amber-700"
+              : "border-slate-200 bg-white/85 text-slate-600"
         }`}
       >
-        {data ? <Link2 className="h-3 w-3" /> : <Link2Off className="h-3 w-3" />}
-        {data ? "Connected" : "Not connected"}
+        {data && !data.account.isRevoked ? (
+          <Link2 className="h-3 w-3" />
+        ) : (
+          <Link2Off className="h-3 w-3" />
+        )}
+        {data?.account.isRevoked
+          ? "Reconnect required"
+          : data
+            ? "Connected"
+            : "Not connected"}
       </span>
     </div>
   );
@@ -230,13 +242,15 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
                 className={`rounded-full border px-2.5 py-1 ${
                   healthState === "healthy"
                     ? "border-emerald-200 bg-emerald-100 text-emerald-700"
-                    : healthState === "error"
+                    : healthState === "error" || healthState === "revoked"
                       ? "border-red-200 bg-red-100 text-red-700"
                       : "border-amber-200 bg-amber-100 text-amber-700"
                 }`}
               >
                 {healthState === "healthy"
                   ? "Healthy"
+                  : healthState === "revoked"
+                    ? "Reconnect required"
                   : healthState === "error"
                     ? "Needs attention"
                     : healthState === "no-calendars"
@@ -323,14 +337,24 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
                     </p>
                   ) : null}
                 </div>
-                <button
-                  onClick={handleSync}
-                  disabled={syncing}
-                  className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
-                >
-                  <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-                  {syncing ? 'Syncing...' : 'Sync now'}
-                </button>
+                {data.account.isRevoked ? (
+                  <button
+                    onClick={handleConnect}
+                    className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  >
+                    <Link2 className="h-4 w-4" />
+                    Reconnect
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSync}
+                    disabled={syncing}
+                    className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                    {syncing ? 'Syncing...' : 'Sync now'}
+                  </button>
+                )}
               </div>
             </div>
           </div>

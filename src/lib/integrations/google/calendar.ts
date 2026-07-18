@@ -82,6 +82,21 @@ export async function refreshAccessToken(refreshToken: string) {
   };
 }
 
+function isInvalidGrantError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const response = 'response' in error && error.response && typeof error.response === 'object'
+    ? error.response
+    : null;
+  const data = response && 'data' in response && response.data && typeof response.data === 'object'
+    ? response.data
+    : null;
+
+  return Boolean(data && 'error' in data && data.error === 'invalid_grant');
+}
+
 /**
  * Get a valid OAuth2 client for an external account (refreshes token if needed)
  */
@@ -105,6 +120,14 @@ export async function getAuthenticatedClient(externalAccountId: string) {
   const needsRefresh = !tokenExpiresAt || 
     tokenExpiresAt.getTime() < Date.now() + 5 * 60 * 1000;
   
+  if (needsRefresh && !account.refreshToken) {
+    await prisma.externalAccount.update({
+      where: { id: externalAccountId },
+      data: { revokedAt: new Date() },
+    });
+    throw new Error('Google Calendar needs to be reconnected.');
+  }
+
   if (needsRefresh && account.refreshToken) {
     try {
       const decryptedRefreshToken = decryptToken(account.refreshToken);
@@ -121,13 +144,18 @@ export async function getAuthenticatedClient(externalAccountId: string) {
           tokenExpiresAt: tokenExpiresAt,
         },
       });
-    } catch {
-      // Mark account as revoked if refresh fails
-      await prisma.externalAccount.update({
-        where: { id: externalAccountId },
-        data: { revokedAt: new Date() },
-      });
-      throw new Error('Failed to refresh access token. Please reconnect your account.');
+    } catch (error) {
+      // invalid_grant means the user revoked access (or the refresh token is no
+      // longer valid). Network and Google service errors should remain retryable.
+      if (isInvalidGrantError(error)) {
+        await prisma.externalAccount.update({
+          where: { id: externalAccountId },
+          data: { revokedAt: new Date() },
+        });
+        throw new Error('Google Calendar access expired. Please reconnect your account.');
+      }
+
+      throw new Error('Google Calendar could not refresh right now. Please try again shortly.');
     }
   }
   

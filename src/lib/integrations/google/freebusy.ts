@@ -6,6 +6,55 @@ type FreeBusyCalendarData = {
   busy?: Array<{ start?: string | null; end?: string | null }>;
 };
 
+const AUTO_SYNC_INTERVAL_MS = 15 * 60 * 1000;
+
+export async function getGoogleAvailabilitySyncStatus(userId: string) {
+  const account = await prisma.externalAccount.findUnique({
+    where: {
+      userId_provider: {
+        userId,
+        provider: 'GOOGLE',
+      },
+    },
+    select: {
+      revokedAt: true,
+      calendars: {
+        where: { selected: true },
+        select: { id: true },
+      },
+      syncState: {
+        select: {
+          lastSyncError: true,
+          updatedAt: true,
+        },
+      },
+    },
+  });
+
+  if (!account) {
+    return {
+      connected: false,
+      revoked: false,
+      shouldAutoSync: false,
+      lastSyncError: null,
+    };
+  }
+
+  const lastAttemptAt = account.syncState?.updatedAt ?? null;
+  const shouldAutoSync =
+    !account.revokedAt &&
+    account.calendars.length > 0 &&
+    (!lastAttemptAt ||
+      lastAttemptAt.getTime() < Date.now() - AUTO_SYNC_INTERVAL_MS);
+
+  return {
+    connected: true,
+    revoked: Boolean(account.revokedAt),
+    shouldAutoSync,
+    lastSyncError: account.syncState?.lastSyncError ?? null,
+  };
+}
+
 /**
  * Fetch freebusy information for selected calendars
  * @param externalAccountId The external account ID
