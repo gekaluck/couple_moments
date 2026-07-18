@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type GoogleCalendarAutoSyncProps = {
   connected: boolean;
@@ -20,15 +20,17 @@ export default function GoogleCalendarAutoSync({
   settingsHref,
 }: GoogleCalendarAutoSyncProps) {
   const router = useRouter();
+  const [hasAttempted, setHasAttempted] = useState(false);
 
   useEffect(() => {
-    if (!shouldAutoSync) {
+    if (!shouldAutoSync || hasAttempted) {
       return;
     }
 
     const controller = new AbortController();
 
     async function sync() {
+      setHasAttempted(true);
       try {
         await fetch("/api/integrations/google/sync", {
           method: "POST",
@@ -36,15 +38,16 @@ export default function GoogleCalendarAutoSync({
         });
         router.refresh();
       } catch (error) {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          router.refresh();
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
         }
+        router.refresh();
       }
     }
 
     void sync();
     return () => controller.abort();
-  }, [router, shouldAutoSync]);
+  }, [router, shouldAutoSync, hasAttempted]);
 
   if (!connected || (!revoked && !lastSyncError)) {
     return null;
