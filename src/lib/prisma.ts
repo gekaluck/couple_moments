@@ -14,7 +14,12 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL is not set");
   }
 
-  const pool = globalForPrisma.pool ?? new Pool({ connectionString });
+  const pool = globalForPrisma.pool ?? new Pool({
+    connectionString,
+    // Avoid leaving API requests pending forever when the database endpoint is
+    // temporarily unreachable. Route handlers can then return a recoverable 500.
+    connectionTimeoutMillis: 10_000,
+  });
   globalForPrisma.pool = pool;
 
   const adapter = new PrismaPg(pool);

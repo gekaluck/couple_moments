@@ -35,6 +35,43 @@ type GoogleCalendarSettingsProps = {
   embedded?: boolean;
 };
 
+const GOOGLE_CALENDAR_REQUEST_TIMEOUT_MS = 12_000;
+
+async function fetchGoogleCalendarSettings() {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    GOOGLE_CALENDAR_REQUEST_TIMEOUT_MS,
+  );
+
+  try {
+    return await fetch('/api/integrations/google/calendars', {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function getResponseError(response: Response, fallback: string) {
+  try {
+    const payload: unknown = await response.json();
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'error' in payload &&
+      typeof payload.error === 'string'
+    ) {
+      return payload.error;
+    }
+  } catch {
+    // Use the user-facing fallback when the server did not return JSON.
+  }
+
+  return fallback;
+}
+
 export default function GoogleCalendarSettings({ embedded = false }: GoogleCalendarSettingsProps = {}) {
   const router = useRouter();
   const [data, setData] = useState<GoogleCalendarData>(null);
@@ -65,8 +102,11 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
   }, []);
 
   async function loadData() {
+    setLoading(true);
+    setError(null);
+
     try {
-      const res = await fetch('/api/integrations/google/calendars');
+      const res = await fetchGoogleCalendarSettings();
       if (res.status === 404) {
         // Not connected
         setData(null);
@@ -74,11 +114,19 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
         const json = await res.json();
         setData(json);
       } else {
-        const json = await res.json();
-        setError(json.error || 'Failed to load Google Calendar settings');
+        setError(
+          await getResponseError(
+            res,
+            'Failed to load Google Calendar settings',
+          ),
+        );
       }
-    } catch {
-      setError('Failed to load Google Calendar settings');
+    } catch (error) {
+      setError(
+        error instanceof Error && error.name === 'AbortError'
+          ? 'Google Calendar settings took too long to load. Please try again.'
+          : 'Failed to load Google Calendar settings',
+      );
     } finally {
       setLoading(false);
     }
@@ -213,24 +261,33 @@ export default function GoogleCalendarSettings({ embedded = false }: GoogleCalen
       {!embedded ? header : null}
 
       {error && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-700">{error}</p>
+          <button
+            type="button"
+            onClick={() => void loadData()}
+            className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+          >
+            Retry
+          </button>
         </div>
       )}
 
       {!data ? (
-        <div className="mt-5 rounded-2xl border border-white/80 bg-white/75 p-4 shadow-[var(--shadow-sm)] backdrop-blur-sm">
-          <p className="text-sm text-[var(--text-secondary)]">
-            Connect once, then choose exactly which calendars should contribute availability.
-          </p>
-          <button
-            onClick={handleConnect}
-            className="button-hover mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
-          >
-            <CalendarDays className="h-4 w-4" />
-            Connect Google Calendar
-          </button>
-        </div>
+        error ? null : (
+          <div className="mt-5 rounded-2xl border border-white/80 bg-white/75 p-4 shadow-[var(--shadow-sm)] backdrop-blur-sm">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Connect once, then choose exactly which calendars should contribute availability.
+            </p>
+            <button
+              onClick={handleConnect}
+              className="button-hover mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--panel-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
+            >
+              <CalendarDays className="h-4 w-4" />
+              Connect Google Calendar
+            </button>
+          </div>
+        )
       ) : (
         <>
           <div className="mt-5 rounded-2xl border border-white/80 bg-white/80 p-4 shadow-[var(--shadow-sm)]">
