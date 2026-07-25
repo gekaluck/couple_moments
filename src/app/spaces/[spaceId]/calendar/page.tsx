@@ -719,6 +719,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         {/* Mobile agenda view */}
         <div className="mt-4 md:hidden">
           <MobileAgendaView
+            key={`${monthParam(now)}-${agendaTodayKey}`}
             days={agendaDays}
             todayKey={agendaTodayKey}
             timeFormat={calendarTimeFormat}

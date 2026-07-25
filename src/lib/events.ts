@@ -393,6 +393,107 @@ export async function deleteEvent(eventId: string, userId: string) {
   return event;
 }
 
+export async function moveMemoryToIdeas(eventId: string, userId: string) {
+  return prisma.$transaction(async (tx) => {
+    const event = await tx.event.findFirst({
+      where: {
+        id: eventId,
+        coupleSpace: { memberships: { some: { userId } } },
+      },
+    });
+    if (!event) {
+      throw new Error("Memory not found.");
+    }
+
+    const eventEnd = event.dateTimeEnd ?? event.dateTimeStart;
+    if (eventEnd >= new Date()) {
+      throw new Error("Only memories can be moved back to ideas.");
+    }
+
+    const ideaFields = {
+      title: event.title,
+      description: event.description,
+      tags: event.tags,
+      placeId: event.placeId,
+      placeName: event.placeName,
+      placeAddress: event.placeAddress,
+      placeLat: event.placeLat,
+      placeLng: event.placeLng,
+      placeUrl: event.placeUrl,
+      placeWebsite: event.placeWebsite,
+      placeOpeningHours: event.placeOpeningHours ?? Prisma.JsonNull,
+      placePhotoUrls: event.placePhotoUrls ?? Prisma.JsonNull,
+      status: "NEW" as const,
+      convertedToEventId: null,
+    };
+
+    const idea = event.originIdeaId
+      ? await tx.idea.update({
+          where: { id: event.originIdeaId },
+          data: ideaFields,
+        })
+      : await tx.idea.create({
+          data: {
+            coupleSpaceId: event.coupleSpaceId,
+            createdByUserId: event.createdByUserId,
+            ...ideaFields,
+          },
+        });
+
+    await tx.note.updateMany({
+      where: {
+        parentType: "EVENT",
+        parentId: event.id,
+      },
+      data: {
+        parentType: "IDEA",
+        parentId: idea.id,
+        kind: "IDEA_COMMENT",
+      },
+    });
+
+    await Promise.all([
+      tx.photo.deleteMany({ where: { eventId: event.id } }),
+      tx.rating.deleteMany({ where: { eventId: event.id } }),
+      tx.notification.deleteMany({ where: { eventId: event.id } }),
+      tx.reaction.deleteMany({
+        where: {
+          targetType: "EVENT",
+          targetId: event.id,
+        },
+      }),
+    ]);
+
+    await tx.event.delete({ where: { id: event.id } });
+
+    await tx.changeLogEntry.createMany({
+      data: [
+        {
+          coupleSpaceId: event.coupleSpaceId,
+          entityType: "IDEA",
+          entityId: idea.id,
+          userId,
+          changeType: event.originIdeaId ? "UPDATE" : "CREATE",
+          summary: "Memory moved back to ideas.",
+        },
+        {
+          coupleSpaceId: event.coupleSpaceId,
+          entityType: "EVENT",
+          entityId: event.id,
+          userId,
+          changeType: "DELETE",
+          summary: "Memory moved back to ideas.",
+        },
+      ],
+    });
+
+    return {
+      ideaId: idea.id,
+      coupleSpaceId: event.coupleSpaceId,
+    };
+  });
+}
+
 export async function createEventPhoto(
   eventId: string,
   userId: string,

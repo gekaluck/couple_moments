@@ -311,7 +311,9 @@ export default function MobileAgendaView({
   prevHref,
   nextHref,
 }: MobileAgendaViewProps) {
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(() =>
+    monthGrid?.days.some((day) => day.dateKey === todayKey) ? todayKey : null,
+  );
   const resolvedTodayKey = todayKey;
 
   const daysWithContent = days.filter(
