@@ -6,7 +6,6 @@ import { cookies } from "next/headers";
 
 import {
   createEventComment,
-  createEventPhoto,
   createEventPhotoFromFile,
   deleteEvent,
   deleteEventPhoto,
@@ -304,24 +303,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     }
     await updateEventRating(eventIdForActions, currentUserId, rating);
     revalidatePath(`/events/${eventIdForActions}`);
-  }
-
-  async function handleCreatePhoto(input: { storageUrl: string }) {
-    "use server";
-    const currentUserId = await requireUserId();
-    const photo = await createEventPhoto(
-      eventIdForActions,
-      currentUserId,
-      input.storageUrl,
-    );
-    revalidatePath(`/events/${eventIdForActions}`);
-    revalidatePath(`/spaces/${spaceIdForActions}/memories`);
-
-    return {
-      id: photo.id,
-      storageUrl: photo.storageUrl,
-      createdAtIso: photo.createdAt.toISOString(),
-    };
   }
 
   async function handleUploadPhoto(formData: FormData) {
@@ -775,7 +756,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                 email: photo.uploadedBy.email,
               },
             }))}
-            onCreatePhoto={handleCreatePhoto}
             onUploadPhoto={handleUploadPhoto}
             onDeletePhoto={handleDeletePhoto}
             onSetPhotoAsCover={handleSetPhotoAsCover}
