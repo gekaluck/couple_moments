@@ -9,6 +9,7 @@ import {
   createEventPhotoFromFile,
   deleteEvent,
   deleteEventPhoto,
+  moveMemoryToIdeas,
   setEventPhotoAsCover,
   updateEvent,
   updateEventRating,
@@ -272,6 +273,20 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     redirect(`/spaces/${spaceIdForActions}/calendar`);
   }
 
+  async function handleMoveMemoryToIdeas(): Promise<void> {
+    "use server";
+    const googleDeleteContext = await getGoogleEventDeleteContext(eventIdForActions);
+    const currentUserId = await requireUserId();
+    const result = await moveMemoryToIdeas(eventIdForActions, currentUserId);
+    await cancelGoogleCalendarEvent(googleDeleteContext);
+
+    revalidatePath(`/spaces/${result.coupleSpaceId}/calendar`);
+    revalidatePath(`/spaces/${result.coupleSpaceId}/memories`);
+    revalidatePath(`/spaces/${result.coupleSpaceId}/activity`);
+    revalidatePath(`/spaces/${result.coupleSpaceId}/ideas/${result.ideaId}`);
+    redirect(`/spaces/${result.coupleSpaceId}/ideas/${result.ideaId}`);
+  }
+
   async function handleComment(formData: FormData) {
     "use server";
     const currentUserId = await requireUserId();
@@ -476,6 +491,22 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            {isPast ? (
+              <ConfirmForm
+                action={handleMoveMemoryToIdeas}
+                title="Move memory to ideas?"
+                message="This removes the memory from the calendar. Its comments will move with the idea, but photos and ratings will be removed."
+                confirmLabel="Move to ideas"
+                variant="warning"
+              >
+                <button
+                  className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 shadow-[var(--shadow-sm)] transition hover:border-amber-300 hover:bg-amber-100"
+                  type="submit"
+                >
+                  Move to ideas
+                </button>
+              </ConfirmForm>
+            ) : null}
             {isPast ? (
               <Link
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rose-200 bg-white/90 text-rose-600 shadow-[var(--shadow-sm)] transition hover:border-rose-300 hover:bg-rose-50"
