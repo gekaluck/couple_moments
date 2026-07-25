@@ -785,8 +785,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
         ) : null}
       </section>
-      <div className="hidden md:block">
-        <PlanningSection>
+      <PlanningSection
+        ideaCount={ideasForPlanning.length}
+        planCount={upcomingEvents.length}
+      >
           <div className="flex flex-col gap-8">
             <IdeasColumn
               key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
@@ -828,8 +830,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
               onDeleteEvent={handleDeleteEvent}
             />
           </div>
-        </PlanningSection>
-      </div>
+      </PlanningSection>
       <AvailabilityBlockModal
         isOpen={Boolean(editBlock)}
         onCloseHref={buildCalendarHref(monthParam(now))}
