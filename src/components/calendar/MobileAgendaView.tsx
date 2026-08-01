@@ -274,7 +274,7 @@ function MonthStrip({
                   {day.hasMemory ? (
                     <span className="h-1 w-1 rounded-full bg-[var(--calendar-memory-dot)]" />
                   ) : null}
-                  {day.hasBlock && !isMultiDayBlock
+                  {day.hasBlock && (!isMultiDayBlock || isSelected)
                     ? blockColors.slice(0, 2).map((color) => (
                         <span
                           key={color}
@@ -284,7 +284,7 @@ function MonthStrip({
                       ))
                     : null}
                 </span>
-                {isMultiDayBlock ? (
+                {isMultiDayBlock && !isSelected ? (
                   <span
                     aria-hidden="true"
                     className={`absolute bottom-1 left-0 right-0 h-[3px] ${
