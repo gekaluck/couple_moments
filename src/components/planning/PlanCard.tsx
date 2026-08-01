@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PlanningCover from "@/components/planning/PlanningCover";
+import useResolvedPlaceCover from "@/components/planning/useResolvedPlaceCover";
 import LocalTime from "@/components/time/LocalTime";
 import Card from "@/components/ui/Card";
 import { CalendarTimeFormat } from "@/lib/calendar";
@@ -35,7 +36,10 @@ type PlanCardProps = {
   commentCount?: number;
   createdBy?: { name: string | null; email: string };
   placeName?: string | null;
+  placeId?: string | null;
   coverUrl?: string | null;
+  placePhotoUrl?: string | null;
+  mapsApiKey?: string;
   timeFormat?: CalendarTimeFormat;
   onDelete?: (formData: FormData) => Promise<void | PlanActionResult>;
 };
@@ -56,7 +60,10 @@ export default function PlanCard({
   commentCount = 0,
   createdBy,
   placeName,
+  placeId,
   coverUrl,
+  placePhotoUrl,
+  mapsApiKey,
   timeFormat = "24h",
   onDelete,
 }: PlanCardProps) {
@@ -66,6 +73,15 @@ export default function PlanCard({
   const proximityLabel =
     dayDiff === 0 ? "Today" : dayDiff === 1 ? "Tomorrow" : null;
   const eventHref = `/events/${id}`;
+  const {
+    coverUrl: resolvedCoverUrl,
+    isLoading: isCoverLoading,
+  } = useResolvedPlaceCover({
+    preferredUrl: coverUrl,
+    storedPlacePhotoUrl: placePhotoUrl,
+    placeId,
+    mapsApiKey,
+  });
 
   async function handleDelete() {
     if (!onDelete) return;
@@ -99,9 +115,10 @@ export default function PlanCard({
         />
 
         <PlanningCover
-          src={coverUrl}
+          src={resolvedCoverUrl}
           alt={`${title} cover`}
           className="aspect-[16/9] w-full md:h-44 md:aspect-auto"
+          isLoading={isCoverLoading}
         >
           <span className="absolute left-3 top-3 rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
             Plan

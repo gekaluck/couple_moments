@@ -17,14 +17,28 @@ type PlacesLibrary = {
   Place?: new (params: { id: string }) => PlaceInstance;
 };
 
+function hasLoadedMapsLibrary() {
+  return Boolean(
+    (
+      globalThis as typeof globalThis & {
+        google?: { maps?: { importLibrary?: unknown } };
+      }
+    ).google?.maps?.importLibrary,
+  );
+}
+
 function ensureMapsConfigured(apiKey?: string) {
   const key = apiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (!key) {
+  const hasLoadedLibrary = hasLoadedMapsLibrary();
+  if (!key && !hasLoadedLibrary) {
     return false;
   }
 
   if (!mapsConfigured) {
-    setOptions({ key, language: "en" } as Parameters<typeof setOptions>[0]);
+    setOptions({
+      key: key ?? "already-loaded",
+      language: "en",
+    } as Parameters<typeof setOptions>[0]);
     mapsConfigured = true;
   }
 

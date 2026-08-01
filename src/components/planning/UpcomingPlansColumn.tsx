@@ -18,7 +18,9 @@ type Plan = {
   timeIsSet?: boolean;
   createdBy?: { name: string | null; email: string };
   placeName?: string | null;
+  placeId?: string | null;
   coverUrl?: string | null;
+  placePhotoUrl?: string | null;
 };
 
 type UpcomingPlansColumnProps = {
@@ -26,6 +28,7 @@ type UpcomingPlansColumnProps = {
   commentCounts: Record<string, number>;
   newEventHref?: string;
   timeFormat?: CalendarTimeFormat;
+  mapsApiKey?: string;
   onDeleteEvent?: (formData: FormData) => Promise<
     | void
     | {
@@ -39,6 +42,7 @@ export default function UpcomingPlansColumn({
   commentCounts,
   newEventHref,
   timeFormat = "24h",
+  mapsApiKey,
   onDeleteEvent,
 }: UpcomingPlansColumnProps) {
   const [visibleCount, setVisibleCount] = useState(5);
@@ -114,7 +118,10 @@ export default function UpcomingPlansColumn({
                   commentCount={commentCounts[plan.id] ?? 0}
                   createdBy={plan.createdBy}
                   placeName={plan.placeName}
+                  placeId={plan.placeId}
                   coverUrl={plan.coverUrl}
+                  placePhotoUrl={plan.placePhotoUrl}
+                  mapsApiKey={mapsApiKey}
                   timeFormat={timeFormat}
                   onDelete={onDeleteEvent}
                 />
@@ -135,7 +142,10 @@ export default function UpcomingPlansColumn({
                   commentCount={commentCounts[plan.id] ?? 0}
                   createdBy={plan.createdBy}
                   placeName={plan.placeName}
+                  placeId={plan.placeId}
                   coverUrl={plan.coverUrl}
+                  placePhotoUrl={plan.placePhotoUrl}
+                  mapsApiKey={mapsApiKey}
                   timeFormat={timeFormat}
                   onDelete={onDeleteEvent}
                 />

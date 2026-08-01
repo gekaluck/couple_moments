@@ -14,6 +14,7 @@ import TagBadge from "@/components/ui/TagBadge";
 import Button from "@/components/ui/Button";
 import Card, { CardDescription, CardFooter, CardTitle } from "@/components/ui/Card";
 import PlanningCover from "@/components/planning/PlanningCover";
+import useResolvedPlaceCover from "@/components/planning/useResolvedPlaceCover";
 import { LocalTimeAgo } from "@/components/time/LocalTime";
 
 import { getOffsetMinutesForLocalDateTime } from "@/lib/date-time";
@@ -120,6 +121,14 @@ export default function IdeaCard({
   const [isPending, startTransition] = useTransition();
   const coverUrl =
     idea.placePhotoUrls?.find((url) => /^https?:\/\//i.test(url.trim())) ?? null;
+  const {
+    coverUrl: resolvedCoverUrl,
+    isLoading: isCoverLoading,
+  } = useResolvedPlaceCover({
+    storedPlacePhotoUrl: coverUrl,
+    placeId: idea.placeId,
+    mapsApiKey,
+  });
 
   useEffect(() => {
     if (isCommentsOpen) {
@@ -192,9 +201,10 @@ export default function IdeaCard({
       />
 
       <PlanningCover
-        src={coverUrl}
+        src={resolvedCoverUrl}
         alt={`${idea.title} cover`}
         className="aspect-[16/9] w-full md:hidden"
+        isLoading={isCoverLoading}
       >
         <span className="absolute left-3 top-3 rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
           Idea
@@ -255,9 +265,10 @@ export default function IdeaCard({
       {/* Desktop layout */}
       <div className="hidden flex-1 gap-4 p-5 md:flex md:flex-row md:items-stretch md:justify-between">
         <PlanningCover
-          src={coverUrl}
+          src={resolvedCoverUrl}
           alt={`${idea.title} cover`}
           className="h-36 w-48 shrink-0 rounded-xl"
+          isLoading={isCoverLoading}
         >
           <span className="absolute left-3 top-3 rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
             Idea
