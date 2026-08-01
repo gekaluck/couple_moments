@@ -117,14 +117,14 @@ export default function PlanCard({
         <PlanningCover
           src={resolvedCoverUrl}
           alt={`${title} cover`}
-          className="aspect-[4/3] w-full md:h-44 md:aspect-auto"
+          className="aspect-[4/3] w-full md:aspect-auto md:h-64"
           isLoading={isCoverLoading}
         >
           <ChevronRight
             aria-hidden="true"
             className="absolute right-3 top-3 h-8 w-8 rounded-full border border-white/40 bg-black/25 p-2 text-white backdrop-blur-md md:hidden"
           />
-          <div className="absolute left-3 top-3 flex items-center gap-2.5 text-white md:bottom-3 md:top-auto">
+          <div className="absolute left-3 top-3 flex items-center gap-2.5 text-white">
             <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-white/45 bg-white/20 shadow-[var(--shadow-sm)] backdrop-blur-md">
               <LocalTime
                 className="text-[11px] font-bold uppercase leading-none tracking-[0.08em]"
@@ -142,6 +142,63 @@ export default function PlanCard({
                 {proximityLabel}
               </span>
             ) : null}
+          </div>
+
+          {/* Title and meta sit on the scrim so the photo keeps the whole card. */}
+          <div className="absolute inset-x-0 bottom-0 flex min-w-0 flex-col gap-1 p-4 text-white">
+            <h4 className="break-words text-lg font-semibold leading-snug tracking-[-0.015em] line-clamp-2 [overflow-wrap:anywhere] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)] md:text-xl">
+              {title}
+            </h4>
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/85">
+              <span className="inline-flex shrink-0 items-center gap-1.5">
+                <CalendarClock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                {timeIsSet ? (
+                  <LocalTime
+                    options={{ hour: "numeric", minute: "2-digit" }}
+                    timeFormat={timeFormat}
+                    value={dateTimeStart}
+                  />
+                ) : (
+                  <span>Anytime</span>
+                )}
+              </span>
+              {placeName ? (
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  <span aria-hidden="true">·</span>
+                  <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                  <span className="min-w-0 truncate">{placeName}</span>
+                </span>
+              ) : null}
+            </div>
+            {description ? (
+              <p className="hidden text-xs leading-5 text-white/75 line-clamp-1 md:block">
+                {description}
+              </p>
+            ) : null}
+            <div className="flex items-center justify-between gap-2 pt-0.5">
+              {createdBy ? (
+                <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-white/80">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white ring-1 ring-white/40"
+                    style={{ backgroundImage: getAvatarGradient(CREATOR_ACCENTS.rose) }}
+                  >
+                    {getInitials(createdBy.name, createdBy.email)}
+                  </span>
+                  <span className="truncate font-medium">
+                    {createdBy.name || createdBy.email}
+                  </span>
+                </span>
+              ) : (
+                <span />
+              )}
+              {commentCount > 0 ? (
+                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-white/80">
+                  <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
+                  {commentCount}
+                </span>
+              ) : null}
+            </div>
           </div>
         </PlanningCover>
 
@@ -174,64 +231,6 @@ export default function PlanCard({
           </button>
         </div>
 
-        <div className="absolute inset-x-2 bottom-2 z-[1] flex flex-col rounded-2xl border border-white/55 bg-white/90 p-3 shadow-[var(--shadow-md)] backdrop-blur-xl md:static md:z-auto md:flex-1 md:rounded-none md:border-0 md:bg-transparent md:p-5 md:shadow-none md:backdrop-blur-none">
-          <h4 className="break-words text-base font-semibold leading-snug tracking-[-0.015em] text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere] md:text-xl">
-            {title}
-          </h4>
-          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--text-muted)]">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarClock className="h-4 w-4 shrink-0 text-rose-500" />
-              <LocalTime
-                options={
-                  timeIsSet
-                    ? { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }
-                    : { month: "short", day: "numeric" }
-                }
-                timeFormat={timeFormat}
-                value={dateTimeStart}
-              />
-              {!timeIsSet ? (
-                <span className="font-semibold text-rose-700">Anytime</span>
-              ) : null}
-            </span>
-            {placeName ? (
-              <span className="inline-flex min-w-0 items-center gap-1.5">
-                <span aria-hidden="true">·</span>
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-rose-500" />
-                <span className="min-w-0 truncate">{placeName}</span>
-              </span>
-            ) : null}
-          </div>
-          {description ? (
-            <p className="mt-1 text-xs leading-5 text-[var(--text-muted)] line-clamp-1 md:mt-2 md:text-sm md:line-clamp-2">
-              {description}
-            </p>
-          ) : null}
-          <div className="mt-auto flex items-center justify-between gap-2 pt-2 md:pt-4">
-            {createdBy ? (
-              <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
-                <span
-                  aria-hidden="true"
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
-                  style={{ backgroundImage: getAvatarGradient(CREATOR_ACCENTS.rose) }}
-                >
-                  {getInitials(createdBy.name, createdBy.email)}
-                </span>
-                <span className="truncate font-medium">
-                  {createdBy.name || createdBy.email}
-                </span>
-              </span>
-            ) : (
-              <span />
-            )}
-            {commentCount > 0 ? (
-              <span className="inline-flex shrink-0 items-center gap-1 text-xs text-[var(--text-tertiary)]">
-                <MessageSquare className="h-3.5 w-3.5" />
-                {commentCount}
-              </span>
-            ) : null}
-          </div>
-        </div>
       </Card>
       <ConfirmDialog
         isOpen={isDeleteOpen}

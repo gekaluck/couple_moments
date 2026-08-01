@@ -10,6 +10,12 @@ type PlanningCoverProps = {
   children?: ReactNode;
   className?: string;
   isLoading?: boolean;
+  /**
+   * Cards render their title/meta straight on the photo, so the scrim has to be
+   * dark enough for white text at the bottom edge. Thumbnails that carry no
+   * overlaid text pass `scrim="soft"` to keep the photo bright.
+   */
+  scrim?: "overlay" | "soft";
 };
 
 export default function PlanningCover({
@@ -18,6 +24,7 @@ export default function PlanningCover({
   children,
   className = "",
   isLoading = false,
+  scrim = "overlay",
 }: PlanningCoverProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const imageSrc =
@@ -44,10 +51,23 @@ export default function PlanningCover({
       ) : (
         <div className="h-full w-full animate-pulse bg-gradient-to-br from-rose-100 via-amber-50 to-rose-50" />
       )}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/55"
-      />
+      {scrim === "overlay" ? (
+        <>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/45 to-transparent"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/85 via-black/45 to-transparent"
+          />
+        </>
+      ) : (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/35"
+        />
+      )}
       {children}
     </div>
   );
