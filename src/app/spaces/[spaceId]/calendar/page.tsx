@@ -763,6 +763,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                 isPast={isPast}
                 isWeekend={isWeekend}
                 isCompact={isCompact}
+                isSixWeekMonth={monthDays.length === 42}
                 events={dayEvents}
                 blocks={dayBlocks}
                 timeFormat={calendarTimeFormat}
@@ -791,23 +792,6 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         planCount={upcomingEvents.length}
       >
           <div className="flex flex-col gap-8">
-            <IdeasColumn
-              key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
-              ideas={ideasForPlanning}
-              spaceId={space.id}
-              commentCounts={ideaCommentCounts}
-              commentsByIdea={ideaCommentsByIdea}
-              currentUserId={userId}
-              memberVisuals={memberVisuals}
-              mapsApiKey={mapsApiKey}
-              hasGoogleCalendar={hasGoogleCalendar}
-              onCreateIdea={handleCreateIdea}
-              onScheduleIdea={handleScheduleIdea}
-              onAddComment={handleIdeaComment}
-              onDeleteIdea={handleDeleteIdea}
-              onEditIdea={handleUpdateIdea}
-              autoOpen={autoOpenIdea}
-            />
             <UpcomingPlansColumn
               plans={upcomingEvents.map((event) => ({
                 id: event.id,
@@ -824,11 +808,36 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     }
                   : undefined,
                 placeName: event.placeName,
+                coverUrl:
+                  event.photos?.[0]?.storageUrl ??
+                  (Array.isArray(event.placePhotoUrls)
+                    ? event.placePhotoUrls.find(
+                        (item): item is string =>
+                          typeof item === "string" && /^https?:\/\//i.test(item.trim()),
+                      )
+                    : null),
               }))}
               commentCounts={eventCommentCounts}
               newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
               timeFormat={calendarTimeFormat}
               onDeleteEvent={handleDeleteEvent}
+            />
+            <IdeasColumn
+              key={autoOpenIdea ? "ideas-auto-open" : "ideas-default"}
+              ideas={ideasForPlanning}
+              spaceId={space.id}
+              commentCounts={ideaCommentCounts}
+              commentsByIdea={ideaCommentsByIdea}
+              currentUserId={userId}
+              memberVisuals={memberVisuals}
+              mapsApiKey={mapsApiKey}
+              hasGoogleCalendar={hasGoogleCalendar}
+              onCreateIdea={handleCreateIdea}
+              onScheduleIdea={handleScheduleIdea}
+              onAddComment={handleIdeaComment}
+              onDeleteIdea={handleDeleteIdea}
+              onEditIdea={handleUpdateIdea}
+              autoOpen={autoOpenIdea}
             />
           </div>
       </PlanningSection>

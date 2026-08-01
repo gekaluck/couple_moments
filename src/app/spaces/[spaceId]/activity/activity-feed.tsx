@@ -462,7 +462,7 @@ export default function ActivityFeed({
       <section className="mb-4 flex flex-col gap-3 px-1">
         <div
           aria-label="Activity type filter"
-          className="-mx-1 flex gap-1.5 overflow-x-auto scrollbar-none px-1 pb-1"
+          className="-mx-1 flex gap-1 overflow-x-auto scrollbar-none px-1 pb-1"
           role="group"
         >
           {FILTERS.map((filter) => {
@@ -470,7 +470,7 @@ export default function ActivityFeed({
             return (
               <button
                 aria-pressed={active}
-                className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                className={`min-h-10 flex-shrink-0 rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${
                   active
                     ? "border-rose-500 bg-rose-500 text-white shadow-sm"
                     : "border-[var(--panel-border)] bg-white text-[var(--text-secondary)] hover:border-rose-300 hover:text-[var(--text-primary)]"
@@ -497,7 +497,7 @@ export default function ActivityFeed({
           <input
             aria-label="Search activity"
             name="q"
-            className="w-full rounded-full border border-[var(--panel-border)] bg-white py-2 pl-9 pr-4 text-sm text-[var(--text-primary)] outline-none transition focus:border-rose-400"
+            className="min-h-11 w-full rounded-full border border-[var(--panel-border)] bg-white py-2 pl-9 pr-4 text-sm text-[var(--text-primary)] outline-none transition focus:border-rose-400"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search activity..."
             type="search"

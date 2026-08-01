@@ -22,7 +22,7 @@ export default function PlanningSection({
 }: PlanningSectionProps) {
   const [isOpen, setIsOpen] = useState(true);
   const contentId = useId();
-  const summary = `${countLabel(ideaCount, "idea")} · ${countLabel(planCount, "plan")}`;
+  const summary = `${countLabel(planCount, "plan")} · ${countLabel(ideaCount, "idea")}`;
 
   return (
     <section className="surface mt-4 p-4 md:mt-6 md:p-8">

@@ -38,13 +38,13 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
 
   return (
     <section className="animate-fade-in-up rounded-2xl border border-amber-200/90 bg-[linear-gradient(135deg,rgba(255,251,235,0.92),rgba(255,237,213,0.88))] px-4 py-3 shadow-[var(--shadow-sm)]">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-start gap-2">
-          <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
             <FlaskConical className="h-3.5 w-3.5" />
           </span>
-          <div>
-            <p className="text-sm font-semibold text-amber-900">Private Beta</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-amber-900">Private Beta</p>
             {/* Secondary copy is desktop-only: on a phone this bar was ~118px of
                 the first screen on every tab until dismissed. */}
             <p className="hidden text-xs text-amber-800/90 sm:block">
@@ -52,7 +52,7 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Link
             href={`/spaces/${spaceId}/settings#beta-checklist`}
             className="hidden rounded-full border border-amber-300 bg-white/90 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-50 sm:inline-block"
@@ -61,7 +61,7 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
           </Link>
           <Link
             href={reportHref}
-            className="inline-flex items-center gap-1.5 rounded-full bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-800"
+            className="inline-flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-800"
           >
             <MessageSquareWarning className="h-3.5 w-3.5" />
             Report issue
@@ -74,7 +74,7 @@ export default function BetaNoticeBar({ spaceId }: BetaNoticeBarProps) {
               }
               setDismissedInSession(true);
             }}
-            className="rounded-full border border-amber-300 bg-white/90 p-1.5 text-amber-700 transition hover:bg-amber-50"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-white/90 text-amber-700 transition hover:bg-amber-50"
             aria-label="Dismiss beta notice"
             title="Dismiss beta notice"
           >

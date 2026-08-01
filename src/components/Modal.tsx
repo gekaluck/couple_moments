@@ -45,7 +45,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
                       {title}
                     </Dialog.Title>
                     <button
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/85 text-[var(--text-muted)] transition hover:border-[var(--border-medium)] hover:bg-white hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/85 text-[var(--text-muted)] transition hover:border-[var(--border-medium)] hover:bg-white hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
                       aria-label="Close modal"
                       onClick={onClose}
                       type="button"

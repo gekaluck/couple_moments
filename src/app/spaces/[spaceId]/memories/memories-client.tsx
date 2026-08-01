@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { MapPin } from "lucide-react";
 
 import EmptyState from "@/components/ui/EmptyState";
+import PlanningCover from "@/components/planning/PlanningCover";
 import LocalTime from "@/components/time/LocalTime";
 import { loadPlacePhotoUrls } from "@/lib/place-photos-client";
 
@@ -27,6 +29,7 @@ type Memory = {
   dateTimeStart: string;
   tags: string[];
   placeId: string | null;
+  placeName: string | null;
   coverUrl: string | null;
   fallbackCoverUrl: string | null;
 };
@@ -41,7 +44,7 @@ type MemoryCoverProps = {
   fallbackCoverUrl: string | null;
   placeId: string | null;
   title: string;
-  gradient: string;
+  children?: ReactNode;
   sizeClass?: string;
 };
 
@@ -50,14 +53,15 @@ function MemoryCover({
   fallbackCoverUrl,
   placeId,
   title,
-  gradient,
-  sizeClass = "h-[72px] w-[72px] min-h-[72px] min-w-[72px] md:h-[120px] md:w-[120px] md:min-h-[120px] md:min-w-[120px]",
+  children,
+  sizeClass = "aspect-[16/10] w-full",
 }: MemoryCoverProps) {
   const [resolvedCoverUrl, setResolvedCoverUrl] = useState<string | null>(null);
   const [dynamicCoverState, setDynamicCoverState] = useState<{
     placeId: string | null;
     url: string | null;
-  }>({ placeId: null, url: null });
+    loaded: boolean;
+  }>({ placeId: null, url: null, loaded: false });
   const uploadedCoverCandidates = useMemo(
     () =>
       [coverUrl]
@@ -71,11 +75,14 @@ function MemoryCover({
   const activeCoverUrl =
     resolvedCoverUrl && uploadedCoverCandidates.includes(resolvedCoverUrl)
       ? resolvedCoverUrl
-      : dynamicCoverState.placeId === placeId
-        ? dynamicCoverState.url
-        : !placeId
-          ? fallbackCoverUrl
-          : null;
+      : dynamicCoverState.loaded && dynamicCoverState.placeId === placeId
+        ? dynamicCoverState.url ?? fallbackCoverUrl
+        : uploadedCoverCandidates[0] ?? fallbackCoverUrl;
+  const isResolvingCover = Boolean(
+    !resolvedCoverUrl &&
+      (uploadedCoverCandidates.length > 0 || placeId) &&
+      !(dynamicCoverState.loaded && dynamicCoverState.placeId === placeId),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +91,7 @@ function MemoryCover({
       if (!placeId) {
         if (!cancelled) {
           setResolvedCoverUrl(null);
-          setDynamicCoverState({ placeId: null, url: null });
+          setDynamicCoverState({ placeId: null, url: null, loaded: true });
         }
         return;
       }
@@ -95,7 +102,7 @@ function MemoryCover({
       }).catch(() => []);
       if (!cancelled) {
         setResolvedCoverUrl(null);
-        setDynamicCoverState({ placeId, url: freshUrls[0] ?? null });
+        setDynamicCoverState({ placeId, url: freshUrls[0] ?? null, loaded: true });
       }
     };
 
@@ -127,65 +134,16 @@ function MemoryCover({
   }, [placeId, uploadedCoverCandidates]);
 
   return (
-    <div
-      className={`relative flex ${sizeClass} items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br text-4xl font-semibold text-white shadow-sm`}
+    <PlanningCover
+      src={activeCoverUrl}
+      alt={`${title} cover`}
+      className={sizeClass}
+      isLoading={isResolvingCover}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
-      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.6) 0, rgba(255,255,255,0) 60%)" }} />
-      {activeCoverUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          alt={title}
-          className="relative z-10 h-full w-full object-cover"
-          src={activeCoverUrl}
-          onError={() => {
-            setResolvedCoverUrl(null);
-            if (placeId) {
-              setDynamicCoverState((current) =>
-                current.placeId === placeId ? { placeId, url: null } : current,
-              );
-            }
-          }}
-        />
-      ) : (
-        <svg
-          aria-hidden="true"
-          className="relative z-10 h-7 w-7 text-white/90 md:h-9 md:w-9"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-        >
-          <path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a1 1 0 0 1 1-1Z" />
-          <circle cx="12" cy="13" r="3.2" />
-        </svg>
-      )}
-    </div>
+      {children}
+    </PlanningCover>
   );
 }
-
-// Dusty, brand-adjacent tones (shared vocabulary with TagBadge): a list of
-// photo-less memories no longer reads as a wall of saturated magenta (C-1).
-const TAG_GRADIENTS: Record<string, string> = {
-  date: "from-[#d94f5c] to-[#b83a48]",
-  together: "from-[#d94f5c] to-[#b83a48]",
-  romantic: "from-[#d94f5c] to-[#b83a48]",
-  anniversary: "from-[#d94f5c] to-[#b83a48]",
-  cozy: "from-[#dd9f57] to-[#c98a3f]",
-  home: "from-[#dd9f57] to-[#c98a3f]",
-  weekend: "from-[#b06a8f] to-[#96527a]",
-  outdoor: "from-[#729b63] to-[#5c7f50]",
-  hiking: "from-[#729b63] to-[#5c7f50]",
-  nature: "from-[#729b63] to-[#5c7f50]",
-  dinner: "from-[#d4944c] to-[#b87a35]",
-  food: "from-[#d4944c] to-[#b87a35]",
-  restaurant: "from-[#d4944c] to-[#b87a35]",
-  movie: "from-[#b06a8f] to-[#96527a]",
-  concert: "from-[#b06a8f] to-[#96527a]",
-  travel: "from-[#5f8fa3] to-[#4a7488]",
-  trip: "from-[#5f8fa3] to-[#4a7488]",
-  vacation: "from-[#5f8fa3] to-[#4a7488]",
-};
 
 export default function MemoriesClient({ memories, spaceId }: MemoriesClientProps) {
   const [year, setYear] = useState("all");
@@ -264,7 +222,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
         </div>
         <div className="mt-4">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex h-10 min-w-[220px] flex-1 items-center">
+            <div className="relative flex h-11 min-w-[220px] flex-1 items-center">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                 <svg
                   aria-hidden="true"
@@ -278,7 +236,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 </svg>
               </span>
               <input
-                className="h-10 w-full rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
+                className="h-11 w-full rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
                 placeholder="Search memories..."
                 value={search}
                 onChange={(e) => {
@@ -313,7 +271,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           {tags.length > 0 ? (
             <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 md:flex-wrap md:overflow-visible">
               <button
-                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                className={`min-h-10 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   tag === "all"
                     ? "border-rose-300 bg-rose-100 text-rose-700"
                     : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
@@ -329,7 +287,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               {tags.map((value) => (
                 <button
                   key={value}
-                  className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  className={`min-h-10 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                     tag === value
                       ? "border-rose-300 bg-rose-100 text-rose-700"
                       : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
@@ -348,7 +306,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
           {years.length > 0 ? (
             <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 md:hidden">
               <button
-                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                className={`min-h-10 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                   year === "all"
                     ? "border-rose-300 bg-rose-100 text-rose-700"
                     : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
@@ -364,7 +322,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               {years.map((value) => (
                 <button
                   key={value}
-                  className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  className={`min-h-10 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
                     year === value.toString()
                       ? "border-rose-300 bg-rose-100 text-rose-700"
                       : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
@@ -397,70 +355,72 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
       ) : null}
       {/* Desktop uses the full container width as a grid — the old
           single-column max-w-4xl rows were ~1100px of mostly whitespace. */}
-      <div className="stagger-children flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-4 xl:grid-cols-3">
+      <div className="stagger-children mt-4 flex flex-col gap-4 md:grid md:grid-cols-2 xl:grid-cols-3">
         {visibleMemories.map((event) => {
-          const gradient =
-            event.tags
-              .map((value) => TAG_GRADIENTS[value.toLowerCase()])
-              .find(Boolean) ?? "from-[#8b7f76] to-[#6f6259]";
           const primaryTag = event.tags[0] ?? null;
           return (
             <div
               key={event.id}
-              className="group surface relative flex flex-row items-center gap-3 overflow-hidden p-3 transition-all duration-200 hover:shadow-lg md:gap-4 md:p-4 md:hover:scale-[1.01]"
+              className="group/memory surface relative flex h-full flex-col overflow-hidden p-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
             >
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-[linear-gradient(125deg,rgba(255,255,255,0),rgba(255,230,240,0.2),rgba(253,240,226,0.18))]"
-              />
               <Link
                 href={`/events/${event.id}?from=memories&spaceId=${encodeURIComponent(spaceId)}`}
                 aria-label={`Open ${event.title}`}
-                className="absolute inset-0 z-20"
+                className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400"
               />
               <MemoryCover
                 coverUrl={event.coverUrl}
                 fallbackCoverUrl={event.fallbackCoverUrl}
                 placeId={event.placeId}
                 title={event.title}
-                gradient={gradient}
-                sizeClass="h-[72px] w-[72px] min-h-[72px] min-w-[72px] md:h-[96px] md:w-[96px] md:min-h-[96px] md:min-w-[96px]"
-              />
-              <div className="relative z-[1] min-w-0 flex-1">
-                <h2 className="truncate text-[14.5px] font-semibold leading-tight tracking-[-0.01em] text-[var(--text-primary)] md:whitespace-normal md:text-lg md:font-[var(--font-display)]">
+                sizeClass="aspect-[16/10] w-full md:aspect-[4/3]"
+              >
+                {primaryTag ? (
+                  <span className="absolute bottom-3 right-3 max-w-[40%] truncate rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md">
+                    {primaryTag}
+                  </span>
+                ) : null}
+              </MemoryCover>
+              <div className="flex min-w-0 flex-1 flex-col p-4 md:p-5">
+                <h2 className="break-words text-lg font-semibold leading-snug tracking-[-0.015em] text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere] md:text-xl md:font-[var(--font-display)]">
                   {event.title}
                 </h2>
                 {event.description ? (
-                  <p className="mt-0.5 truncate text-xs text-[var(--text-muted)] md:mt-1.5 md:line-clamp-2 md:whitespace-normal md:text-sm md:leading-relaxed">
+                  <p className="mt-2 text-sm leading-5 text-[var(--text-muted)] line-clamp-2">
                     {event.description}
                   </p>
                 ) : null}
-                <div className="mt-1.5 flex items-center gap-2 md:mt-3 md:flex-wrap">
-                  {primaryTag ? (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-tertiary)]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
-                      {primaryTag}
-                    </span>
-                  ) : null}
-                  {event.tags.slice(1).map((value) => (
-                    <span
-                      key={value}
-                      className="hidden items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-tertiary)] md:inline-flex"
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
-                      {value}
-                    </span>
-                  ))}
+                {event.placeName ? (
+                  <div className="mt-2 flex min-w-0 items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-rose-500" />
+                    <span className="truncate">{event.placeName}</span>
+                  </div>
+                ) : null}
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
+                  <CalendarIcon />
                   <LocalTime
-                    className="ml-auto shrink-0 rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--text-muted)] shadow-sm md:px-3 md:py-1 md:text-xs"
-                    options={{
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    }}
+                    options={{ month: "short", day: "numeric", year: "numeric" }}
                     value={event.dateTimeStart}
                   />
                 </div>
+                {event.tags.length > 0 ? (
+                  <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
+                    {event.tags.slice(0, 3).map((value) => (
+                      <span
+                        key={value}
+                        className="inline-flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-tertiary)]"
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
+                        {value}
+                      </span>
+                    ))}
+                    {event.tags.length > 3 ? (
+                      <span className="inline-flex items-center rounded-full border border-[var(--panel-border)] bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-[var(--text-tertiary)]">
+                        +{event.tags.length - 3}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
           );

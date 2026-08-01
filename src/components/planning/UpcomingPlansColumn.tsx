@@ -18,6 +18,7 @@ type Plan = {
   timeIsSet?: boolean;
   createdBy?: { name: string | null; email: string };
   placeName?: string | null;
+  coverUrl?: string | null;
 };
 
 type UpcomingPlansColumnProps = {
@@ -113,6 +114,7 @@ export default function UpcomingPlansColumn({
                   commentCount={commentCounts[plan.id] ?? 0}
                   createdBy={plan.createdBy}
                   placeName={plan.placeName}
+                  coverUrl={plan.coverUrl}
                   timeFormat={timeFormat}
                   onDelete={onDeleteEvent}
                 />
@@ -133,6 +135,7 @@ export default function UpcomingPlansColumn({
                   commentCount={commentCounts[plan.id] ?? 0}
                   createdBy={plan.createdBy}
                   placeName={plan.placeName}
+                  coverUrl={plan.coverUrl}
                   timeFormat={timeFormat}
                   onDelete={onDeleteEvent}
                 />

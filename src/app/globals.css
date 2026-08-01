@@ -428,7 +428,8 @@ h3,
 }
 
 .event-details-label {
-  width: 100px;
+  width: 88px;
+  flex: 0 0 88px;
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -442,6 +443,20 @@ h3,
   font-size: 0.95rem;
   color: var(--text-primary);
   font-weight: 400;
+}
+
+@media (max-width: 420px) {
+  .event-details-row {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 0;
+  }
+
+  .event-details-label {
+    width: 78px;
+    flex-basis: 78px;
+    padding-top: 3px;
+  }
 }
 
 /* ──────────────────────────────────────────────────

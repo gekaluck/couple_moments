@@ -515,7 +515,7 @@ export default function MobileAgendaView({
             {selectedGridDay ? (
               <Link
                 href={selectedGridDay.addHref}
-                className="inline-flex items-center gap-1 rounded-full bg-[var(--action-primary)] px-3 py-1.5 text-[11px] font-semibold text-white transition active:scale-95"
+                className="inline-flex min-h-10 items-center gap-1 rounded-full bg-[var(--action-primary)] px-3 py-1.5 text-[11px] font-semibold text-white transition active:scale-95"
               >
                 <Plus size={12} strokeWidth={2.5} />
                 Add
@@ -524,7 +524,7 @@ export default function MobileAgendaView({
             <button
               type="button"
               onClick={() => setSelectedKey(null)}
-              className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-rose-700 transition active:scale-95"
+              className="inline-flex min-h-10 items-center gap-1 rounded-full border border-rose-200 bg-white/80 px-3 py-1.5 text-[11px] font-medium text-rose-700 transition active:scale-95"
             >
               <X size={12} />
               Close

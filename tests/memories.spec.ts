@@ -55,6 +55,12 @@ test("memory card navigates to the event page", async ({ page }) => {
       bottomNav.getByRole("link", { name: "Calendar" }),
     ).toBeVisible();
     await expect(
+      bottomNav.getByRole("link", { name: "Calendar" }),
+    ).not.toHaveAttribute("aria-current", "page");
+    await expect(
+      bottomNav.getByRole("link", { name: "Memories" }),
+    ).toHaveAttribute("aria-current", "page");
+    await expect(
       bottomNav.getByRole("link", { name: "Activity" }),
     ).toBeVisible();
 
