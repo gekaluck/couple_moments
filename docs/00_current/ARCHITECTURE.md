@@ -37,11 +37,13 @@ Client components
   - `settings`: member/settings + Google calendar controls
   - `planning`: redirect route to `calendar`
 - `src/app/events/[eventId]/*`: event detail, comments, ratings, photos
+- `src/app/demo`: demo sandbox entry point (see Demo mode below)
 - `src/app/api/*`:
   - auth routes
   - couple-space, event, and idea API routes
   - Google integration routes
   - ICS export route
+  - demo cleanup route (cron)
 
 ## Data/domain layer
 Primary modules in `src/lib`:
@@ -56,6 +58,7 @@ Main entities:
 - `CoupleSpace`, `Membership`
 - `Event`, `Idea`, `Note`, `AvailabilityBlock`, `Photo`
 - `ExternalAccount`, `ExternalCalendar`, `ExternalAvailabilityBlock`, `ExternalEventLink`
+- Demo flags: `User.isDemo`, `CoupleSpace.isDemo`, `CoupleSpace.demoExpiresAt`
 - `ChangeLogEntry`
 - `Notification` (kept for planned future implementation)
 
@@ -77,6 +80,21 @@ Main entities:
 ### Calendar availability
 - Manual availability and external busy blocks are rendered together.
 - Google calendar busy sync is supported through selected calendars.
+
+### Demo mode
+- `/demo` provisions a throwaway `CoupleSpace` (`isDemo`, `demoExpiresAt`) with two
+  throwaway `User` rows (`isDemo`, `@demo.duet.invalid` addresses) and signs the
+  visitor in with an ordinary `cm_session`.
+- Content comes from `src/lib/demo/fixture.ts`, generated from offsets against
+  `now` so the sandbox is never stale. Images are static files under `public/demo/`,
+  referenced by absolute URL.
+- Because the demo user is an ordinary user with an ordinary membership, every
+  product surface works with no demo branching. Only externally-effectful actions
+  are blocked: Cloudinary photo upload, Google OAuth, invite codes, and feedback mail.
+- Bounded by cookie reuse, a per-IP rate limit, a global live-space cap, and the
+  `DEMO_MODE_ENABLED` flag (off unless explicitly `"true"`).
+- Expired sandboxes are deleted by `src/lib/demo/cleanup.ts`, driven by an hourly
+  Vercel cron on `/api/demo/cleanup` and opportunistically on each `/demo` entry.
 
 ### Google outbound sync
 - Event creation can optionally create a linked Google Calendar event.

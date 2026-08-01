@@ -73,6 +73,18 @@ This file records high-level decisions and trade-offs. Add dated entries as they
 - ADR-2026-01-30-tags-json-string.md
 - ADR-2026-01-30-mutation-auth-checks.md
 
+## 2026-07-31 - Demo mode as a per-visitor sandbox (/demo)
+- Context: Duet needed a shareable link that shows the product fully populated, without a signup. Onboarding does not serve this: it explains an empty space, and the mobile UI is now picture-heavy enough that an empty space undersells it.
+- Decision: `/demo` provisions a throwaway `CoupleSpace` plus two throwaway `User` rows per visitor, signs the visitor in with an ordinary `cm_session`, and deletes the sandbox after `DEMO_TTL_HOURS` (default 24). Content is generated from date offsets against `now` by `src/lib/demo/fixture.ts`; images are static files in `public/demo/` referenced by absolute URL. Guarded by cookie reuse, a per-IP rate limit, a global live-space cap, and a `DEMO_MODE_ENABLED` flag that is off by default.
+- Alternatives considered: One shared demo account — rejected because concurrent viewers see each other's edits and the content drifts until re-seeded. Shared read-only account — rejected because a demo where no button works undercuts the pitch. Cloning a template space from the database — rejected because a fixed snapshot goes stale: "today" empties out and upcoming plans slide into the past.
+- Consequences: Because a demo user is an ordinary user with an ordinary membership, the whole product works with no demo branching in the domain layer. Only externally-effectful actions needed blocking (Cloudinary upload, Google OAuth, invite codes, feedback mail). The cost is two additive columns, an ordered cleanup routine (only `Session` cascades in this schema), and an hourly cron. Demo rows are filterable everywhere via `isDemo`, so they never pollute real user counts.
+
+## 2026-07-31 - Demo images are downloaded once, never fetched at runtime
+- Context: The demo needs ~29 photos. Google Places photos were requested for venue shots, but Google Maps Platform terms permit storing place *IDs* indefinitely while restricting caching of other Places content, photos included.
+- Decision: `scripts/fetch-demo-photos.ts` resolves images once into `public/demo/` and records attribution in `public/demo/CREDITS.md`. It supports two sources behind one manifest: Google Places (`--source=places`, the default) and pasted stock URLs (`--source=stock`). Nothing fetches images at request time.
+- Alternatives considered: Live Places lookup during provisioning — rejected for adding an API dependency, cost, and latency to every `/demo` click. Hotlinking stock URLs — rejected as fragile.
+- Consequences: `/demo` has no runtime dependency on Google. The licensing choice is explicit and documented at the top of the script: committing Places photos to a public repo is likely outside Google's terms, so either use the stock source or keep `public/demo/` out of git and generate it at deploy time.
+
 ## Links
 - READ_THIS_FIRST.md
 - docs/00_current/ARCHITECTURE.md

@@ -7,6 +7,7 @@ import { requireUserId } from "@/lib/current-user";
 import { listEventsForSpace } from "@/lib/events";
 import { resolveCalendarTimeFormat } from "@/lib/calendar";
 import BetaNoticeBar from "@/components/beta/BetaNoticeBar";
+import DemoBar from "@/components/demo/DemoBar";
 import SpaceNav from "./space-nav";
 import MobileTopBar from "@/components/mobile/MobileTopBar";
 import BottomTabBar from "@/components/mobile/BottomTabBar";
@@ -71,7 +72,13 @@ export default async function SpaceLayout({ children, params }: LayoutProps) {
       <MobileTopBar {...navProps} />
       <SpaceNav {...navProps} />
       <div className="mx-auto mt-4 w-full max-w-[1220px] px-3 md:px-6">
-        <BetaNoticeBar spaceId={space.id} />
+        {/* One bar, never two — a demo visitor gets the demo notice instead of
+            the beta notice. */}
+        {space.isDemo ? (
+          <DemoBar spaceId={space.id} />
+        ) : (
+          <BetaNoticeBar spaceId={space.id} />
+        )}
       </div>
       {/* pb-36 clears the tab bar AND the FAB (bottom ~136px on mobile) so the
           last list item is never trapped underneath them. */}

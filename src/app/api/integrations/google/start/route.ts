@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { internalServerError, requireApiUserId } from "@/lib/api-utils";
+import { isDemoUser } from "@/lib/demo/guard";
 import { generateAuthUrl } from "@/lib/integrations/google/calendar";
 
 /**
@@ -15,6 +16,13 @@ export async function GET() {
     const auth = await requireApiUserId();
     if (!auth.ok) {
       return auth.response;
+    }
+    // Demo visitors must never be sent to a real Google consent screen.
+    if (await isDemoUser(auth.userId)) {
+      return NextResponse.json(
+        { error: "Google Calendar is disabled in the demo." },
+        { status: 403 },
+      );
     }
     // Generate a random state parameter for CSRF protection
     const state = crypto.randomBytes(32).toString("hex");
