@@ -206,7 +206,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
 
   return (
     <div className="page-enter-stagger">
-      <section className="surface-muted p-4 md:p-6">
+      <section className="surface-muted p-3.5 md:p-6">
         <div>
           {/* One count, not three: the kicker count and permanent subtitle
               duplicated the headline; a count only matters while filtering. */}
@@ -220,9 +220,9 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
             </p>
           ) : null}
         </div>
-        <div className="mt-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex h-11 min-w-[220px] flex-1 items-center">
+        <div className="mt-3">
+          <div className="flex h-11 items-center rounded-2xl border border-[var(--panel-border)] bg-white/70 p-1 shadow-[var(--shadow-xs)] transition focus-within:border-rose-300 focus-within:bg-white/90">
+            <div className="relative flex h-full min-w-0 flex-1 items-center">
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
                 <svg
                   aria-hidden="true"
@@ -236,8 +236,9 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 </svg>
               </span>
               <input
-                className="h-11 w-full rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
-                placeholder="Search memories..."
+                aria-label="Search memories"
+                className="h-full min-w-0 w-full bg-transparent py-2 pl-9 pr-2 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)]"
+                placeholder="Search memories"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -245,12 +246,13 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 }}
               />
             </div>
-            <div className="relative hidden h-10 items-center md:flex">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--accent-strong)]">
+            <div className="relative flex h-8 w-[106px] shrink-0 items-center border-l border-[var(--panel-border)]">
+              <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[var(--accent-strong)]">
                 <CalendarIcon />
               </span>
               <select
-                className="h-10 rounded-full border border-[var(--panel-border)] bg-white/85 py-2 pl-10 pr-3 text-sm leading-none text-[var(--text-primary)] shadow-sm outline-none focus:border-rose-300"
+                aria-label="Filter memories by year"
+                className="h-full w-full cursor-pointer appearance-none bg-transparent py-1 pl-8 pr-6 text-xs font-semibold leading-none text-[var(--text-secondary)] outline-none"
                 onChange={(event) => {
                   setYear(event.target.value);
                   setVisibleCount(12);
@@ -264,14 +266,24 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                   </option>
                 ))}
               </select>
+              <svg
+                aria-hidden="true"
+                className="pointer-events-none absolute right-2 h-3 w-3 text-[var(--text-tertiary)]"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="m3 4.5 3 3 3-3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
           </div>
           {/* The tag chips below are the single tag filter — the old "All
               tags" dropdown duplicated them on desktop. */}
           {tags.length > 0 ? (
-            <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 md:flex-wrap md:overflow-visible">
+            <div className="scrollbar-none -mx-1 mt-2 flex gap-1.5 overflow-x-auto px-1 md:flex-wrap md:overflow-visible">
               <button
-                className={`min-h-10 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                className={`min-h-8 shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
                   tag === "all"
                     ? "border-rose-300 bg-rose-100 text-rose-700"
                     : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
@@ -287,48 +299,13 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
               {tags.map((value) => (
                 <button
                   key={value}
-                  className={`min-h-10 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  className={`min-h-8 shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
                     tag === value
                       ? "border-rose-300 bg-rose-100 text-rose-700"
                       : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
                   }`}
                   onClick={() => {
                     setTag(value);
-                    setVisibleCount(12);
-                  }}
-                  type="button"
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
-          ) : null}
-          {years.length > 0 ? (
-            <div className="scrollbar-none -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 md:hidden">
-              <button
-                className={`min-h-10 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                  year === "all"
-                    ? "border-rose-300 bg-rose-100 text-rose-700"
-                    : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
-                }`}
-                onClick={() => {
-                  setYear("all");
-                  setVisibleCount(12);
-                }}
-                type="button"
-              >
-                All years
-              </button>
-              {years.map((value) => (
-                <button
-                  key={value}
-                  className={`min-h-10 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                    year === value.toString()
-                      ? "border-rose-300 bg-rose-100 text-rose-700"
-                      : "border-[var(--panel-border)] bg-white/70 text-[var(--text-tertiary)] hover:border-rose-300 hover:text-rose-700"
-                  }`}
-                  onClick={() => {
-                    setYear(value.toString());
                     setVisibleCount(12);
                   }}
                   type="button"
