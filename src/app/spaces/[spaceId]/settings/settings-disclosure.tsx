@@ -62,8 +62,8 @@ export default function SettingsDisclosure({
         aria-label={label}
         className={`grid overflow-hidden transition-[grid-template-rows] duration-200 ease-out md:!grid-rows-[1fr] md:overflow-visible ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
       >
-        <div className="min-h-0">
-          <div className="border-t border-[var(--panel-border)] px-4 pb-4 pt-4 md:border-0 md:px-6 md:pb-6 md:pt-4 lg:px-8 lg:pb-8">
+        <div className="min-h-0 min-w-0">
+          <div className="min-w-0 border-t border-[var(--panel-border)] px-4 pb-4 pt-4 md:border-0 md:px-6 md:pb-6 md:pt-4 lg:px-8 lg:pb-8">
             {children}
           </div>
         </div>

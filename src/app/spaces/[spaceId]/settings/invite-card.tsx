@@ -124,26 +124,29 @@ export default function InviteCard({ inviteCode, isSpaceComplete = false, embedd
         </div>
       ) : null}
 
-      <div className={embedded ? "space-y-4" : "mt-6 space-y-4"}>
+      <div className={embedded ? "min-w-0 space-y-4" : "mt-6 min-w-0 space-y-4"}>
         {/* Invite Link */}
         <div>
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
             Invite Link
           </label>
-          <div className="flex gap-2">
-            <div className="flex-1 truncate rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)]">
+          <div className="flex min-w-0 gap-2">
+            <div className="min-w-0 flex-1 truncate rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 text-sm text-[var(--text-primary)]">
               {inviteUrl}
             </div>
             <button
+              aria-label={copied === "link" ? "Invite link copied" : "Copy invite link"}
               onClick={() => copyToClipboard(inviteUrl, "link")}
-              className={`flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35 ${
+              className={`flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-full text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35 sm:h-auto sm:w-auto sm:px-4 sm:py-3 ${
                 copied === "link"
                   ? "bg-emerald-500 text-white"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
               {copied === "link" ? <CheckIcon /> : <CopyIcon />}
-              {copied === "link" ? "Copied" : "Copy"}
+              <span className="hidden sm:inline">
+                {copied === "link" ? "Copied" : "Copy"}
+              </span>
             </button>
           </div>
         </div>
@@ -153,20 +156,23 @@ export default function InviteCard({ inviteCode, isSpaceComplete = false, embedd
           <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">
             Invite Code
           </label>
-          <div className="flex gap-2">
-            <div className="flex-1 rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 font-mono text-lg font-bold tracking-widest text-[var(--text-primary)]">
+          <div className="flex min-w-0 gap-2">
+            <div className="min-w-0 flex-1 truncate rounded-xl border border-[var(--panel-border)] bg-white px-4 py-3 font-mono text-lg font-bold tracking-widest text-[var(--text-primary)]">
               {inviteCode}
             </div>
             <button
+              aria-label={copied === "code" ? "Invite code copied" : "Copy invite code"}
               onClick={() => copyToClipboard(inviteCode, "code")}
-              className={`flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35 ${
+              className={`flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-full text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35 sm:h-auto sm:w-auto sm:px-4 sm:py-3 ${
                 copied === "code"
                   ? "bg-emerald-500 text-white"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
               {copied === "code" ? <CheckIcon /> : <CopyIcon />}
-              {copied === "code" ? "Copied" : "Copy"}
+              <span className="hidden sm:inline">
+                {copied === "code" ? "Copied" : "Copy"}
+              </span>
             </button>
           </div>
         </div>
@@ -181,7 +187,7 @@ export default function InviteCard({ inviteCode, isSpaceComplete = false, embedd
         </button>
       </div>
 
-      <p className="mt-4 text-center text-xs text-[var(--text-tertiary)]">
+      <p className="mt-4 break-words px-1 text-center text-xs text-[var(--text-tertiary)]">
         Your partner will need to create an account and enter this code to join.
       </p>
     </>
