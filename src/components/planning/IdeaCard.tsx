@@ -200,6 +200,7 @@ export default function IdeaCard({
         className="absolute inset-0 z-10 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400 md:hidden"
       />
 
+      {/* Mobile: the photo owns the card and the text rides the scrim. */}
       <PlanningCover
         src={resolvedCoverUrl}
         alt={`${idea.title} cover`}
@@ -210,31 +211,23 @@ export default function IdeaCard({
           aria-hidden="true"
           className="absolute right-3 top-3 h-8 w-8 rounded-full border border-white/40 bg-black/25 p-2 text-white backdrop-blur-md"
         />
-      </PlanningCover>
-      <div className="absolute inset-x-2 bottom-2 z-[1] flex min-w-0 flex-col gap-1 rounded-2xl border border-white/55 bg-white/90 p-3 shadow-[var(--shadow-md)] backdrop-blur-xl md:hidden">
-          <div className="flex items-start justify-between gap-2">
-            <p className="min-w-0 flex-1 break-words text-base font-semibold leading-snug text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere]">
-              {idea.title}
-            </p>
-          </div>
-          {idea.description ? (
-            <p className="text-xs text-[var(--text-muted)] line-clamp-1">
-              {idea.description}
-            </p>
-          ) : null}
+        <div className="absolute inset-x-0 bottom-0 flex min-w-0 flex-col gap-1 p-4 text-white">
+          <p className="min-w-0 break-words text-lg font-semibold leading-snug tracking-[-0.015em] line-clamp-2 [overflow-wrap:anywhere] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+            {idea.title}
+          </p>
           {idea.placeName || idea.placeAddress ? (
-            <p className="flex min-w-0 items-center gap-1 text-xs text-[var(--text-muted)]">
-              <MapPin className="h-3 w-3 shrink-0 text-amber-500" />
+            <p className="flex min-w-0 items-center gap-1.5 text-xs text-white/85">
+              <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
               <span className="min-w-0 truncate">
                 {idea.placeName || idea.placeAddress}
               </span>
             </p>
           ) : null}
-          <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
-            <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-[var(--text-tertiary)]">
+          <div className="flex items-center justify-between gap-2 pt-0.5">
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-white/80">
               <span
                 aria-hidden="true"
-                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] font-semibold text-white"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white ring-1 ring-white/40"
                 style={{ backgroundImage: creatorGradient }}
               >
                 {creatorInitials}
@@ -245,13 +238,14 @@ export default function IdeaCard({
               </span>
             </span>
             {commentCount > 0 ? (
-              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-[var(--text-tertiary)]">
-                <MessageSquare className="h-3.5 w-3.5" />
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-white/80">
+                <MessageSquare aria-hidden="true" className="h-3.5 w-3.5" />
                 {commentCount}
               </span>
             ) : null}
           </div>
-      </div>
+        </div>
+      </PlanningCover>
 
       {/* Desktop layout */}
       <div className="hidden flex-1 gap-4 p-5 md:flex md:flex-row md:items-stretch md:justify-between">
@@ -260,6 +254,7 @@ export default function IdeaCard({
           alt={`${idea.title} cover`}
           className="h-36 w-48 shrink-0 rounded-xl"
           isLoading={isCoverLoading}
+          scrim="soft"
         />
         <div className="flex min-w-0 flex-1 flex-col">
           <CardTitle className="text-lg">{idea.title}</CardTitle>

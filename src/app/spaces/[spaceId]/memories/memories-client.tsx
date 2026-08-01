@@ -354,64 +354,45 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 sizeClass="aspect-[4/3] w-full"
               >
                 {visibleTags.length > 0 ? (
-                  <div className="absolute bottom-3 right-3 hidden max-w-[70%] items-center justify-end gap-1.5 md:flex">
+                  <div className="absolute right-3 top-3 flex max-w-[65%] items-center justify-end gap-1.5">
                     {visibleTags.map((value) => (
                       <span
                         key={value}
-                        className="min-w-0 truncate rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md"
+                        className="min-w-0 truncate rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
                       >
                         {value}
                       </span>
                     ))}
                     {hiddenTagCount > 0 ? (
-                      <span className="shrink-0 rounded-full border border-white/40 bg-black/30 px-2 py-1 text-xs font-semibold text-white backdrop-blur-md">
+                      <span className="shrink-0 rounded-full border border-white/40 bg-black/30 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-md">
                         +{hiddenTagCount}
                       </span>
                     ) : null}
                   </div>
                 ) : null}
-              </MemoryCover>
-              <div className="absolute inset-x-2 bottom-2 z-[1] flex min-w-0 flex-col rounded-2xl border border-white/55 bg-white/90 p-3 shadow-[var(--shadow-md)] backdrop-blur-xl md:static md:z-auto md:flex-1 md:rounded-none md:border-0 md:bg-transparent md:p-5 md:shadow-none md:backdrop-blur-none">
-                <h2 className="break-words text-base font-semibold leading-snug tracking-[-0.015em] text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere] md:text-xl md:font-[var(--font-display)]">
-                  {event.title}
-                </h2>
-                {event.description ? (
-                  <p className="mt-2 hidden text-sm leading-5 text-[var(--text-muted)] line-clamp-2 md:block">
-                    {event.description}
-                  </p>
-                ) : null}
-                {event.placeName ? (
-                  <div className="mt-1.5 flex min-w-0 items-center gap-1.5 text-xs text-[var(--text-muted)] md:mt-2">
-                    <MapPin className="h-3.5 w-3.5 shrink-0 text-rose-500" />
-                    <span className="truncate">{event.placeName}</span>
+                {/* Title and meta ride the scrim so the photo keeps the card. */}
+                <div className="absolute inset-x-0 bottom-0 flex min-w-0 flex-col gap-1 p-4 text-white">
+                  <h2 className="break-words text-lg font-semibold leading-snug tracking-[-0.015em] line-clamp-2 [overflow-wrap:anywhere] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)] md:text-xl md:font-[var(--font-display)]">
+                    {event.title}
+                  </h2>
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/85">
+                    <span className="inline-flex shrink-0 items-center gap-1.5">
+                      <CalendarIcon />
+                      <LocalTime
+                        options={{ month: "short", day: "numeric", year: "numeric" }}
+                        value={event.dateTimeStart}
+                      />
+                    </span>
+                    {event.placeName ? (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <span aria-hidden="true">·</span>
+                        <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                        <span className="min-w-0 truncate">{event.placeName}</span>
+                      </span>
+                    ) : null}
                   </div>
-                ) : null}
-                <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[var(--text-tertiary)] md:mt-2">
-                  <CalendarIcon />
-                  <LocalTime
-                    options={{ month: "short", day: "numeric", year: "numeric" }}
-                    value={event.dateTimeStart}
-                  />
                 </div>
-                {visibleTags.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap gap-1.5 md:hidden">
-                    {visibleTags.map((value) => (
-                      <span
-                        key={value}
-                        className="inline-flex items-center gap-1 rounded-full border border-[var(--panel-border)] bg-[var(--surface-50)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-tertiary)]"
-                      >
-                        <span className="h-1.5 w-1.5 rounded-full bg-rose-300" />
-                        {value}
-                      </span>
-                    ))}
-                    {hiddenTagCount > 0 ? (
-                      <span className="inline-flex items-center rounded-full border border-[var(--panel-border)] bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-[var(--text-tertiary)]">
-                        +{hiddenTagCount}
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
+              </MemoryCover>
             </div>
           );
         })}
