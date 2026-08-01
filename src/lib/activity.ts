@@ -504,7 +504,7 @@ export async function listActivityForSpace(
           kind: "idea",
           id: entry.entityId,
           title: linkedIdea.title,
-          href: `/spaces/${spaceId}/calendar#idea-${entry.entityId}`,
+          href: `/spaces/${spaceId}/ideas/${entry.entityId}`,
         },
         body: null,
         memory: null,
@@ -531,7 +531,7 @@ export async function listActivityForSpace(
     const href =
       comment.parentType === "EVENT"
         ? `/events/${comment.parentId}`
-        : `/spaces/${spaceId}/calendar#idea-${comment.parentId}`;
+        : `/spaces/${spaceId}/ideas/${comment.parentId}`;
 
     commentItems.push({
       id: `note-${comment.id}`,

@@ -206,6 +206,7 @@ function DayHeader({ entries }: { entries: ActivityEntry[] }) {
 
 type ActivityRowProps = {
   entry: ActivityEntry;
+  spaceId: string;
   memberVisuals: CreatorVisualMap;
   timeFormat: CalendarTimeFormat;
   currentUserId: string;
@@ -215,6 +216,7 @@ type ActivityRowProps = {
 
 function ActivityRow({
   entry,
+  spaceId,
   memberVisuals,
   timeFormat,
   currentUserId,
@@ -232,7 +234,9 @@ function ActivityRow({
         entry.actor.name ??
         entry.actor.email;
   const title = entry.target?.title ?? "";
-  const href = entry.target?.href ?? null;
+  const href = entry.target?.href
+    ? `${entry.target.href}${entry.target.href.includes("?") ? "&" : "?"}from=activity&spaceId=${encodeURIComponent(spaceId)}`
+    : null;
 
   const ariaLabel = `${actorLabel} ${presentation.eyebrow.toLowerCase()} ${title}`.trim();
 
@@ -545,6 +549,7 @@ export default function ActivityFeed({
                       isUnseen={isUnseen}
                       key={entry.id}
                       memberVisuals={memberVisuals}
+                      spaceId={spaceId}
                       timeFormat={timeFormat}
                     />
                   );

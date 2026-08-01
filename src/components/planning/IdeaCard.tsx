@@ -14,6 +14,7 @@ import TagBadge from "@/components/ui/TagBadge";
 import Button from "@/components/ui/Button";
 import Card, { CardDescription, CardFooter, CardTitle } from "@/components/ui/Card";
 import PlanningCover from "@/components/planning/PlanningCover";
+import useResolvedPlaceCover from "@/components/planning/useResolvedPlaceCover";
 import { LocalTimeAgo } from "@/components/time/LocalTime";
 
 import { getOffsetMinutesForLocalDateTime } from "@/lib/date-time";
@@ -120,6 +121,14 @@ export default function IdeaCard({
   const [isPending, startTransition] = useTransition();
   const coverUrl =
     idea.placePhotoUrls?.find((url) => /^https?:\/\//i.test(url.trim())) ?? null;
+  const {
+    coverUrl: resolvedCoverUrl,
+    isLoading: isCoverLoading,
+  } = useResolvedPlaceCover({
+    storedPlacePhotoUrl: coverUrl,
+    placeId: idea.placeId,
+    mapsApiKey,
+  });
 
   useEffect(() => {
     if (isCommentsOpen) {
@@ -192,25 +201,17 @@ export default function IdeaCard({
       />
 
       <PlanningCover
-        src={coverUrl}
+        src={resolvedCoverUrl}
         alt={`${idea.title} cover`}
-        className="aspect-[16/9] w-full md:hidden"
+        className="aspect-[4/3] w-full md:hidden"
+        isLoading={isCoverLoading}
       >
-        <span className="absolute left-3 top-3 rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
-          Idea
-        </span>
         <ChevronRight
           aria-hidden="true"
           className="absolute right-3 top-3 h-8 w-8 rounded-full border border-white/40 bg-black/25 p-2 text-white backdrop-blur-md"
         />
-        {idea.placeName ? (
-          <span className="absolute bottom-3 left-3 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{idea.placeName}</span>
-          </span>
-        ) : null}
       </PlanningCover>
-      <div className="flex min-w-0 flex-1 flex-col gap-1 p-4 md:hidden">
+      <div className="absolute inset-x-2 bottom-2 z-[1] flex min-w-0 flex-col gap-1 rounded-2xl border border-white/55 bg-white/90 p-3 shadow-[var(--shadow-md)] backdrop-blur-xl md:hidden">
           <div className="flex items-start justify-between gap-2">
             <p className="min-w-0 flex-1 break-words text-base font-semibold leading-snug text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere]">
               {idea.title}
@@ -255,14 +256,11 @@ export default function IdeaCard({
       {/* Desktop layout */}
       <div className="hidden flex-1 gap-4 p-5 md:flex md:flex-row md:items-stretch md:justify-between">
         <PlanningCover
-          src={coverUrl}
+          src={resolvedCoverUrl}
           alt={`${idea.title} cover`}
           className="h-36 w-48 shrink-0 rounded-xl"
-        >
-          <span className="absolute left-3 top-3 rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
-            Idea
-          </span>
-        </PlanningCover>
+          isLoading={isCoverLoading}
+        />
         <div className="flex min-w-0 flex-1 flex-col">
           <CardTitle className="text-lg">{idea.title}</CardTitle>
           {idea.description ? (

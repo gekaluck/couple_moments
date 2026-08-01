@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
 import PlanningCover from "@/components/planning/PlanningCover";
+import useResolvedPlaceCover from "@/components/planning/useResolvedPlaceCover";
 import LocalTime from "@/components/time/LocalTime";
 import Card from "@/components/ui/Card";
 import { CalendarTimeFormat } from "@/lib/calendar";
@@ -35,7 +36,10 @@ type PlanCardProps = {
   commentCount?: number;
   createdBy?: { name: string | null; email: string };
   placeName?: string | null;
+  placeId?: string | null;
   coverUrl?: string | null;
+  placePhotoUrl?: string | null;
+  mapsApiKey?: string;
   timeFormat?: CalendarTimeFormat;
   onDelete?: (formData: FormData) => Promise<void | PlanActionResult>;
 };
@@ -56,7 +60,10 @@ export default function PlanCard({
   commentCount = 0,
   createdBy,
   placeName,
+  placeId,
   coverUrl,
+  placePhotoUrl,
+  mapsApiKey,
   timeFormat = "24h",
   onDelete,
 }: PlanCardProps) {
@@ -66,6 +73,15 @@ export default function PlanCard({
   const proximityLabel =
     dayDiff === 0 ? "Today" : dayDiff === 1 ? "Tomorrow" : null;
   const eventHref = `/events/${id}`;
+  const {
+    coverUrl: resolvedCoverUrl,
+    isLoading: isCoverLoading,
+  } = useResolvedPlaceCover({
+    preferredUrl: coverUrl,
+    storedPlacePhotoUrl: placePhotoUrl,
+    placeId,
+    mapsApiKey,
+  });
 
   async function handleDelete() {
     if (!onDelete) return;
@@ -99,18 +115,16 @@ export default function PlanCard({
         />
 
         <PlanningCover
-          src={coverUrl}
+          src={resolvedCoverUrl}
           alt={`${title} cover`}
-          className="aspect-[16/9] w-full md:h-44 md:aspect-auto"
+          className="aspect-[4/3] w-full md:h-44 md:aspect-auto"
+          isLoading={isCoverLoading}
         >
-          <span className="absolute left-3 top-3 rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-md">
-            Plan
-          </span>
           <ChevronRight
             aria-hidden="true"
             className="absolute right-3 top-3 h-8 w-8 rounded-full border border-white/40 bg-black/25 p-2 text-white backdrop-blur-md md:hidden"
           />
-          <div className="absolute bottom-3 left-3 flex items-center gap-2.5 text-white">
+          <div className="absolute left-3 top-3 flex items-center gap-2.5 text-white md:bottom-3 md:top-auto">
             <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-white/45 bg-white/20 shadow-[var(--shadow-sm)] backdrop-blur-md">
               <LocalTime
                 className="text-[11px] font-bold uppercase leading-none tracking-[0.08em]"
@@ -160,8 +174,8 @@ export default function PlanCard({
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col p-4 md:p-5">
-          <h4 className="break-words text-lg font-semibold leading-snug tracking-[-0.015em] text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere] md:text-xl">
+        <div className="absolute inset-x-2 bottom-2 z-[1] flex flex-col rounded-2xl border border-white/55 bg-white/90 p-3 shadow-[var(--shadow-md)] backdrop-blur-xl md:static md:z-auto md:flex-1 md:rounded-none md:border-0 md:bg-transparent md:p-5 md:shadow-none md:backdrop-blur-none">
+          <h4 className="break-words text-base font-semibold leading-snug tracking-[-0.015em] text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere] md:text-xl">
             {title}
           </h4>
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--text-muted)]">
@@ -189,11 +203,11 @@ export default function PlanCard({
             ) : null}
           </div>
           {description ? (
-            <p className="mt-2 text-sm leading-5 text-[var(--text-muted)] line-clamp-2">
+            <p className="mt-1 text-xs leading-5 text-[var(--text-muted)] line-clamp-1 md:mt-2 md:text-sm md:line-clamp-2">
               {description}
             </p>
           ) : null}
-          <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+          <div className="mt-auto flex items-center justify-between gap-2 pt-2 md:pt-4">
             {createdBy ? (
               <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
                 <span

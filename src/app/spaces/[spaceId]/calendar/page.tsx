@@ -808,18 +808,19 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                     }
                   : undefined,
                 placeName: event.placeName,
-                coverUrl:
-                  event.photos?.[0]?.storageUrl ??
-                  (Array.isArray(event.placePhotoUrls)
-                    ? event.placePhotoUrls.find(
-                        (item): item is string =>
-                          typeof item === "string" && /^https?:\/\//i.test(item.trim()),
-                      )
-                    : null),
+                placeId: event.placeId,
+                coverUrl: event.photos?.[0]?.storageUrl ?? null,
+                placePhotoUrl: Array.isArray(event.placePhotoUrls)
+                  ? event.placePhotoUrls.find(
+                      (item): item is string =>
+                        typeof item === "string" && /^https?:\/\//i.test(item.trim()),
+                    )
+                  : null,
               }))}
               commentCounts={eventCommentCounts}
               newEventHref={buildCalendarHref(monthParam(today), { new: formatDateInput(today) })}
               timeFormat={calendarTimeFormat}
+              mapsApiKey={mapsApiKey}
               onDeleteEvent={handleDeleteEvent}
             />
             <IdeasColumn

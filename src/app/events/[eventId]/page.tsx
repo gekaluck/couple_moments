@@ -169,10 +169,18 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   // Store event ID for use in server actions (avoids TypeScript narrowing issues)
   const eventIdForActions = event.id;
   const spaceIdForActions = event.coupleSpaceId;
-  const isFromMemories = search.from === "memories" && search.spaceId;
-  const backHref = isFromMemories
-    ? `/spaces/${search.spaceId}/memories`
-    : `/spaces/${event.coupleSpaceId}/calendar`;
+  const isFromActivity = search.from === "activity";
+  const isFromMemories = search.from === "memories";
+  const backHref = isFromActivity
+    ? `/spaces/${event.coupleSpaceId}/activity`
+    : isFromMemories
+      ? `/spaces/${event.coupleSpaceId}/memories`
+      : `/spaces/${event.coupleSpaceId}/calendar`;
+  const backLabel = isFromActivity
+    ? "Back to activity"
+    : isFromMemories
+      ? "Back to memories"
+      : "Back to calendar";
 
   async function handleUpdate(formData: FormData): Promise<EventActionResult | void> {
     "use server";
@@ -485,7 +493,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
               className="inline-flex min-h-8 items-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] transition hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
             >
               <span aria-hidden="true" className="mr-1.5 text-base leading-none">←</span>
-              {isFromMemories ? "Back to memories" : "Back to calendar"}
+              {backLabel}
             </Link>
             <h1 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl break-words">
               {event.title}

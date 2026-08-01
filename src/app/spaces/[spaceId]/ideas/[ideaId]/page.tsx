@@ -38,11 +38,13 @@ import IdeaComments from "./idea-comments";
 
 type PageProps = {
   params: Promise<{ spaceId: string; ideaId: string }>;
+  searchParams?: Promise<{ from?: string; spaceId?: string }>;
 };
 
-export default async function IdeaDetailPage({ params }: PageProps) {
+export default async function IdeaDetailPage({ params, searchParams }: PageProps) {
   const userId = await requireUserId();
   const { spaceId, ideaId } = await params;
+  const search = (await searchParams) ?? {};
   const cookieStore = await cookies();
   const timeFormat = resolveCalendarTimeFormat(
     cookieStore.get("cm_calendar_time_format")?.value,
@@ -54,6 +56,11 @@ export default async function IdeaDetailPage({ params }: PageProps) {
   }
   const spaceIdForActions = space.id;
   const calendarHref = `/spaces/${space.id}/calendar`;
+  const isFromActivity = search.from === "activity";
+  const backHref = isFromActivity
+    ? `/spaces/${space.id}/activity`
+    : calendarHref;
+  const backLabel = isFromActivity ? "Back to activity" : "Back to calendar";
   const ideaPath = `/spaces/${space.id}/ideas/${ideaId}`;
 
   const idea = await getIdeaForUser(ideaId, userId);
@@ -61,7 +68,11 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     redirect(calendarHref);
   }
   if (idea.convertedToEventId) {
-    redirect(`/events/${idea.convertedToEventId}`);
+    redirect(
+      isFromActivity
+        ? `/events/${idea.convertedToEventId}?from=activity&spaceId=${encodeURIComponent(space.id)}`
+        : `/events/${idea.convertedToEventId}`,
+    );
   }
 
   const [comments, members, hasGoogleCalendar] = await Promise.all([
@@ -266,10 +277,10 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         <div className="mx-auto w-full max-w-[1180px] px-4 py-5 md:px-6 md:py-7">
           <div className="flex items-center gap-2">
             <Link
-              href={calendarHref}
+              href={backHref}
               className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)] transition hover:text-amber-600"
             >
-              Calendar
+              {isFromActivity ? "Activity" : "Calendar"}
             </Link>
             <span className="text-[var(--text-tertiary)]">/</span>
             <span className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-600">
@@ -299,9 +310,9 @@ export default async function IdeaDetailPage({ params }: PageProps) {
             />
             <Link
               className="ml-auto hidden rounded-full border border-[var(--panel-border)] bg-white/90 px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-amber-300 hover:text-amber-700 md:inline-flex"
-              href={calendarHref}
+              href={backHref}
             >
-              Back to calendar
+              {backLabel}
             </Link>
           </div>
         </div>

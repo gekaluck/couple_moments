@@ -169,7 +169,7 @@ export default async function SettingsPage({ params }: PageProps) {
     const currentMembers = await listSpaceMembers(spaceIdForActions);
     const currentPartner = currentMembers.find((member) => member.userId !== currentUserId);
     if (!currentPartner) {
-      return { ok: false, message: "No partner to remove." };
+      return { ok: false, message: "No one else currently shares this space." };
     }
 
     try {
@@ -180,11 +180,11 @@ export default async function SettingsPage({ params }: PageProps) {
       });
       revalidatePath(`/spaces/${spaceIdForActions}/settings`);
       revalidatePath(`/spaces/${spaceIdForActions}/calendar`);
-      return { ok: true, message: "Partner removed." };
+      return { ok: true, message: "Space access updated." };
     } catch (error) {
       return {
         ok: false,
-        message: error instanceof Error ? error.message : "Failed to remove partner.",
+        message: error instanceof Error ? error.message : "Couldn’t update space access.",
       };
     }
   }
@@ -609,9 +609,9 @@ export default async function SettingsPage({ params }: PageProps) {
         <div className="surface overflow-hidden border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(255,241,245,0.8))]">
           <SettingsDisclosure
             icon={<Shield className="h-4 w-4" />}
-            label="Membership"
+            label="Space access"
             previewValue={membershipPreview}
-            description="Manage who is in this space. Destructive actions are confirmed first."
+            description="See who shares this space and review access changes."
           >
             <MembershipActions
               isCreator={isCreator}
