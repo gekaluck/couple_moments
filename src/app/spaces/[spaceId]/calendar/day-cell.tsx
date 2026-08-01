@@ -35,6 +35,7 @@ type DayCellProps = {
   isPast: boolean;
   isWeekend: boolean;
   isCompact: boolean;
+  isSixWeekMonth: boolean;
   events: EventSummary[];
   blocks: BlockSummary[];
   timeFormat: CalendarTimeFormat;
@@ -90,6 +91,44 @@ function formatTimeRange(
   return `${formatter.format(startAt)} to ${formatter.format(endAt)}`;
 }
 
+function isMidnightInTimeZone(value: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone,
+  }).formatToParts(value);
+  const hour = parts.find((part) => part.type === "hour")?.value;
+  const minute = parts.find((part) => part.type === "minute")?.value;
+  return hour === "00" && minute === "00";
+}
+
+function getBlockTimeLabel(
+  currentDay: Date,
+  startAt: Date | undefined,
+  endAt: Date | undefined,
+  timeFormat: CalendarTimeFormat,
+  timeZone: string,
+) {
+  if (!startAt || !endAt) return null;
+
+  const isAllDay =
+    isMidnightInTimeZone(startAt, timeZone) &&
+    isMidnightInTimeZone(endAt, timeZone) &&
+    endAt.getTime() - startAt.getTime() >= 86_400_000;
+  if (isAllDay) return null;
+
+  const spanPosition = getEventSpanPosition(currentDay, startAt, endAt, timeZone);
+  if (spanPosition === "start") {
+    return `Starts ${formatEventTime(startAt, timeFormat, timeZone)}`;
+  }
+  if (spanPosition === "end") {
+    return `Ends ${formatEventTime(endAt, timeFormat, timeZone)}`;
+  }
+  if (spanPosition === "middle") return "Continues";
+  return formatEventTime(startAt, timeFormat, timeZone);
+}
+
 function getEventTimeLabel(
   event: EventSummary,
   timeFormat: CalendarTimeFormat,
@@ -138,6 +177,7 @@ export default function DayCell({
   isPast,
   isWeekend,
   isCompact,
+  isSixWeekMonth,
   events,
   blocks,
   timeFormat,
@@ -150,7 +190,9 @@ export default function DayCell({
 }: DayCellProps) {
   const dayCellBase = isCompact
     ? "min-h-[48px] p-1.5 sm:min-h-[104px] sm:p-2"
-    : "min-h-[48px] p-1.5 sm:min-h-[136px] sm:p-2.5";
+    : isSixWeekMonth
+      ? "min-h-[48px] p-1.5 sm:min-h-[116px] sm:p-2"
+      : "min-h-[48px] p-1.5 sm:min-h-[136px] sm:p-2.5";
   const hasEvents = events.length > 0;
   const inMonthTone = isToday
     ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.96),rgba(255,236,244,0.82))]"
@@ -166,6 +208,22 @@ export default function DayCell({
       : "bg-white/60 text-[var(--text-tertiary)]";
   const totalItems = events.length + blocks.length;
   const countLabel = totalItems === 1 ? "1 item" : `${totalItems} items`;
+  const maxVisibleItems = isCompact ? 2 : 3;
+  // Plans are primary, so reserve their preview slots before availability.
+  const visibleEvents = events.slice(0, maxVisibleItems);
+  const visibleBlocks = blocks.slice(
+    0,
+    Math.max(0, maxVisibleItems - visibleEvents.length),
+  );
+  const hiddenEvents = events.slice(visibleEvents.length);
+  const hiddenBlocks = blocks.slice(visibleBlocks.length);
+  const hiddenCount = hiddenEvents.length + hiddenBlocks.length;
+  const hiddenItemsLabel = [
+    ...hiddenEvents.map((event) => event.title),
+    ...hiddenBlocks.map((block) =>
+      block.source === "GOOGLE" ? "Busy" : block.title,
+    ),
+  ].join(", ");
 
   return (
     <div
@@ -196,7 +254,7 @@ export default function DayCell({
         ) : null}
       </div>
       <div className="relative z-10 mt-2.5 hidden flex-col gap-1.5 sm:flex">
-        {blocks.map((block) => {
+        {visibleBlocks.map((block) => {
           const isExternal = block.source === "GOOGLE";
           const createdByUserId = block.createdByUserId || "external";
           const creatorAccent = memberVisuals[createdByUserId]?.accent;
@@ -223,6 +281,13 @@ export default function DayCell({
               email: block.createdBy?.email ?? "??",
             });
           const blockLabel = isExternal ? "Busy" : block.title;
+          const blockTimeLabel = getBlockTimeLabel(
+            date,
+            block.startAt,
+            block.endAt,
+            timeFormat,
+            timeZone,
+          );
           const tooltipText = isExternal
             ? `${creatorLabel} is busy${
                 block.startAt && block.endAt
@@ -238,6 +303,11 @@ export default function DayCell({
                 style={{ backgroundColor: blockAccent }}
               />
               <div className="min-w-0">
+                {blockTimeLabel ? (
+                  <div className="truncate text-[10px] font-semibold leading-tight text-current/70">
+                    {blockTimeLabel}
+                  </div>
+                ) : null}
                 <div className="truncate text-[10px] font-medium">{blockLabel}</div>
                 {notePreview ? (
                   <div className="truncate text-[10px] text-current/75">
@@ -299,7 +369,7 @@ export default function DayCell({
             </div>
           );
         })}
-        {events.map((event) => {
+        {visibleEvents.map((event) => {
           const spanPosition = getEventSpanPosition(
             date,
             event.dateTimeStart,
@@ -319,6 +389,15 @@ export default function DayCell({
             />
           );
         })}
+        {hiddenCount > 0 ? (
+          <div
+            className="rounded-md border border-dashed border-[var(--panel-border)] bg-white/70 px-2 py-1 text-center text-[10px] font-semibold text-[var(--text-muted)]"
+            title={hiddenItemsLabel}
+            aria-label={`${hiddenCount} more ${hiddenCount === 1 ? "item" : "items"}: ${hiddenItemsLabel}`}
+          >
+            +{hiddenCount} more
+          </div>
+        ) : null}
       </div>
       <span className="pointer-events-none absolute bottom-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/90 bg-white/80 text-[10px] font-semibold text-[var(--text-muted)] opacity-0 transition group-hover/day:opacity-100">
         +

@@ -54,6 +54,7 @@ export default async function MemoriesPage({ params }: PageProps) {
       dateTimeStart: event.dateTimeStart.toISOString(),
       tags: parseTags(event.tags),
       placeId: event.placeId,
+      placeName: event.placeName,
       coverUrl: attachedPhoto,
       fallbackCoverUrl: placePhoto,
     };

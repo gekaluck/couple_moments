@@ -429,58 +429,64 @@ export default async function EventPage({ params, searchParams }: PageProps) {
       spansMultipleDays ? "All day" : "Anytime"
     );
 
-  const renderEventDateSummary = () =>
-    spansMultipleDays && event.dateTimeEnd ? (
+  const renderEventDateSummary = () => {
+    const compactOptions = {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    } as const;
+    const fullOptions = {
+      weekday: "short",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    } as const;
+
+    if (spansMultipleDays && event.dateTimeEnd) {
+      return (
+        <>
+          <span className="sm:hidden">
+            <LocalTime options={compactOptions} value={event.dateTimeStart} />
+            <span> – </span>
+            <LocalTime options={compactOptions} value={event.dateTimeEnd} />
+          </span>
+          <span className="hidden sm:inline">
+            <LocalTime options={fullOptions} value={event.dateTimeStart} />
+            <span> – </span>
+            <LocalTime options={fullOptions} value={event.dateTimeEnd} />
+          </span>
+        </>
+      );
+    }
+
+    return (
       <>
         <LocalTime
-          options={{
-            weekday: "short",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }}
+          className="sm:hidden"
+          options={compactOptions}
           value={event.dateTimeStart}
         />
-        <span> - </span>
         <LocalTime
-          options={{
-            weekday: "short",
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          }}
-          value={event.dateTimeEnd}
+          className="hidden sm:inline"
+          options={fullOptions}
+          value={event.dateTimeStart}
         />
       </>
-    ) : (
-      <LocalTime
-        options={{
-          weekday: "short",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        }}
-        value={event.dateTimeStart}
-      />
     );
+  };
 
   return (
     <div className="min-h-screen page-enter">
       <header className="border-b border-rose-200/50 bg-[linear-gradient(175deg,rgba(255,255,255,0.92),rgba(255,236,244,0.75))] backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-start justify-between gap-4 px-4 py-5 md:px-6 md:py-7">
+        <div className="mx-auto grid w-full max-w-[1180px] gap-4 px-4 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-6 md:py-7">
           <div className="max-w-4xl">
-            <div className="flex items-center gap-2">
-              <Link
-                href={backHref}
-                className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)] transition hover:text-rose-600"
-              >
-                {isFromMemories ? "Memories" : "Calendar"}
-              </Link>
-              <span className="text-[var(--text-tertiary)]">/</span>
-              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-600">
-                Event
-              </span>
-            </div>
+            <Link
+              href={backHref}
+              className="inline-flex min-h-8 items-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)] transition hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
+            >
+              <span aria-hidden="true" className="mr-1.5 text-base leading-none">←</span>
+              {isFromMemories ? "Back to memories" : "Back to calendar"}
+            </Link>
             <h1 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)] md:text-3xl break-words">
               {event.title}
             </h1>
@@ -490,7 +496,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
               {renderEventTime()}
             </p>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex w-full items-center gap-2 md:w-auto md:justify-end">
             {isPast ? (
               <ConfirmForm
                 action={handleMoveMemoryToIdeas}
@@ -500,7 +506,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                 variant="warning"
               >
                 <button
-                  className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 shadow-[var(--shadow-sm)] transition hover:border-amber-300 hover:bg-amber-100"
+                  className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-amber-200 bg-amber-50 px-4 text-sm font-medium text-amber-800 shadow-[var(--shadow-sm)] transition hover:border-amber-300 hover:bg-amber-100"
                   type="submit"
                 >
                   Move to ideas
@@ -535,12 +541,6 @@ export default async function EventPage({ params, searchParams }: PageProps) {
                 <TrashIcon />
               </button>
             </ConfirmForm>
-            <Link
-              className="rounded-full border border-[var(--panel-border)] bg-white/90 px-4 py-2 text-sm font-medium text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-rose-300 hover:text-rose-600"
-              href={backHref}
-            >
-              {isFromMemories ? "Back to memories" : "Back to calendar"}
-            </Link>
           </div>
         </div>
       </header>
@@ -565,7 +565,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
             <div className="event-details-row">
               <span className="event-details-label">Status</span>
               <span
-                className={`event-details-value inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                className={`event-details-value !flex-none self-start inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
                   isPast
                     ? "border border-slate-200 bg-slate-100 text-slate-600"
                     : "border border-rose-200 bg-rose-50 text-rose-700"

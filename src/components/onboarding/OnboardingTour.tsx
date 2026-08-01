@@ -142,18 +142,34 @@ export default function OnboardingTour({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [handleNext, handlePrev, handleSkip, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const step = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(30,41,59,0.32),rgba(2,6,23,0.62))] backdrop-blur-sm animate-fade-in-up">
+    <div
+      aria-labelledby="onboarding-tour-title"
+      aria-modal="true"
+      role="dialog"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(30,41,59,0.32),rgba(2,6,23,0.62))] backdrop-blur-sm animate-fade-in-up"
+    >
       <div className="relative mx-4 w-full max-w-md overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
         <div className="bg-hero px-6 pb-8 pt-7 text-white">
           <button
             onClick={handleSkip}
-            className="absolute right-4 top-4 rounded-full p-1 text-white/80 transition hover:bg-white/20 hover:text-white"
+            className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/20 hover:text-white"
             aria-label="Skip tour"
           >
             <X className="h-5 w-5" />
@@ -175,7 +191,7 @@ export default function OnboardingTour({
 
         {/* Content */}
         <div className="px-6 py-6 text-center">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
+          <h2 id="onboarding-tour-title" className="text-xl font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
             {step.title}
           </h2>
           <p className="mt-3 text-sm text-[var(--text-muted)] leading-relaxed">
@@ -198,13 +214,19 @@ export default function OnboardingTour({
               <button
                 key={index}
                 onClick={() => setCurrentStep(index)}
-                className={`h-2 rounded-full transition-all ${
-                  index === currentStep
-                    ? "w-6 bg-[var(--action-primary)]"
-                    : "w-2 bg-slate-200 hover:bg-slate-300"
-                }`}
+                aria-current={index === currentStep ? "step" : undefined}
+                className="flex h-8 w-8 items-center justify-center rounded-full"
                 aria-label={`Go to step ${index + 1}`}
-              />
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 rounded-full transition-all ${
+                    index === currentStep
+                      ? "w-6 bg-[var(--action-primary)]"
+                      : "w-2 bg-slate-200 hover:bg-slate-300"
+                  }`}
+                />
+              </button>
             ))}
           </div>
 
@@ -219,7 +241,7 @@ export default function OnboardingTour({
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition hover:bg-slate-100 hover:text-[var(--text-primary)] disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--text-muted)]"
+              className="flex min-h-11 items-center gap-1 rounded-full px-4 py-2 text-sm font-medium text-[var(--text-muted)] transition hover:bg-slate-100 hover:text-[var(--text-primary)] disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--text-muted)]"
             >
               <ChevronLeft className="h-4 w-4" />
               Back

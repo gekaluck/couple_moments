@@ -83,22 +83,22 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
           ) : null}
         </header>
 
-        <div className="flex justify-center gap-4 text-sm">
-          <span className="text-[var(--text-muted)]">Not the right account?</span>
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-sm">
+          <span className="whitespace-nowrap text-[var(--text-muted)]">Wrong account?</span>
           <form action="/api/auth/logout" method="POST" className="inline">
             <button
               type="submit"
-              className="font-semibold text-[var(--accent-strong)] hover:underline"
+              className="whitespace-nowrap font-semibold text-[var(--accent-strong)] hover:underline"
             >
               Log out
             </button>
           </form>
-          <span className="text-[var(--text-muted)]">or</span>
+          <span className="whitespace-nowrap text-[var(--text-muted)]">or</span>
           <a
             href="/login"
-            className="font-semibold text-[var(--accent-strong)] hover:underline"
+            className="whitespace-nowrap font-semibold text-[var(--accent-strong)] hover:underline"
           >
-            Sign in as different user
+            switch accounts
           </a>
         </div>
 

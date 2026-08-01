@@ -40,9 +40,15 @@ export function getMonthGrid(date: Date, weekStartsOn: 0 | 1 = 0) {
   // Calculate offset based on week start (0 = Sunday, 1 = Monday)
   const startOffset = (firstOfMonth.getDay() - weekStartsOn + 7) % 7;
   const startDate = new Date(year, month, 1 - startOffset);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const requiredSlots = startOffset + daysInMonth;
+  // Keep a stable five-week minimum, but only add a sixth row when the month
+  // actually crosses into it. The previous fixed 42-day grid left an empty
+  // trailing week on most desktop calendars.
+  const cellCount = requiredSlots > 35 ? 42 : 35;
 
   const days: CalendarDay[] = [];
-  for (let i = 0; i < 42; i += 1) {
+  for (let i = 0; i < cellCount; i += 1) {
     const day = new Date(startDate);
     day.setDate(startDate.getDate() + i);
     days.push({

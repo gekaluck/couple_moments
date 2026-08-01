@@ -86,6 +86,7 @@ export async function loadCalendarPageData(params: {
         spaceId,
         from: actualToday,
         timeframe: "upcoming",
+        includePhotos: true,
       }),
     ]);
 

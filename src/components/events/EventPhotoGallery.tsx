@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Fragment, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -66,6 +68,7 @@ export default function EventPhotoGallery({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [photoPendingDelete, setPhotoPendingDelete] = useState<EventPhoto | null>(null);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -76,6 +79,8 @@ export default function EventPhotoGallery({
     setPhotos(initialPhotos);
   }
   const hasReachedPhotoLimit = photos.length >= MAX_EVENT_PHOTOS;
+  const selectedPhotoIndex = photos.findIndex((photo) => photo.id === selectedPhotoId);
+  const selectedPhoto = selectedPhotoIndex >= 0 ? photos[selectedPhotoIndex] : null;
   const helperText = hasReachedPhotoLimit
     ? `This memory already has the maximum of ${MAX_EVENT_PHOTOS} photos.`
     : canUploadDirectly
@@ -251,19 +256,19 @@ export default function EventPhotoGallery({
                 key={photo.id}
                 className="overflow-hidden rounded-2xl border border-rose-100/80 bg-white shadow-[var(--shadow-xs)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-sm)]"
               >
-                <a
-                  className="group block"
-                  href={photo.storageUrl}
-                  rel="noreferrer"
-                  target="_blank"
+                <button
+                  className="group block w-full overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rose-400"
+                  type="button"
+                  aria-label={`View memory photo uploaded by ${getUploaderLabel(photo)}`}
+                  onClick={() => setSelectedPhotoId(photo.id)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     alt={`Memory uploaded by ${getUploaderLabel(photo)}`}
-                    className="h-48 w-full object-cover"
+                    className="h-48 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                     src={photo.storageUrl}
                   />
-                </a>
+                </button>
                 <div className="space-y-3 px-3 py-3">
                   <div className="space-y-1">
                     <div className="flex items-center justify-between gap-2">
@@ -317,6 +322,117 @@ export default function EventPhotoGallery({
           </div>
         )}
       </section>
+      <Transition show={Boolean(selectedPhoto)} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-[80]"
+          onClose={() => setSelectedPhotoId(null)}
+          onKeyDown={(event) => {
+            if (photos.length < 2 || selectedPhotoIndex < 0) return;
+            if (event.key === "ArrowLeft") {
+              event.preventDefault();
+              const previousIndex =
+                (selectedPhotoIndex - 1 + photos.length) % photos.length;
+              setSelectedPhotoId(photos[previousIndex].id);
+            }
+            if (event.key === "ArrowRight") {
+              event.preventDefault();
+              const nextIndex = (selectedPhotoIndex + 1) % photos.length;
+              setSelectedPhotoId(photos[nextIndex].id);
+            }
+          }}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-200"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-150"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto p-2 sm:p-5">
+            <div className="flex min-h-full items-center justify-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-200"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-150"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="relative flex w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950 shadow-2xl">
+                  <Dialog.Title className="sr-only">
+                    Memory photo viewer
+                  </Dialog.Title>
+                  <button
+                    type="button"
+                    aria-label="Close photo viewer"
+                    onClick={() => setSelectedPhotoId(null)}
+                    className="absolute right-3 top-3 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/45 text-white backdrop-blur-md transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <div className="relative flex min-h-[55dvh] items-center justify-center bg-black sm:min-h-[68dvh]">
+                    {selectedPhoto ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        alt={`Memory uploaded by ${getUploaderLabel(selectedPhoto)}`}
+                        className="max-h-[calc(100dvh-7.5rem)] w-full object-contain"
+                        src={selectedPhoto.storageUrl}
+                      />
+                    ) : null}
+
+                    {photos.length > 1 ? (
+                      <>
+                        <button
+                          type="button"
+                          aria-label="Previous photo"
+                          onClick={() => {
+                            const previousIndex =
+                              (selectedPhotoIndex - 1 + photos.length) % photos.length;
+                            setSelectedPhotoId(photos[previousIndex].id);
+                          }}
+                          className="absolute left-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/45 text-white backdrop-blur-md transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:left-4"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Next photo"
+                          onClick={() => {
+                            const nextIndex = (selectedPhotoIndex + 1) % photos.length;
+                            setSelectedPhotoId(photos[nextIndex].id);
+                          }}
+                          className="absolute right-2 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/45 text-white backdrop-blur-md transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-4"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+
+                  {selectedPhoto ? (
+                    <div className="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-white/75 sm:px-5">
+                      <span className="min-w-0 truncate">
+                        Added by {getUploaderLabel(selectedPhoto)}
+                      </span>
+                      <span className="shrink-0 font-semibold text-white">
+                        {selectedPhotoIndex + 1} of {photos.length}
+                      </span>
+                    </div>
+                  ) : null}
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
       <ConfirmDialog
         isOpen={Boolean(photoPendingDelete)}
         onClose={() => setPhotoPendingDelete(null)}
