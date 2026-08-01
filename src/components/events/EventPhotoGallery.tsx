@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, LoaderCircle, Plus, X } from "lucide-react";
 import { Fragment, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -198,7 +198,7 @@ export default function EventPhotoGallery({
 
   return (
     <>
-      <section className="rounded-2xl border border-rose-200/60 bg-[linear-gradient(150deg,rgba(255,255,255,0.96),rgba(255,240,246,0.72))] p-6 shadow-[var(--shadow-sm)]">
+      <section className="rounded-2xl border border-rose-200/60 bg-[linear-gradient(150deg,rgba(255,255,255,0.96),rgba(255,240,246,0.72))] p-4 shadow-[var(--shadow-sm)] md:p-6">
         <div>
           <div>
             <h3 className="text-lg font-semibold text-[var(--text-primary)] font-[var(--font-display)]">
@@ -208,49 +208,17 @@ export default function EventPhotoGallery({
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-rose-100/80 bg-white/75 p-4">
-          <input
-            ref={fileInputRef}
-            accept="image/*"
-            className="sr-only"
-            disabled={!canUploadDirectly || isPending || hasReachedPhotoLimit}
-            id="event-photo-upload"
-            onChange={(event) => handleFileSelected(event.target.files?.[0] ?? null)}
-            type="file"
-          />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium text-[var(--text-primary)]">
-                {isPending ? "Uploading photo..." : "Add a photo from your device"}
-              </p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
-                {selectedFile
-                  ? `${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)`
-                  : "Use your camera or photo library."}
-              </p>
-            </div>
-            <Button
-              variant="secondary"
-              size="md"
-              className="w-full sm:w-auto"
-              disabled={!canUploadDirectly || hasReachedPhotoLimit}
-              loading={isPending}
-              onClick={() => fileInputRef.current?.click()}
-              type="button"
-            >
-              {canUploadDirectly ? "Choose photo" : "Upload unavailable"}
-            </Button>
-          </div>
+        <input
+          ref={fileInputRef}
+          accept="image/*"
+          className="sr-only"
+          disabled={!canUploadDirectly || isPending || hasReachedPhotoLimit}
+          id="event-photo-upload"
+          onChange={(event) => handleFileSelected(event.target.files?.[0] ?? null)}
+          type="file"
+        />
 
-          {inlineError ? (
-            <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {inlineError}
-            </p>
-          ) : null}
-        </div>
-
-        {photos.length > 0 ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {photos.map((photo) => (
               <div
                 key={photo.id}
@@ -315,12 +283,46 @@ export default function EventPhotoGallery({
                 </div>
               </div>
             ))}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-2xl border border-dashed border-rose-200 bg-white/55 px-4 py-8 text-center text-sm text-[var(--text-muted)]">
-            Add a photo to make this memory pop.
-          </div>
-        )}
+            {!hasReachedPhotoLimit ? (
+              <button
+                aria-label="Add memory photo"
+                className="group flex min-h-28 w-full items-center justify-center gap-3 rounded-2xl border border-dashed border-rose-200 bg-white/45 px-4 py-5 text-left transition hover:border-rose-300 hover:bg-white/75 hover:shadow-[var(--shadow-xs)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-55 sm:min-h-full sm:flex-col sm:text-center"
+                disabled={!canUploadDirectly || isPending}
+                onClick={() => fileInputRef.current?.click()}
+                type="button"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 transition group-hover:scale-105 group-hover:bg-rose-200/80">
+                  {isPending ? (
+                    <LoaderCircle className="h-6 w-6 animate-spin" />
+                  ) : (
+                    <Plus className="h-7 w-7" />
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-[var(--text-primary)]">
+                    {isPending
+                      ? "Uploading photo..."
+                      : canUploadDirectly
+                        ? "Add photo"
+                        : "Upload unavailable"}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-[var(--text-muted)] sm:whitespace-normal">
+                    {selectedFile
+                      ? `${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)`
+                      : canUploadDirectly
+                        ? "Camera or photo library"
+                        : "Storage is not configured"}
+                  </span>
+                </span>
+              </button>
+            ) : null}
+        </div>
+
+        {inlineError ? (
+          <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {inlineError}
+          </p>
+        ) : null}
       </section>
       <Transition show={Boolean(selectedPhoto)} as={Fragment}>
         <Dialog
