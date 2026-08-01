@@ -14,9 +14,11 @@ import {
 
 import { getSessionUserId } from "@/lib/session";
 import { listCoupleSpacesForUser } from "@/lib/couple-spaces";
+import { isDemoModeEnabled } from "@/lib/demo/config";
 
 export default async function Home() {
   const userId = await getSessionUserId();
+  const showDemoLink = isDemoModeEnabled();
 
   if (userId) {
     const spaces = await listCoupleSpacesForUser(userId);
@@ -124,6 +126,19 @@ export default async function Home() {
             Log in
           </Link>
         </div>
+
+        {showDemoLink ? (
+          <p className="mt-6 text-sm text-[var(--text-muted)]">
+            Just looking?{" "}
+            <a
+              href="/demo"
+              className="font-semibold text-[var(--accent-strong)] underline decoration-rose-300 underline-offset-4 transition hover:decoration-rose-500"
+            >
+              Explore a filled-in space
+            </a>{" "}
+            — no signup.
+          </p>
+        ) : null}
 
         <p className="mt-7 text-sm text-[var(--text-tertiary)]">
           Free to get started · No credit card needed

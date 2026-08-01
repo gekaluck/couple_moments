@@ -22,6 +22,7 @@ import {
   sanitizeMemberInitials,
 } from "@/lib/creator-colors";
 import { requireUserId } from "@/lib/current-user";
+import DemoDisabledNote from "@/components/demo/DemoDisabledNote";
 import MutationToast from "@/components/ui/MutationToast";
 import LocalTime from "@/components/time/LocalTime";
 
@@ -369,11 +370,19 @@ export default async function SettingsPage({ params }: PageProps) {
                   : "Share this link with your partner so they can join your space."
               }
             >
-              <InviteCard
-                inviteCode={space.inviteCode}
-                isSpaceComplete={isSpaceComplete}
-                embedded
-              />
+              {space.isDemo ? (
+                <DemoDisabledNote>
+                  Invite codes are switched off here — a demo code would let a
+                  stranger join a space that vanishes within a day. In a real
+                  space this is a six-character code you send your partner.
+                </DemoDisabledNote>
+              ) : (
+                <InviteCard
+                  inviteCode={space.inviteCode}
+                  isSpaceComplete={isSpaceComplete}
+                  embedded
+                />
+              )}
             </SettingsDisclosure>
           </div>
 
@@ -603,7 +612,15 @@ export default async function SettingsPage({ params }: PageProps) {
             previewValue="Manage"
             description="Bring in real busy time so plans feel realistic for both of you."
           >
-            <GoogleCalendarSettings embedded />
+            {space.isDemo ? (
+              <DemoDisabledNote>
+                Connecting Google Calendar needs a real Google sign-in, so it is
+                switched off in the demo. In a real space this pulls your busy
+                time onto the calendar and can push plans back to Google.
+              </DemoDisabledNote>
+            ) : (
+              <GoogleCalendarSettings embedded />
+            )}
           </SettingsDisclosure>
         </div>
         <div className="surface overflow-hidden border border-rose-200/60 bg-[linear-gradient(165deg,rgba(255,255,255,0.92),rgba(255,241,245,0.8))]">

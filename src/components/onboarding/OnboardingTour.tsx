@@ -64,6 +64,11 @@ type OnboardingTourProps = {
   forceOpen?: boolean;
   initialStep?: number;
   autoOpen?: boolean;
+  /**
+   * When provided, the tour reports closing to its parent instead of navigating
+   * on finish. Used where the tour is opened on demand rather than as first-run.
+   */
+  onClose?: () => void;
 };
 
 export default function OnboardingTour({
@@ -71,6 +76,7 @@ export default function OnboardingTour({
   forceOpen = false,
   initialStep = 0,
   autoOpen = true,
+  onClose,
 }: OnboardingTourProps) {
   const clampedInitialStep = Math.max(0, Math.min(initialStep, steps.length - 1));
   const [isOpen, setIsOpen] = useState(forceOpen);
@@ -82,14 +88,18 @@ export default function OnboardingTour({
   const handleComplete = useCallback(() => {
     localStorage.setItem(`${STORAGE_KEY}_${spaceId}`, "true");
     setIsOpen(false);
-  }, [spaceId]);
+    onClose?.();
+  }, [onClose, spaceId]);
 
   // Finishing the tour drops the user straight into adding their first idea —
-  // the lowest-friction first action for a newly joined partner.
+  // the lowest-friction first action for a newly joined partner. When the tour
+  // was opened on demand, closing is the whole job.
   const handleFinish = useCallback(() => {
     handleComplete();
-    router.push(`/spaces/${spaceId}/calendar?action=idea`);
-  }, [handleComplete, router, spaceId]);
+    if (!onClose) {
+      router.push(`/spaces/${spaceId}/calendar?action=idea`);
+    }
+  }, [handleComplete, onClose, router, spaceId]);
 
   const handlePrev = useCallback(() => {
     if (currentStep > 0) {
@@ -250,7 +260,7 @@ export default function OnboardingTour({
               onClick={isLastStep ? handleFinish : handleNext}
               className="flex min-h-11 items-center gap-1 rounded-full bg-cta px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:shadow-lg btn-press focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/40"
             >
-              {isLastStep ? "Add your first idea" : "Next"}
+              {isLastStep ? (onClose ? "Got it" : "Add your first idea") : "Next"}
               {!isLastStep && <ChevronRight className="h-4 w-4" />}
             </button>
           </div>

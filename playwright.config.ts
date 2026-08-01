@@ -32,6 +32,9 @@ export default defineConfig({
       // Keep integrations quiet in tests
       SENTRY_DSN: "",
       NEXT_PUBLIC_SENTRY_DSN: "",
+      // Demo mode is opt-in; the demo spec needs it on.
+      DEMO_MODE_ENABLED: "true",
+      NEXT_PUBLIC_APP_URL: `http://localhost:${PORT}`,
     },
   },
 });

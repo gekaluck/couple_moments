@@ -26,6 +26,11 @@ type EventPhoto = {
 type EventPhotoGalleryProps = {
   initialPhotos: EventPhoto[];
   canUploadDirectly: boolean;
+  /**
+   * When set, uploading is off and this explains why. Used by demo mode, where
+   * the storage bill is real even though the space is not.
+   */
+  uploadDisabledReason?: string | null;
   currentUser: {
     name: string | null;
     email: string;
@@ -58,7 +63,8 @@ function getUploaderLabel(photo: EventPhoto) {
 
 export default function EventPhotoGallery({
   initialPhotos,
-  canUploadDirectly,
+  canUploadDirectly: canUploadDirectlyProp,
+  uploadDisabledReason = null,
   currentUser,
   onUploadPhoto,
   onDeletePhoto,
@@ -78,14 +84,17 @@ export default function EventPhotoGallery({
     setPrevInitialPhotos(initialPhotos);
     setPhotos(initialPhotos);
   }
+  const canUploadDirectly = canUploadDirectlyProp && !uploadDisabledReason;
   const hasReachedPhotoLimit = photos.length >= MAX_EVENT_PHOTOS;
   const selectedPhotoIndex = photos.findIndex((photo) => photo.id === selectedPhotoId);
   const selectedPhoto = selectedPhotoIndex >= 0 ? photos[selectedPhotoIndex] : null;
-  const helperText = hasReachedPhotoLimit
-    ? `This memory already has the maximum of ${MAX_EVENT_PHOTOS} photos.`
-    : canUploadDirectly
-      ? `Choose an image up to ${formatFileSize(MAX_EVENT_PHOTO_FILE_SIZE_BYTES)} from your device.`
-      : "Photo uploads are unavailable because storage is not configured.";
+  const helperText = uploadDisabledReason
+    ? uploadDisabledReason
+    : hasReachedPhotoLimit
+      ? `This memory already has the maximum of ${MAX_EVENT_PHOTOS} photos.`
+      : canUploadDirectly
+        ? `Choose an image up to ${formatFileSize(MAX_EVENT_PHOTO_FILE_SIZE_BYTES)} from your device.`
+        : "Photo uploads are unavailable because storage is not configured.";
 
   function appendCreatedPhoto(createdPhoto: {
     id: string;
@@ -304,14 +313,16 @@ export default function EventPhotoGallery({
                       ? "Uploading photo..."
                       : canUploadDirectly
                         ? "Add photo"
-                        : "Upload unavailable"}
+                        : uploadDisabledReason
+                          ? "Not in the demo"
+                          : "Upload unavailable"}
                   </span>
                   <span className="mt-0.5 block truncate text-xs text-[var(--text-muted)] sm:whitespace-normal">
                     {selectedFile
                       ? `${selectedFile.name} (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB)`
                       : canUploadDirectly
                         ? "Camera or photo library"
-                        : "Storage is not configured"}
+                        : uploadDisabledReason ?? "Storage is not configured"}
                   </span>
                 </span>
               </button>

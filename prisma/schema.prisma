@@ -23,6 +23,9 @@ model User {
 
   emailRemindersEnabled    Boolean            @default(true)
 
+  /// Throwaway account created by the /demo sandbox. Never reachable through /login.
+  isDemo                   Boolean            @default(false)
+
   memberships              Membership[]
   eventsCreated            Event[]            @relation("EventsCreatedBy")
   ideasCreated             Idea[]             @relation("IdeasCreatedBy")
@@ -61,12 +64,18 @@ model CoupleSpace {
   name        String?
   inviteCode  String        @unique
 
+  /// Sandbox space created by /demo. Deleted wholesale once demoExpiresAt passes.
+  isDemo        Boolean     @default(false)
+  demoExpiresAt DateTime?
+
   memberships Membership[]
   events      Event[]
   ideas       Idea[]
   availabilityBlocks AvailabilityBlock[]
   notes       Note[]
   changeLogs  ChangeLogEntry[]
+
+  @@index([isDemo, demoExpiresAt])
 }
 
 model Membership {

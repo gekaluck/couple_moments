@@ -35,6 +35,7 @@ import EventRating from "./event-rating";
 import HeartRating from "@/components/ui/HeartRating";
 import ConfirmForm from "@/components/ConfirmForm";
 import EventPhotoGallery from "@/components/events/EventPhotoGallery";
+import { isDemoUser } from "@/lib/demo/guard";
 import PlacePhotoStrip from "@/components/events/PlacePhotoStrip";
 import LocalTime from "@/components/time/LocalTime";
 import BottomTabBar from "@/components/mobile/BottomTabBar";
@@ -332,6 +333,12 @@ export default async function EventPage({ params, searchParams }: PageProps) {
     "use server";
     try {
       const currentUserId = await requireUserId();
+      if (await isDemoUser(currentUserId)) {
+        return {
+          success: false as const,
+          error: "Photo upload is disabled in the demo.",
+        };
+      }
       const file = formData.get("photo");
       if (!(file instanceof File)) {
         return { success: false as const, error: "Select an image first." };
@@ -389,6 +396,7 @@ export default async function EventPage({ params, searchParams }: PageProps) {
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const cloudinaryCloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const cloudinaryUploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  const isDemo = await isDemoUser(userId);
   const hasPlace = Boolean(event.placeName || event.placeAddress);
   const placeLink =
     sanitizeHttpUrl(event.placeUrl) ||
@@ -781,6 +789,11 @@ export default async function EventPage({ params, searchParams }: PageProps) {
         {isPast ? (
           <EventPhotoGallery
             canUploadDirectly={Boolean(cloudinaryCloudName && cloudinaryUploadPreset)}
+            uploadDisabledReason={
+              isDemo
+                ? "Photo upload is off in the demo — the memories below already have photos."
+                : null
+            }
             currentUser={{
               name: currentUser.name,
               email: currentUser.email,

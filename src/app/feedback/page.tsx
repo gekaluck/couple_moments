@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import FeedbackForm from "@/components/feedback/FeedbackForm";
 import { requireUserId } from "@/lib/current-user";
+import { isDemoUser } from "@/lib/demo/guard";
 
 type FeedbackPageProps = {
   searchParams?: Promise<{
@@ -31,6 +32,12 @@ export default async function FeedbackPage({ searchParams }: FeedbackPageProps) 
   const fromPath = normalizeRelativePath(query.from);
   const spaceId = normalizeSpaceId(query.spaceId);
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "";
+
+  // The demo bar has no feedback link, but the route is reachable directly and
+  // submitting sends real mail — bounce demo visitors back to their space.
+  if (await isDemoUser(userId)) {
+    redirect(fromPath);
+  }
 
   if (!fromPath.startsWith("/")) {
     redirect("/spaces");

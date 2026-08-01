@@ -10,6 +10,8 @@ npm run db:migrate       # prisma migrate dev
 npm run db:push          # prisma db push
 npm run db:studio        # Prisma Studio
 npx tsx scripts/seed-demo.ts <spaceId> --reset  # Seed demo data
+npx tsx scripts/fetch-demo-photos.ts     # Populate public/demo/ for /demo
+npx tsx scripts/fetch-demo-photos.ts --check   # Manifest vs fixture agreement
 npm test                 # Playwright smoke tests (uses a throwaway test DB)
 CAPTURE_SCREENS=1 npx playwright test screens    # Capture mobile screenshots -> .screenshots/ (gitignored)
 ```
@@ -36,8 +38,11 @@ src/
       notes/, planning/, inbox/    # Legacy redirect shims to calendar/activity
     events/[eventId]/              # Event detail (comments, ratings, photos)
     login/, register/              # Auth pages (+ forgot/reset password)
+    demo/                          # /demo sandbox entry (provision + sign in + redirect)
   components/                      # UI and feature components
   lib/                             # Domain logic, auth/session, integrations, helpers
+    demo/                          # Fixture, provisioning, guardrails, cleanup
+public/demo/                       # Demo images (generated, see fetch-demo-photos.ts)
 prisma/                            # Schema and migrations
 scripts/                           # Utility scripts
 docs/00_current/                   # Active docs
