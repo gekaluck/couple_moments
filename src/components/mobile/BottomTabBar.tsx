@@ -23,10 +23,14 @@ export default function BottomTabBar({ spaceId }: { spaceId: string }) {
   const items = tabs(spaceId);
   const isMemoryEvent =
     pathname.startsWith("/events/") && searchParams.get("from") === "memories";
+  const isActivityDetail =
+    searchParams.get("from") === "activity" &&
+    (pathname.startsWith("/events/") ||
+      pathname.startsWith(`/spaces/${spaceId}/ideas/`));
   const calendarIsActive =
     pathname.startsWith(`/spaces/${spaceId}/calendar`) ||
-    pathname.startsWith(`/spaces/${spaceId}/ideas/`) ||
-    (pathname.startsWith("/events/") && !isMemoryEvent);
+    (pathname.startsWith(`/spaces/${spaceId}/ideas/`) && !isActivityDetail) ||
+    (pathname.startsWith("/events/") && !isMemoryEvent && !isActivityDetail);
 
   return (
     <nav className="bottom-tab-bar fixed bottom-0 left-0 right-0 z-50 md:hidden">
@@ -37,7 +41,7 @@ export default function BottomTabBar({ spaceId }: { spaceId: string }) {
               ? calendarIsActive
               : tab.id === "memories"
                 ? isMemoryEvent || pathname.startsWith(tab.href)
-                : pathname.startsWith(tab.href);
+                : isActivityDetail || pathname.startsWith(tab.href);
           const Icon = tab.icon;
           return (
             <Link

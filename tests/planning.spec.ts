@@ -14,9 +14,10 @@ test("core planning flow: event, idea, schedule, delete reverts idea", async ({
 
   const eventTitle = `Smoke Dinner ${Date.now()}`;
   const ideaTitle = `Smoke Picnic ${Date.now()}`;
+  let spaceId = "";
 
   await test.step("register and create a space", async () => {
-    await registerWithSpace(page, "plan");
+    ({ spaceId } = await registerWithSpace(page, "plan"));
   });
 
   await test.step("create an event from the calendar", async () => {
@@ -48,7 +49,48 @@ test("core planning flow: event, idea, schedule, delete reverts idea", async ({
     ).toBeVisible();
   });
 
+  await test.step("activity details return to the activity feed", async () => {
+    await page.goto(`/spaces/${spaceId}/activity`);
+
+    const eventLink = page
+      .locator('a[href*="/events/"]')
+      .filter({ hasText: eventTitle })
+      .first();
+    await expect(eventLink).toHaveAttribute(
+      "href",
+      new RegExp(`from=activity&spaceId=${spaceId}`),
+    );
+    await eventLink.click();
+    await expect(page.getByRole("link", { name: "Back to activity" })).toHaveAttribute(
+      "href",
+      `/spaces/${spaceId}/activity`,
+    );
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole("link", { name: "Activity" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.getByRole("link", { name: "Back to activity" }).click();
+
+    const ideaLink = page
+      .locator('a[href*="/ideas/"]')
+      .filter({ hasText: ideaTitle })
+      .first();
+    await expect(ideaLink).toHaveAttribute(
+      "href",
+      new RegExp(`from=activity&spaceId=${spaceId}`),
+    );
+    await ideaLink.click();
+    await expect(page.getByRole("link", { name: "Back to activity" })).toHaveAttribute(
+      "href",
+      `/spaces/${spaceId}/activity`,
+    );
+  });
+
   await test.step("schedule the idea into an event", async () => {
+    await page.goto(`/spaces/${spaceId}/calendar`);
     // Desktop cards are not whole-card links; go straight to the idea page.
     const ideaHref = await page
       .locator('a[href*="/ideas/"]')
