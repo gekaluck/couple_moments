@@ -373,30 +373,30 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                 fallbackCoverUrl={event.fallbackCoverUrl}
                 placeId={event.placeId}
                 title={event.title}
-                sizeClass="aspect-[16/10] w-full md:aspect-[4/3]"
+                sizeClass="aspect-[4/3] w-full"
               >
                 {primaryTag ? (
-                  <span className="absolute bottom-3 right-3 max-w-[40%] truncate rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md">
+                  <span className="absolute bottom-3 right-3 hidden max-w-[40%] truncate rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md md:block">
                     {primaryTag}
                   </span>
                 ) : null}
               </MemoryCover>
-              <div className="flex min-w-0 flex-1 flex-col p-4 md:p-5">
-                <h2 className="break-words text-lg font-semibold leading-snug tracking-[-0.015em] text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere] md:text-xl md:font-[var(--font-display)]">
+              <div className="absolute inset-x-2 bottom-2 z-[1] flex min-w-0 flex-col rounded-2xl border border-white/55 bg-white/90 p-3 shadow-[var(--shadow-md)] backdrop-blur-xl md:static md:z-auto md:flex-1 md:rounded-none md:border-0 md:bg-transparent md:p-5 md:shadow-none md:backdrop-blur-none">
+                <h2 className="break-words text-base font-semibold leading-snug tracking-[-0.015em] text-[var(--text-primary)] line-clamp-2 [overflow-wrap:anywhere] md:text-xl md:font-[var(--font-display)]">
                   {event.title}
                 </h2>
                 {event.description ? (
-                  <p className="mt-2 text-sm leading-5 text-[var(--text-muted)] line-clamp-2">
+                  <p className="mt-2 hidden text-sm leading-5 text-[var(--text-muted)] line-clamp-2 md:block">
                     {event.description}
                   </p>
                 ) : null}
                 {event.placeName ? (
-                  <div className="mt-2 flex min-w-0 items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                  <div className="mt-1.5 flex min-w-0 items-center gap-1.5 text-xs text-[var(--text-muted)] md:mt-2">
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-rose-500" />
                     <span className="truncate">{event.placeName}</span>
                   </div>
                 ) : null}
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
+                <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[var(--text-tertiary)] md:mt-2">
                   <CalendarIcon />
                   <LocalTime
                     options={{ month: "short", day: "numeric", year: "numeric" }}
@@ -404,7 +404,7 @@ export default function MemoriesClient({ memories, spaceId }: MemoriesClientProp
                   />
                 </div>
                 {event.tags.length > 0 ? (
-                  <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
+                  <div className="mt-2 flex flex-wrap gap-1.5 md:mt-auto md:pt-4">
                     {event.tags.slice(0, 3).map((value) => (
                       <span
                         key={value}
