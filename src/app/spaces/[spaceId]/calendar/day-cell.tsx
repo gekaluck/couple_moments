@@ -281,13 +281,15 @@ export default function DayCell({
               email: block.createdBy?.email ?? "??",
             });
           const blockLabel = isExternal ? "Busy" : block.title;
-          const blockTimeLabel = getBlockTimeLabel(
-            date,
-            block.startAt,
-            block.endAt,
-            timeFormat,
-            timeZone,
-          );
+          const blockTimeLabel = isExternal
+            ? getBlockTimeLabel(
+                date,
+                block.startAt,
+                block.endAt,
+                timeFormat,
+                timeZone,
+              )
+            : null;
           const tooltipText = isExternal
             ? `${creatorLabel} is busy${
                 block.startAt && block.endAt
