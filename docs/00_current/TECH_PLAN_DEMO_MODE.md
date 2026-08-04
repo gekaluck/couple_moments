@@ -1,8 +1,8 @@
 # Technical Plan: Demo Mode
 
-Status: **Implemented** on branch `demo-mode` (2026-07-31). Outstanding: real images
-must be generated into `public/demo/` via `scripts/fetch-demo-photos.ts` before
-the demo is shown to anyone.
+Status: **Implemented** on branch `demo-mode` (2026-07-31). Photo delivery was
+superseded on 2026-08-04: the active fixture now stores real Place IDs and loads
+fresh Places photos in the browser instead of requiring `public/demo/` assets.
 Created: 2026-07-31
 
 ## Goal

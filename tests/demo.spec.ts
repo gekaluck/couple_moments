@@ -1,6 +1,9 @@
 import { test, expect } from "playwright/test";
 
-import { buildDemoContent } from "../src/lib/demo/fixture";
+import {
+  buildDemoContent,
+  DEMO_REAL_PLACES,
+} from "../src/lib/demo/fixture";
 
 /**
  * Demo mode smoke tests.
@@ -49,21 +52,21 @@ test.describe("demo fixture", () => {
     }
   });
 
-  test("every image URL is absolute", () => {
+  test("uses stored real Place IDs without persisting Google photo URLs", () => {
     const content = buildDemoContent(new Date());
-    const urls = [
-      ...content.events.flatMap((event) => [
-        ...(event.place?.placePhotoUrls ?? []),
-        ...event.photos.map((photo) => photo.storageUrl),
-      ]),
-      ...content.ideas.flatMap((idea) => idea.place?.placePhotoUrls ?? []),
-    ];
+    const places = [
+      ...content.events.map((event) => event.place),
+      ...content.ideas.map((idea) => idea.place),
+    ].filter((place) => place !== null);
 
-    expect(urls.length).toBeGreaterThan(0);
-    for (const url of urls) {
-      // IdeaCard filters placePhotoUrls through /^https?:\/\//i — a relative
-      // path here would silently drop every idea cover.
-      expect(url).toMatch(/^https?:\/\//i);
+    expect(Object.keys(DEMO_REAL_PLACES).length).toBeGreaterThanOrEqual(15);
+    expect(places.some((place) => place.placeAddress.includes("Chicago"))).toBe(true);
+    expect(places.some((place) => place.placeAddress.includes("Canada"))).toBe(true);
+    expect(places.some((place) => place.placeAddress.includes("Portugal"))).toBe(true);
+    for (const place of places) {
+      // Only stable Place IDs are persisted; photo URLs are fetched fresh.
+      expect(place.placeId).toMatch(/^ChIJ/);
+      expect(place.placePhotoUrls).toBeNull();
     }
   });
 
@@ -92,7 +95,7 @@ test.describe("demo sandbox", () => {
     // one the current viewport actually shows.
     await expect(
       page
-        .getByText("Dinner at Maison Lune")
+        .getByText("Dinner at Cindy's Rooftop")
         .filter({ visible: true })
         .first(),
     ).toBeVisible();

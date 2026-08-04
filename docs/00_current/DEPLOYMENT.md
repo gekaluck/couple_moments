@@ -49,17 +49,14 @@ DEMO_MODE_ENABLED=true
 DEMO_TTL_HOURS=24            # optional, default 24
 DEMO_MAX_LIVE_SPACES=500     # optional, default 500
 CRON_SECRET=...              # bearer secret for /api/demo/cleanup
-NEXT_PUBLIC_APP_URL=https://<your-domain>   # demo images are absolute URLs
+NEXT_PUBLIC_APP_URL=https://<your-domain>
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=...         # live demo place photos
 ```
 
-Demo mode also needs its images present:
-
-```bash
-npx tsx scripts/fetch-demo-photos.ts   # writes public/demo/
-```
-
-Read the header of that script before running it — using Google Places as the
-image source has licensing implications, and the stock source does not.
+Restrict the browser Maps key by HTTP referrer to the production and preview
+domains, enable the Places library, and set a conservative usage quota. The
+demo stores Place IDs only and requests photo URLs at render time; missing or
+blocked photo requests fall back to the app's standard cover.
 
 ## 2) Build and migrate
 

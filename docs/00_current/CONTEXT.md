@@ -10,8 +10,6 @@ npm run db:migrate       # prisma migrate dev
 npm run db:push          # prisma db push
 npm run db:studio        # Prisma Studio
 npx tsx scripts/seed-demo.ts <spaceId> --reset  # Seed demo data
-npx tsx scripts/fetch-demo-photos.ts     # Populate public/demo/ for /demo
-npx tsx scripts/fetch-demo-photos.ts --check   # Manifest vs fixture agreement
 npm test                 # Playwright smoke tests (uses a throwaway test DB)
 CAPTURE_SCREENS=1 npx playwright test screens    # Capture mobile screenshots -> .screenshots/ (gitignored)
 ```
