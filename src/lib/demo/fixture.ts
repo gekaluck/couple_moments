@@ -1,4 +1,3 @@
-import { demoImageUrl, demoImageUrls } from "@/lib/demo/assets";
 import { DEMO_SPACE_NAME } from "@/lib/demo/config";
 import { serializeTags } from "@/lib/tags";
 
@@ -25,15 +24,14 @@ export type DemoMemberProfile = {
 
 export type DemoPlace = {
   /**
-   * Real Google Place ID where one is configured. Google's terms allow storing
-   * place IDs indefinitely, unlike place photos — the photos themselves are
-   * downloaded once into `public/demo/` by `scripts/fetch-demo-photos.ts`.
+   * Stable Google Place ID. Photo metadata is requested fresh in the browser,
+   * so Google photo URLs are never persisted in the fixture or database.
    */
   placeId: string | null;
   placeName: string;
   placeAddress: string;
   placeWebsite: string | null;
-  /** Absolute URLs, resolved from `public/demo/` filenames. */
+  /** Optional app-owned URLs. Real Places entries deliberately omit these. */
   placePhotoUrls: string[] | null;
 };
 
@@ -133,24 +131,104 @@ function place(input: {
   name: string;
   address: string;
   website?: string | null;
-  photos?: string[];
 }): DemoPlace {
   return {
     placeId: input.id ?? null,
     placeName: input.name,
     placeAddress: input.address,
     placeWebsite: input.website ?? null,
-    placePhotoUrls: input.photos?.length ? demoImageUrls(input.photos) : null,
+    placePhotoUrls: null,
   };
 }
 
-function photos(files: string[], by: DemoMemberKey): DemoPhoto[] {
-  return files.map((file, index) => ({
-    storageUrl: demoImageUrl(file),
-    isCover: index === 0,
-    by,
-  }));
-}
+/** Curated real places verified through Places Text Search on 2026-08-04. */
+export const DEMO_REAL_PLACES = {
+  darkMatter: place({
+    id: "ChIJWRIIZ00tDogRiM95S7fMqPs",
+    name: "Dark Matter Coffee — The Mothership",
+    address: "738 N Western Ave, Chicago, IL 60612",
+  }),
+  cindysRooftop: place({
+    id: "ChIJeYbaOKQsDogRfJrgIMgDNvE",
+    name: "Cindy's Rooftop",
+    address: "12 S Michigan Ave, Chicago, IL 60603",
+  }),
+  greenMill: place({
+    id: "ChIJ5ywykizSD4gRX8IVtWSf3OI",
+    name: "The Green Mill",
+    address: "4802 N Broadway, Chicago, IL 60640",
+  }),
+  greenCityMarket: place({
+    id: "ChIJNdAsc2rTD4gRNPHXq3qiQCY",
+    name: "Green City Market Lincoln Park",
+    address: "1817 N Clark St, Chicago, IL 60614",
+  }),
+  lillstreet: place({
+    id: "ChIJpSdwFDzSD4gRKj5-lxFaBN0",
+    name: "Lillstreet Art Center",
+    address: "4401 N Ravenswood Ave, Chicago, IL 60640",
+  }),
+  millenniumPark: place({
+    id: "ChIJA5xPiqYsDogRBBCptdwsGEQ",
+    name: "Millennium Park",
+    address: "Chicago, IL 60602",
+  }),
+  artInstitute: place({
+    id: "ChIJlUbZ4qMsDogR3tCinMzzKUg",
+    name: "The Art Institute of Chicago",
+    address: "111 S Michigan Ave, Chicago, IL 60603",
+  }),
+  starvedRock: place({
+    id: "ChIJI7ugX_5YCYgRxChEqWX4nU0",
+    name: "Starved Rock State Park",
+    address: "Oglesby, IL 61348",
+  }),
+  recklessRecords: place({
+    id: "ChIJnSEVG8fSD4gRJ0ib4UtxuVM",
+    name: "Reckless Records",
+    address: "1379 N Milwaukee Ave, Chicago, IL 60622",
+  }),
+  garfieldConservatory: place({
+    id: "ChIJaQUY87cyDogRqoNIaIN0IdI",
+    name: "Garfield Park Conservatory",
+    address: "300 N Central Park Ave, Chicago, IL 60624",
+  }),
+  urbanKayaks: place({
+    id: "ChIJVea6NVYrDogRlxzUQCLizfw",
+    name: "Urban Kayaks",
+    address: "435 E Riverwalk, Chicago, IL 60601",
+  }),
+  myopicBooks: place({
+    id: "ChIJMbKjacfSD4gRrBOFhDb_tqs",
+    name: "Myopic Books",
+    address: "1564 N Milwaukee Ave, Chicago, IL 60622",
+  }),
+  adlerPlanetarium: place({
+    id: "ChIJtRSxt28rDogRpo4hEqqjIGk",
+    name: "Adler Planetarium",
+    address: "1300 S DuSable Lake Shore Dr, Chicago, IL 60605",
+  }),
+  goreme: place({
+    id: "ChIJ7eS75-xnKhUR_syP0bAUyrs",
+    name: "Göreme Open Air Museum",
+    address: "Göreme, Nevşehir, Türkiye",
+  }),
+  banff: place({
+    id: "ChIJlZGSjCtmd1MR5tfKrGjincA",
+    name: "Banff National Park",
+    address: "Alberta, Canada",
+  }),
+  marinhaBeach: place({
+    id: "ChIJS-PpA6TWGg0RmCa3wG5Q9Fw",
+    name: "Marinha Beach",
+    address: "Algarve, Portugal",
+  }),
+  tivoliGardens: place({
+    id: "ChIJ8-r2gBJTUkYRsCcLtQ0Ltdk",
+    name: "Tivoli Gardens",
+    address: "Vesterbrogade 3, Copenhagen, Denmark",
+  }),
+} satisfies Record<string, DemoPlace>;
 
 export function buildDemoContent(now: Date): DemoContent {
   const eventSeeds: DemoEventSeed[] = [
@@ -167,11 +245,7 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, 0, 10, 0),
       timeIsSet: true,
       tags: serializeTags(["morning", "easy"]),
-      place: place({
-        name: "Fern & Filter",
-        address: "12 Alder Lane",
-        photos: ["coffee-walk.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.darkMatter,
       photos: [],
       rating: null,
       comments: [],
@@ -179,20 +253,15 @@ export function buildDemoContent(now: Date): DemoContent {
     },
     {
       slug: "bistro-tonight",
-      title: "Dinner at Maison Lune",
-      description: "Booked the corner table. They do the lemon tart on Thursdays.",
+      title: "Dinner at Cindy's Rooftop",
+      description: "Booked a window table for skyline views before sunset.",
       by: "alex",
       type: "PLANNED",
       dateTimeStart: at(now, 0, 19, 30),
       dateTimeEnd: at(now, 0, 21, 30),
       timeIsSet: true,
       tags: serializeTags(["dinner", "date night"]),
-      place: place({
-        name: "Maison Lune",
-        address: "48 Rue Saint-Clair",
-        website: "https://example.com/maison-lune",
-        photos: ["bistro-tonight.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.cindysRooftop,
       photos: [],
       rating: null,
       comments: [
@@ -208,7 +277,7 @@ export function buildDemoContent(now: Date): DemoContent {
     // ── Upcoming ─────────────────────────────────────────────────────────────
     {
       slug: "jazz-night",
-      title: "Jazz night at The Blue Room",
+      title: "Jazz night at the Green Mill",
       description: "Doors at eight. Small room, so worth getting there early.",
       by: "sam",
       type: "PLANNED",
@@ -216,11 +285,7 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, 3, 23, 0),
       timeIsSet: true,
       tags: serializeTags(["music", "night out"]),
-      place: place({
-        name: "The Blue Room",
-        address: "7 Marley Street",
-        photos: ["jazz-night.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.greenMill,
       photos: [],
       rating: null,
       comments: [
@@ -242,11 +307,7 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, 6, 13, 0),
       timeIsSet: true,
       tags: serializeTags(["weekend", "food"]),
-      place: place({
-        name: "Riverside Market",
-        address: "Quay Road",
-        photos: ["farmers-brunch.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.greenCityMarket,
       photos: [],
       rating: null,
       comments: [],
@@ -262,11 +323,7 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, 12, 20, 30),
       timeIsSet: true,
       tags: serializeTags(["making", "learn"]),
-      place: place({
-        name: "Kiln Studio",
-        address: "3 Foundry Yard",
-        photos: ["pottery-class.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.lillstreet,
       photos: [],
       rating: null,
       comments: [],
@@ -275,8 +332,8 @@ export function buildDemoContent(now: Date): DemoContent {
     },
     {
       slug: "hills-weekend",
-      title: "Weekend in the hills",
-      description: "Cabin with a wood stove and no signal. That's the whole plan.",
+      title: "Long weekend in Banff",
+      description: "Mountain trails, a quiet cabin, and no schedule after breakfast.",
       by: "alex",
       type: "PLANNED",
       dateTimeStart: at(now, 19, 9, 0),
@@ -284,11 +341,7 @@ export function buildDemoContent(now: Date): DemoContent {
       // A day-scoped plan — exercises the "no time set" rendering path.
       timeIsSet: false,
       tags: serializeTags(["trip", "nature"]),
-      place: place({
-        name: "Larkspur Cabin",
-        address: "Upper Fell Road",
-        photos: ["hills-weekend.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.banff,
       photos: [],
       rating: null,
       comments: [
@@ -302,19 +355,15 @@ export function buildDemoContent(now: Date): DemoContent {
     },
     {
       slug: "outdoor-cinema",
-      title: "Cinema under the stars",
-      description: "They're showing the one you quote at me constantly.",
+      title: "Movie night in Millennium Park",
+      description: "Blanket, snacks, and a film under the skyline.",
       by: "sam",
       type: "PLANNED",
       dateTimeStart: at(now, 33, 21, 0),
       dateTimeEnd: at(now, 33, 23, 30),
       timeIsSet: true,
       tags: serializeTags(["film", "outdoors"]),
-      place: place({
-        name: "Meadow Park Screen",
-        address: "Meadow Park, East Gate",
-        photos: ["outdoor-cinema.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.millenniumPark,
       photos: [],
       rating: null,
       comments: [],
@@ -334,12 +383,8 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, -4, 12, 30),
       timeIsSet: true,
       tags: serializeTags(["weekend", "food"]),
-      place: place({
-        name: "Riverside Market",
-        address: "Quay Road",
-        photos: ["market-morning-1.jpg"],
-      }),
-      photos: photos(["market-morning-1.jpg", "market-morning-2.jpg"], "alex"),
+      place: DEMO_REAL_PLACES.greenCityMarket,
+      photos: [],
       rating: { by: "alex", value: 4, note: null },
       comments: [
         {
@@ -360,15 +405,8 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, -11, 22, 30),
       timeIsSet: true,
       tags: serializeTags(["anniversary", "dinner"]),
-      place: place({
-        name: "Vista Rooftop",
-        address: "Top floor, 21 Harbour Street",
-        photos: ["rooftop-dinner-1.jpg"],
-      }),
-      photos: photos(
-        ["rooftop-dinner-1.jpg", "rooftop-dinner-2.jpg", "rooftop-dinner-3.jpg"],
-        "sam",
-      ),
+      place: DEMO_REAL_PLACES.cindysRooftop,
+      photos: [],
       rating: {
         by: "sam",
         value: 5,
@@ -398,12 +436,8 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, -24, 17, 0),
       timeIsSet: true,
       tags: serializeTags(["culture", "indoor"]),
-      place: place({
-        name: "City Gallery",
-        address: "1 Museum Square",
-        photos: ["gallery-afternoon-1.jpg"],
-      }),
-      photos: photos(["gallery-afternoon-1.jpg", "gallery-afternoon-2.jpg"], "alex"),
+      place: DEMO_REAL_PLACES.artInstitute,
+      photos: [],
       rating: { by: "alex", value: 4, note: null },
       comments: [],
       fromIdeaSlug: null,
@@ -418,12 +452,8 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, -38, 16, 0),
       timeIsSet: true,
       tags: serializeTags(["outdoors", "hike"]),
-      place: place({
-        name: "Kestrel Ridge",
-        address: "Northern Fells",
-        photos: ["ridge-hike-1.jpg"],
-      }),
-      photos: photos(["ridge-hike-1.jpg", "ridge-hike-2.jpg"], "sam"),
+      place: DEMO_REAL_PLACES.starvedRock,
+      photos: [],
       rating: { by: "sam", value: 5, note: "Worth every one of those steps." },
       comments: [
         {
@@ -445,27 +475,23 @@ export function buildDemoContent(now: Date): DemoContent {
       timeIsSet: true,
       tags: serializeTags(["cooking", "home"]),
       place: null,
-      photos: photos(["pasta-night-1.jpg", "pasta-night-2.jpg"], "alex"),
+      photos: [],
       rating: { by: "alex", value: 4, note: "Next time: less flour, more sauce." },
       comments: [],
       fromIdeaSlug: null,
     },
     {
       slug: "beach-escape",
-      title: "Two days by the sea",
-      description: "Cold water, warm chips, absolutely no plans.",
+      title: "Two days in the Algarve",
+      description: "Sea caves, a quiet beach, and absolutely no schedule.",
       by: "sam",
       type: "MEMORY",
       dateTimeStart: at(now, -74, 11, 0),
       dateTimeEnd: at(now, -73, 18, 0),
       timeIsSet: false,
       tags: serializeTags(["trip", "sea"]),
-      place: place({
-        name: "Camber Cove",
-        address: "South Coast",
-        photos: ["beach-escape-1.jpg"],
-      }),
-      photos: photos(["beach-escape-1.jpg", "beach-escape-2.jpg"], "sam"),
+      place: DEMO_REAL_PLACES.marinhaBeach,
+      photos: [],
       rating: { by: "sam", value: 5, note: null },
       comments: [
         {
@@ -486,32 +512,24 @@ export function buildDemoContent(now: Date): DemoContent {
       dateTimeEnd: at(now, -96, 17, 30),
       timeIsSet: true,
       tags: serializeTags(["music", "city"]),
-      place: place({
-        name: "Groove Lane Records",
-        address: "22 Groove Lane",
-        photos: ["record-shop-1.jpg"],
-      }),
-      photos: photos(["record-shop-1.jpg"], "alex"),
+      place: DEMO_REAL_PLACES.recklessRecords,
+      photos: [],
       rating: { by: "alex", value: 3, note: null },
       comments: [],
       fromIdeaSlug: null,
     },
     {
       slug: "winter-lights",
-      title: "Winter lights walk",
-      description: "Freezing. Beautiful. Two hot chocolates each.",
+      title: "Winter lights at Tivoli",
+      description: "Freezing, beautiful, and worth two hot chocolates each.",
       by: "sam",
       type: "MEMORY",
       dateTimeStart: at(now, -140, 18, 0),
       dateTimeEnd: at(now, -140, 21, 0),
       timeIsSet: true,
       tags: serializeTags(["winter", "walk"]),
-      place: place({
-        name: "Old Town Gardens",
-        address: "Cathedral Close",
-        photos: ["winter-lights-1.jpg"],
-      }),
-      photos: photos(["winter-lights-1.jpg", "winter-lights-2.jpg"], "sam"),
+      place: DEMO_REAL_PLACES.tivoliGardens,
+      photos: [],
       rating: { by: "sam", value: 5, note: null },
       comments: [],
       fromIdeaSlug: null,
@@ -531,17 +549,13 @@ export function buildDemoContent(now: Date): DemoContent {
   const ideas: DemoIdea[] = [
     {
       slug: "balloon",
-      title: "Hot air balloon at sunrise",
-      description: "Ridiculous, expensive, and we should absolutely do it once.",
+      title: "Cappadocia balloon at sunrise",
+      description: "Ridiculous, beautiful, and something we should absolutely do once.",
       by: "alex",
       status: "NEW",
       createdAt: at(now, -6, 22, 10),
       tags: serializeTags(["bucket list", "sunrise"]),
-      place: place({
-        name: "Vale Balloon Field",
-        address: "Vale Road",
-        photos: ["idea-balloon.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.goreme,
       comments: [],
     },
     {
@@ -552,11 +566,7 @@ export function buildDemoContent(now: Date): DemoContent {
       status: "NEW",
       createdAt: at(now, -9, 20, 45),
       tags: serializeTags(["cooking", "project"]),
-      place: place({
-        name: "Home",
-        address: "Our kitchen",
-        photos: ["idea-ramen.jpg"],
-      }),
+      place: null,
       comments: [
         {
           by: "alex",
@@ -567,17 +577,13 @@ export function buildDemoContent(now: Date): DemoContent {
     },
     {
       slug: "botanical",
-      title: "Botanical garden in spring",
-      description: "Apparently the glasshouse is the best bit. Go on a weekday.",
+      title: "Garfield Park Conservatory",
+      description: "A warm glasshouse afternoon when Chicago decides to be cold again.",
       by: "alex",
       status: "NEW",
       createdAt: at(now, -14, 12, 20),
       tags: serializeTags(["nature", "calm"]),
-      place: place({
-        name: "Cordell Botanical Garden",
-        address: "West Park Drive",
-        photos: ["idea-botanical.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.garfieldConservatory,
       comments: [],
     },
     {
@@ -593,17 +599,13 @@ export function buildDemoContent(now: Date): DemoContent {
     },
     {
       slug: "kayak",
-      title: "Kayak the estuary",
-      description: "Hire is cheaper before ten. Bring the dry bag this time.",
+      title: "Kayak the Chicago River",
+      description: "Go early for calmer water and bring the dry bag this time.",
       by: "alex",
       status: "NEW",
       createdAt: at(now, -21, 9, 5),
       tags: serializeTags(["water", "active"]),
-      place: place({
-        name: "Estuary Boat Hire",
-        address: "Lower Slipway",
-        photos: ["idea-kayak.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.urbanKayaks,
       comments: [],
     },
     {
@@ -614,11 +616,7 @@ export function buildDemoContent(now: Date): DemoContent {
       status: "NEW",
       createdAt: at(now, -27, 19, 15),
       tags: serializeTags(["books", "city"]),
-      place: place({
-        name: "Ravensworth Books",
-        address: "9 Cobble Street",
-        photos: ["idea-bookshop.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.myopicBooks,
       comments: [
         {
           by: "alex",
@@ -634,17 +632,13 @@ export function buildDemoContent(now: Date): DemoContent {
     },
     {
       slug: "stargazing",
-      title: "Stargazing outside the city",
-      description: "Need a clear night and a flask. Forty minutes' drive gets us dark sky.",
+      title: "Adler After Dark",
+      description: "Planetarium exhibits, skyline views, and a clear-night walk afterward.",
       by: "alex",
       status: "NEW",
       createdAt: at(now, -33, 23, 30),
       tags: serializeTags(["night", "quiet"]),
-      place: place({
-        name: "Bramley Down",
-        address: "Off the B412",
-        photos: ["idea-stargazing.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.adlerPlanetarium,
       comments: [],
     },
     {
@@ -656,11 +650,7 @@ export function buildDemoContent(now: Date): DemoContent {
       status: "PLANNED",
       createdAt: at(now, -30, 18, 0),
       tags: serializeTags(["making", "learn"]),
-      place: place({
-        name: "Kiln Studio",
-        address: "3 Foundry Yard",
-        photos: ["pottery-class.jpg"],
-      }),
+      place: DEMO_REAL_PLACES.lillstreet,
       comments: [],
     },
   ];
@@ -690,7 +680,7 @@ export function buildDemoContent(now: Date): DemoContent {
     },
     {
       by: "sam",
-      body: "That corner table at Maison Lune is the one to ask for.",
+      body: "The west side of Cindy's terrace is the one to ask for.",
       createdAt: at(now, -12, 11, 0),
     },
     {

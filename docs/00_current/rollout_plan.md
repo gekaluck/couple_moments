@@ -19,7 +19,7 @@ Private beta, live on Vercel with real usage. **The active delivery plan is `/RE
 | D-3 | Decompose `events/[eventId]/page.tsx` (806 lines, same approach) | Phase 1.5 |
 | — | Activity search: mobile + full-history (server-side `?q=`); Memories year filter on mobile | Phase 2 sweep / deferred |
 | — | Infinite scroll for Activity/Memories | Deferred |
-| DEMO-1 | Generate real `public/demo/` images and decide the licensing route (stock vs Places) | Demo mode |
+| DEMO-1 | Verify live Places photo quota, key restrictions, and attribution in production | Demo mode |
 | DEMO-2 | Set `DEMO_MODE_ENABLED`, `CRON_SECRET`, `NEXT_PUBLIC_APP_URL` in Vercel, then verify the hourly cleanup cron fires | Demo mode |
 
 ---

@@ -85,6 +85,12 @@ This file records high-level decisions and trade-offs. Add dated entries as they
 - Alternatives considered: Live Places lookup during provisioning — rejected for adding an API dependency, cost, and latency to every `/demo` click. Hotlinking stock URLs — rejected as fragile.
 - Consequences: `/demo` has no runtime dependency on Google. The licensing choice is explicit and documented at the top of the script: committing Places photos to a public repo is likely outside Google's terms, so either use the stock source or keep `public/demo/` out of git and generate it at deploy time.
 
+## 2026-08-04 - Demo uses real Place IDs and fresh Places photos
+- Context: The first demo rollout intentionally skipped bundled images. The product already resolves fresh place photos in the browser, and realistic Chicago and travel locations communicate the product better than fictional venue names.
+- Decision: Supersede the 2026-07-31 static-image decision for the active demo fixture. Store a curated set of real Google Place IDs, keep mock relationship content and relative dates, and request photo URLs at render time. Preserve author attribution and source links for detail galleries. Do not persist returned Google photo URLs.
+- Alternatives considered: Generate and commit stock photos — rejected for now because they are detached from the seeded venues. Download Google Places photos during deployment — rejected because cached Places photos and URLs carry storage restrictions. Fetch during sandbox provisioning — rejected because it adds latency and would persist short-lived URLs.
+- Consequences: Demo cards need `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`, consume Places photo quota, and fall back gracefully when the API is unavailable. API key referrer restrictions and usage quotas are required production controls. Stored Place IDs should be reviewed or refreshed annually.
+
 ## Links
 - READ_THIS_FIRST.md
 - docs/00_current/ARCHITECTURE.md

@@ -4,8 +4,17 @@ import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 
 let mapsConfigured = false;
 
+type AuthorAttribution = {
+  displayName?: string;
+  uri?: string;
+  photoURI?: string;
+};
+
 type PlacePhoto = {
   getURI: (options: { maxWidth?: number; maxHeight?: number }) => string;
+  authorAttributions?: AuthorAttribution[];
+  googleMapsURI?: string;
+  flagContentURI?: string;
 };
 
 type PlaceInstance = {
@@ -15,6 +24,17 @@ type PlaceInstance = {
 
 type PlacesLibrary = {
   Place?: new (params: { id: string }) => PlaceInstance;
+};
+
+export type ResolvedPlacePhoto = {
+  url: string;
+  authorAttributions: Array<{
+    displayName: string;
+    uri: string | null;
+    photoURI: string | null;
+  }>;
+  googleMapsURI: string | null;
+  flagContentURI: string | null;
 };
 
 function hasLoadedMapsLibrary() {
@@ -45,7 +65,7 @@ function ensureMapsConfigured(apiKey?: string) {
   return true;
 }
 
-export async function loadPlacePhotoUrls(
+export async function loadPlacePhotos(
   placeId: string,
   options?: {
     apiKey?: string;
@@ -68,11 +88,37 @@ export async function loadPlacePhotoUrls(
 
   return (place.photos ?? [])
     .slice(0, options?.limit ?? 3)
-    .map((photo) =>
-      photo.getURI({
+    .map((photo): ResolvedPlacePhoto => ({
+      url: photo.getURI({
         maxWidth: options?.maxWidth ?? 800,
         maxHeight: options?.maxHeight ?? 600,
       }),
-    )
-    .filter((url) => /^https?:\/\//i.test(url));
+      authorAttributions: (photo.authorAttributions ?? [])
+        .map((attribution) => ({
+          displayName: attribution.displayName?.trim() ?? "",
+          uri: attribution.uri ?? null,
+          photoURI: attribution.photoURI ?? null,
+        }))
+        .filter((attribution) => Boolean(attribution.displayName)),
+      googleMapsURI: photo.googleMapsURI ?? null,
+      flagContentURI: photo.flagContentURI ?? null,
+    }))
+    .filter((photo) => /^https?:\/\//i.test(photo.url));
+}
+
+/**
+ * URL-only compatibility helper for compact covers. Those thumbnails link to
+ * detail pages, where PlacePhotoStrip renders Google's source and author data.
+ */
+export async function loadPlacePhotoUrls(
+  placeId: string,
+  options?: {
+    apiKey?: string;
+    limit?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+  },
+) {
+  const photos = await loadPlacePhotos(placeId, options);
+  return photos.map((photo) => photo.url);
 }

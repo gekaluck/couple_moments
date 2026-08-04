@@ -86,8 +86,11 @@ Main entities:
   throwaway `User` rows (`isDemo`, `@demo.duet.invalid` addresses) and signs the
   visitor in with an ordinary `cm_session`.
 - Content comes from `src/lib/demo/fixture.ts`, generated from offsets against
-  `now` so the sandbox is never stale. Images are static files under `public/demo/`,
-  referenced by absolute URL.
+  `now` so the sandbox is never stale. The fixture stores curated real Google
+  Place IDs for Chicago and travel locations; the browser requests fresh photo
+  metadata and URLs through the Places library and renders source attribution.
+- Place-photo failures fall back to the normal app cover. Google photo URLs are
+  not written to the database or bundled into the repository.
 - Because the demo user is an ordinary user with an ordinary membership, every
   product surface works with no demo branching. Only externally-effectful actions
   are blocked: Cloudinary photo upload, Google OAuth, invite codes, and feedback mail.
