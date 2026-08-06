@@ -17,7 +17,10 @@ import PlanningCover from "@/components/planning/PlanningCover";
 import useResolvedPlaceCover from "@/components/planning/useResolvedPlaceCover";
 import { LocalTimeAgo } from "@/components/time/LocalTime";
 
-import { getOffsetMinutesForLocalDateTime } from "@/lib/date-time";
+import {
+  getOffsetMinutesForLocalDateTime,
+  isLocalDateTimeInPast,
+} from "@/lib/date-time";
 import { getInitials } from "@/lib/formatters";
 import { sanitizeHttpUrl } from "@/lib/parsers";
 import {
@@ -101,6 +104,12 @@ export default function IdeaCard({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const todayStr = getTodayDateString();
+  const [scheduleDate, setScheduleDate] = useState(todayStr);
+  const [scheduleTime, setScheduleTime] = useState("19:00");
+  const createsMemory = isLocalDateTimeInPast(
+    scheduleDate,
+    scheduleTime || "12:00",
+  );
   const [editPlace, setEditPlace] = useState<PlaceSelection | null>(
     idea.placeId && idea.placeLat != null && idea.placeLng != null && idea.placeUrl
       ? {
@@ -227,7 +236,7 @@ export default function IdeaCard({
             <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-white/80">
               <span
                 aria-hidden="true"
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white ring-1 ring-white/40"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold leading-none tracking-[-0.04em] text-white ring-1 ring-white/40"
                 style={{ backgroundImage: creatorGradient }}
               >
                 {creatorInitials}
@@ -248,11 +257,11 @@ export default function IdeaCard({
       </PlanningCover>
 
       {/* Desktop layout */}
-      <div className="hidden flex-1 gap-4 p-5 md:flex md:flex-row md:items-stretch md:justify-between">
+      <div className="hidden flex-1 gap-3 p-4 pr-14 md:flex md:flex-row md:items-stretch md:justify-between">
         <PlanningCover
           src={resolvedCoverUrl}
           alt={`${idea.title} cover`}
-          className="h-36 w-48 shrink-0 rounded-xl"
+          className="h-32 w-40 shrink-0 rounded-xl xl:h-36 xl:w-44"
           isLoading={isCoverLoading}
           scrim="soft"
         />
@@ -290,7 +299,7 @@ export default function IdeaCard({
             <span className="inline-flex min-w-0 items-center gap-2">
               <span
                 aria-hidden="true"
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold leading-none tracking-[-0.04em] text-white"
                 style={{ backgroundImage: creatorGradient }}
               >
                 {creatorInitials}
@@ -304,11 +313,11 @@ export default function IdeaCard({
             </span>
           </CardFooter>
         </div>
-        <div className="hidden items-center gap-1.5 md:flex md:justify-end">
+        <div className="absolute right-3 top-3 z-20 hidden flex-col items-center gap-1.5 md:flex">
           <button
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-amber-200/90 bg-white/90 text-amber-700 transition hover:border-amber-300 hover:bg-amber-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 md:pointer-events-none md:opacity-0 md:group-hover/idea:pointer-events-auto md:group-hover/idea:opacity-100"
-            title="Schedule as event"
-            aria-label={`Schedule idea: ${idea.title}`}
+            title="Plan or remember idea"
+            aria-label={`Plan or remember idea: ${idea.title}`}
             onClick={() => setIsScheduleOpen(true)}
             type="button"
           >
@@ -446,7 +455,7 @@ export default function IdeaCard({
       <Modal
         isOpen={isScheduleOpen}
         onClose={() => setIsScheduleOpen(false)}
-        title="Schedule this idea"
+        title="Plan or remember this idea"
       >
         <div className="space-y-4">
           <div>
@@ -466,6 +475,7 @@ export default function IdeaCard({
               const formData = new FormData(event.currentTarget);
               const date = formData.get("date")?.toString() ?? "";
               const time = formData.get("time")?.toString() || "12:00";
+              const creatingMemory = isLocalDateTimeInPast(date, time);
               const offsetMinutes = getOffsetMinutesForLocalDateTime(date, time);
               if (offsetMinutes !== null) {
                 formData.set("timeZoneOffsetStart", offsetMinutes.toString());
@@ -473,7 +483,11 @@ export default function IdeaCard({
               startTransition(async () => {
                 try {
                   const result = await onSchedule(formData);
-                  toast.success("Event created from idea!");
+                  toast.success(
+                    creatingMemory
+                      ? "Memory created from idea!"
+                      : "Plan created from idea!",
+                  );
                   if (result?.googleSync?.attempted && !result.googleSync.success) {
                     toast.warning(
                       result.googleSync.message ??
@@ -485,7 +499,11 @@ export default function IdeaCard({
                   router.refresh();
                   setIsScheduleOpen(false);
                 } catch {
-                  toast.error("Failed to schedule idea");
+                  toast.error(
+                    creatingMemory
+                      ? "Failed to create memory"
+                      : "Failed to plan idea",
+                  );
                 }
               });
             }}
@@ -540,8 +558,8 @@ export default function IdeaCard({
                 className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
                 name="date"
                 type="date"
-                min={todayStr}
-                defaultValue={todayStr}
+                value={scheduleDate}
+                onChange={(event) => setScheduleDate(event.target.value)}
                 required
               />
             </label>
@@ -551,10 +569,16 @@ export default function IdeaCard({
                 className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
                 name="time"
                 type="time"
-                defaultValue="19:00"
+                value={scheduleTime}
+                onChange={(event) => setScheduleTime(event.target.value)}
               />
             </label>
-            {hasGoogleCalendar && (
+            <p className="rounded-xl bg-[var(--surface-50)] px-3 py-2 text-xs text-[var(--text-muted)]">
+              {createsMemory
+                ? "This past date will be saved directly to Memories."
+                : "This date will be added to Upcoming plans."}
+            </p>
+            {hasGoogleCalendar && !createsMemory && (
               <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 <input
                   type="checkbox"
@@ -584,7 +608,11 @@ export default function IdeaCard({
                 Cancel
               </Button>
               <Button variant="primary" size="sm" type="submit" loading={isPending}>
-                {isPending ? "Creating..." : "Create event"}
+                {isPending
+                  ? "Creating..."
+                  : createsMemory
+                    ? "Create memory"
+                    : "Plan idea"}
               </Button>
             </div>
           </form>

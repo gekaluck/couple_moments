@@ -40,7 +40,7 @@ export default function HorizontalRail<T>({
       <div
         ref={railRef}
         onScroll={handleScroll}
-        className="scrollbar-none stagger-children -mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto px-4 pb-1 md:m-0 md:snap-none md:flex-col md:gap-4 md:overflow-visible md:p-0"
+        className="scrollbar-none stagger-children -mx-4 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto px-4 pb-1 md:m-0 md:snap-none md:grid md:grid-cols-1 md:gap-4 md:overflow-visible md:p-0 lg:grid-cols-2"
       >
         {items.map((item) => (
           <div

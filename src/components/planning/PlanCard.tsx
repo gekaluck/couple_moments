@@ -32,6 +32,7 @@ type PlanCardProps = {
   title: string;
   description: string | null;
   dateTimeStart: Date;
+  dateTimeEnd?: Date | null;
   timeIsSet?: boolean;
   commentCount?: number;
   createdBy?: { name: string | null; email: string };
@@ -56,6 +57,7 @@ export default function PlanCard({
   title,
   description,
   dateTimeStart,
+  dateTimeEnd,
   timeIsSet = true,
   commentCount = 0,
   createdBy,
@@ -69,9 +71,19 @@ export default function PlanCard({
 }: PlanCardProps) {
   const router = useRouter();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const now = new Date();
   const dayDiff = getDayDiff(dateTimeStart);
+  const isHappeningNow = Boolean(
+    dateTimeEnd && dateTimeStart <= now && dateTimeEnd > now,
+  );
   const proximityLabel =
-    dayDiff === 0 ? "Today" : dayDiff === 1 ? "Tomorrow" : null;
+    isHappeningNow
+      ? "On now"
+      : dayDiff === 0
+        ? "Today"
+        : dayDiff === 1
+          ? "Tomorrow"
+          : null;
   const eventHref = `/events/${id}`;
   const {
     coverUrl: resolvedCoverUrl,
@@ -117,7 +129,7 @@ export default function PlanCard({
         <PlanningCover
           src={resolvedCoverUrl}
           alt={`${title} cover`}
-          className="aspect-[4/3] w-full md:aspect-auto md:h-64"
+          className="aspect-[4/3] w-full md:aspect-auto md:h-56 xl:h-60"
           isLoading={isCoverLoading}
         >
           <ChevronRight
@@ -146,7 +158,7 @@ export default function PlanCard({
 
           {/* Title and meta sit on the scrim so the photo keeps the whole card. */}
           <div className="absolute inset-x-0 bottom-0 flex min-w-0 flex-col gap-1 p-4 text-white">
-            <h4 className="break-words text-lg font-semibold leading-snug tracking-[-0.015em] line-clamp-2 [overflow-wrap:anywhere] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)] md:text-xl">
+            <h4 className="break-words text-lg font-semibold leading-snug tracking-[-0.015em] line-clamp-2 [overflow-wrap:anywhere] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
               {title}
             </h4>
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/85">
@@ -180,7 +192,7 @@ export default function PlanCard({
                 <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-white/80">
                   <span
                     aria-hidden="true"
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold text-white ring-1 ring-white/40"
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold leading-none tracking-[-0.04em] text-white ring-1 ring-white/40"
                     style={{ backgroundImage: getAvatarGradient(CREATOR_ACCENTS.rose) }}
                   >
                     {getInitials(createdBy.name, createdBy.email)}

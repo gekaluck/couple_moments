@@ -2,6 +2,7 @@ import { google, calendar_v3 } from 'googleapis';
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedClient } from './calendar';
 import { getCreatorDisplayName } from '@/lib/creator-colors';
+import { buildGoogleEventPatch } from './event-diff';
 
 type DuetEvent = {
   id: string;
@@ -404,16 +405,41 @@ export async function updateGoogleCalendarEvent(
       };
     }
 
-    // Update event
+    // Read the organizer's copy before patching. Besides avoiding no-op writes,
+    // this lets Google retain attendee RSVP state when membership is unchanged.
     let responseData: calendar_v3.Schema$Event;
     try {
-      responseData = await withRetry(() =>
+      const existingGoogleEvent = await withRetry(() =>
         calendar.events
-          .update({
+          .get({
             calendarId: link.calendarId,
             eventId: link.externalEventId,
-            sendUpdates: 'all',
-            requestBody: googleEvent,
+          })
+          .then((response) => response.data),
+      );
+      const patch = buildGoogleEventPatch(existingGoogleEvent, googleEvent);
+
+      if (!patch.changed) {
+        await prisma.externalEventLink.update({
+          where: { eventId },
+          data: {
+            etag: existingGoogleEvent.etag || link.etag,
+            lastSyncedAt: new Date(),
+          },
+        });
+        return { success: true, skipped: true };
+      }
+
+      responseData = await withRetry(() =>
+        calendar.events
+          .patch({
+            calendarId: link.calendarId,
+            eventId: link.externalEventId,
+            // Time/title/attendee changes warrant a fresh notification. Notes
+            // and location changes still sync, but do not generate another
+            // invitation email.
+            sendUpdates: patch.notifyGuests ? 'all' : 'none',
+            requestBody: patch.requestBody as calendar_v3.Schema$Event,
           })
           .then((response) => response.data),
       );

@@ -628,7 +628,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         {...googleAvailabilitySync}
         settingsHref={`/spaces/${space.id}/settings`}
       />
-      <section className="surface overflow-hidden p-4 md:p-8">
+      <section className="surface overflow-hidden p-4 md:p-5 xl:p-6">
         {/* One-row header: create actions · month nav · view tools. The old
             version stacked kicker + helper + two mini-rows into a ~110px band. */}
         <div className="grid items-center gap-4 xl:grid-cols-[1fr_auto_1fr]">
@@ -651,7 +651,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             >
               <ChevronLeft className="h-5 w-5" />
             </Link>
-            <h2 className="min-w-[220px] whitespace-nowrap px-2 text-center text-3xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
+            <h2 className="min-w-[220px] whitespace-nowrap px-2 text-center text-2xl font-semibold tracking-[-0.02em] text-[var(--text-primary)] font-[var(--font-display)]">
               {formatMonthTitle(now)}
             </h2>
             <Link
@@ -697,7 +697,10 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
           </div>
         </div>
         {/* Legend - desktop only */}
-        <div className="mt-3 hidden flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)] md:flex">
+        <div
+          className="mt-4 hidden flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[var(--panel-border)] bg-white/55 px-3 py-2 text-xs text-[var(--text-secondary)] md:flex"
+          aria-label="Calendar legend"
+        >
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-rose-500" />
             Your plans
@@ -706,13 +709,33 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
             <span className="h-2 w-2 rounded-full bg-[var(--calendar-memory-dot)]" />
             Memories
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" />
-            Manual busy
+          <span aria-hidden="true" className="h-4 w-px bg-[var(--panel-border)]" />
+          <span className="font-semibold text-[var(--text-tertiary)]">
+            Busy by
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[var(--panel-border)] px-2 py-1">
-            <span className="h-2 w-2 rounded-full bg-[var(--color-secondary)]" />
-            Google busy
+          {Object.entries(memberVisuals).map(([memberId, visual]) => (
+            <span key={memberId} className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: visual.accent.accent }}
+              />
+              {visual.displayName}
+            </span>
+          ))}
+          <span aria-hidden="true" className="h-4 w-px bg-[var(--panel-border)]" />
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3.5 w-6 rounded-md bg-[var(--surface-50)]" />
+            Manual
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="h-3.5 w-6 rounded-md border border-dashed border-[var(--border-medium)] bg-[var(--surface-50)]"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(135deg, transparent 0, transparent 3px, rgba(255,255,255,0.9) 3px, rgba(255,255,255,0.9) 5px)",
+              }}
+            />
+            Google
           </span>
         </div>
 
@@ -731,18 +754,18 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
         </div>
 
         {/* Desktop month grid */}
-        <div className="mt-4 hidden grid-cols-7 gap-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)] md:grid sm:gap-2">
+        <div className="mt-4 hidden grid-cols-7 gap-1.5 border-b border-[var(--panel-border)] pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)] md:grid">
           {dayLabels.map((day) => (
             <div
               key={day}
-              className="rounded-lg border border-white/80 bg-white/55 px-1 py-1.5 text-center sm:px-2"
+              className="px-1 py-1 text-center"
             >
               <span className="sm:hidden">{day[0]}</span>
               <span className="hidden sm:inline">{day}</span>
             </div>
           ))}
         </div>
-        <div className="mt-1 hidden grid-cols-7 gap-1 md:grid sm:mt-2 sm:gap-2">
+        <div className="mt-2 hidden grid-cols-7 gap-1.5 md:grid">
           {monthDays.map((day) => {
             const key = dateKey(day.date);
             const dayEvents = eventsByDay.get(key) ?? [];
@@ -798,6 +821,7 @@ export default async function CalendarPage({ params, searchParams }: PageProps) 
                 title: event.title,
                 description: event.description,
                 dateTimeStart: event.dateTimeStart,
+                dateTimeEnd: event.dateTimeEnd,
                 timeIsSet: event.timeIsSet,
                 createdBy: event.createdBy
                   ? {

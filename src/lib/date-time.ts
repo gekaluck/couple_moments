@@ -108,6 +108,29 @@ export function getOffsetMinutesForLocalDateTime(date: string, time: string) {
   return isValidDate(localDate) ? localDate.getTimezoneOffset() : null;
 }
 
+export function isLocalDateTimeInPast(
+  date: string,
+  time: string,
+  now = new Date(),
+) {
+  const dateParts = parseDateParts(date);
+  const timeParts = parseTimeParts(time);
+
+  if (!dateParts || !timeParts) {
+    return false;
+  }
+
+  const localDate = new Date(
+    dateParts.year,
+    dateParts.month - 1,
+    dateParts.day,
+    timeParts.hour,
+    timeParts.minute,
+  );
+
+  return isValidDate(localDate) && localDate < now;
+}
+
 export function isSameLocalCalendarDay(left: Date, right: Date) {
   return (
     left.getFullYear() === right.getFullYear() &&
