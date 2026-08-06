@@ -15,6 +15,7 @@ type Plan = {
   title: string;
   description: string | null;
   dateTimeStart: Date;
+  dateTimeEnd?: Date | null;
   timeIsSet?: boolean;
   createdBy?: { name: string | null; email: string };
   placeName?: string | null;
@@ -45,9 +46,16 @@ export default function UpcomingPlansColumn({
   mapsApiKey,
   onDeleteEvent,
 }: UpcomingPlansColumnProps) {
-  const [visibleCount, setVisibleCount] = useState(5);
+  const [visibleCount, setVisibleCount] = useState(4);
   const visiblePlans = plans.slice(0, visibleCount);
   const hasMore = plans.length > visibleCount;
+  const now = new Date();
+  const ongoingCount = plans.filter(
+    (plan) =>
+      plan.dateTimeEnd &&
+      plan.dateTimeStart <= now &&
+      plan.dateTimeEnd > now,
+  ).length;
 
   const nextInDays = (() => {
     const next = plans[0]?.dateTimeStart;
@@ -62,6 +70,8 @@ export default function UpcomingPlansColumn({
   const subLabel =
     plans.length === 0
       ? "Nothing on the books"
+      : ongoingCount > 0
+        ? `${plans.length} planned · ${ongoingCount} on now`
       : nextInDays === 0
         ? `${plans.length} planned · next today`
         : nextInDays === 1
@@ -114,6 +124,7 @@ export default function UpcomingPlansColumn({
                   title={plan.title}
                   description={plan.description}
                   dateTimeStart={plan.dateTimeStart}
+                  dateTimeEnd={plan.dateTimeEnd}
                   timeIsSet={plan.timeIsSet}
                   commentCount={commentCounts[plan.id] ?? 0}
                   createdBy={plan.createdBy}
@@ -138,6 +149,7 @@ export default function UpcomingPlansColumn({
                   title={plan.title}
                   description={plan.description}
                   dateTimeStart={plan.dateTimeStart}
+                  dateTimeEnd={plan.dateTimeEnd}
                   timeIsSet={plan.timeIsSet}
                   commentCount={commentCounts[plan.id] ?? 0}
                   createdBy={plan.createdBy}
@@ -154,7 +166,7 @@ export default function UpcomingPlansColumn({
             {hasMore ? (
               <button
                 type="button"
-                onClick={() => setVisibleCount((prev) => prev + 5)}
+                onClick={() => setVisibleCount((prev) => prev + 4)}
                 className="mt-4 w-full rounded-2xl border border-rose-200/80 bg-rose-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-rose-700 transition hover:bg-rose-100/80 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
               >
                 Show more ({plans.length - visibleCount} remaining)

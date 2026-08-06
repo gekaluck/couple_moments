@@ -24,12 +24,12 @@ export default function EventBubble({
   const [isOverflow, setIsOverflow] = useState(false);
   const shapeClass =
     spanPosition === "single"
-      ? "rounded-xl"
+      ? "rounded-lg"
       : spanPosition === "start"
-        ? "rounded-l-xl rounded-r-md"
+        ? "rounded-l-lg rounded-r-sm"
         : spanPosition === "end"
-          ? "rounded-l-md rounded-r-xl"
-          : "rounded-md";
+          ? "rounded-l-sm rounded-r-lg"
+          : "rounded-sm";
 
   useEffect(() => {
     const node = textRef.current;
@@ -56,7 +56,7 @@ export default function EventBubble({
   return (
     <Link
       aria-label={title}
-      className={`group/event relative flex items-center gap-2 border px-2.5 py-1.5 text-xs transition hover:shadow-[var(--shadow-sm)] ${shapeClass} ${
+      className={`group/event relative flex min-w-0 items-center gap-1.5 border px-2 py-1 text-xs transition hover:shadow-[var(--shadow-sm)] ${shapeClass} ${
         isPast
           ? "border-[#d7e0e8] bg-white/82 text-[#627487]"
           : "border-rose-200/75 bg-[linear-gradient(160deg,rgba(255,250,252,0.95),rgba(255,240,246,0.9))] text-rose-700"
@@ -65,17 +65,17 @@ export default function EventBubble({
       title={tooltipLabel ?? title}
     >
       <span
-        className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
+        className={`h-4 w-0.5 flex-shrink-0 rounded-full ${
           isPast ? "bg-[var(--calendar-memory-dot)]" : "bg-rose-500"
         }`}
       />
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
         {timeLabel ? (
-          <div className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-current/75">
+          <span className="shrink-0 text-[9px] font-semibold tabular-nums text-current/70">
             {timeLabel}
-          </div>
+          </span>
         ) : null}
-        <span ref={textRef} className="block truncate text-[11px] font-medium leading-tight">
+        <span ref={textRef} className="min-w-0 truncate text-[11px] font-semibold leading-tight">
           {title}
         </span>
       </div>

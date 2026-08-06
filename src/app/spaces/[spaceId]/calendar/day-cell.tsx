@@ -189,10 +189,10 @@ export default function DayCell({
   referenceNow,
 }: DayCellProps) {
   const dayCellBase = isCompact
-    ? "min-h-[48px] p-1.5 sm:min-h-[104px] sm:p-2"
+    ? "min-h-[96px] p-2"
     : isSixWeekMonth
-      ? "min-h-[48px] p-1.5 sm:min-h-[116px] sm:p-2"
-      : "min-h-[48px] p-1.5 sm:min-h-[136px] sm:p-2.5";
+      ? "min-h-[108px] p-2"
+      : "min-h-[124px] p-2.5";
   const hasEvents = events.length > 0;
   const inMonthTone = isToday
     ? "border-[var(--panel-border)] bg-[linear-gradient(175deg,rgba(255,255,255,0.96),rgba(255,236,244,0.82))]"
@@ -218,16 +218,10 @@ export default function DayCell({
   const hiddenEvents = events.slice(visibleEvents.length);
   const hiddenBlocks = blocks.slice(visibleBlocks.length);
   const hiddenCount = hiddenEvents.length + hiddenBlocks.length;
-  const hiddenItemsLabel = [
-    ...hiddenEvents.map((event) => event.title),
-    ...hiddenBlocks.map((block) =>
-      block.source === "GOOGLE" ? "Busy" : block.title,
-    ),
-  ].join(", ");
 
   return (
     <div
-      className={`group/day relative rounded-2xl border text-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${
+      className={`group/day relative rounded-xl border text-xs transition duration-200 hover:border-rose-200 hover:shadow-[var(--shadow-sm)] ${dayCellBase} ${
         isCurrentMonth
           ? inMonthTone
           : "border-[var(--panel-border)] bg-[var(--surface-50)] text-[var(--surface-400)] opacity-55"
@@ -235,7 +229,7 @@ export default function DayCell({
     >
       <Link
         aria-label={`Add event on ${date.toDateString()}`}
-        className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
+        className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--action-primary)]/35"
         href={addEventHref}
       />
       <div className="relative z-10 flex items-start justify-between gap-2">
@@ -246,14 +240,14 @@ export default function DayCell({
         </span>
         {totalItems > 0 ? (
           <span
-            className="inline-flex items-center rounded-full border border-[var(--panel-border)] bg-white/88 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]"
+            className="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/88 px-1.5 text-[10px] font-semibold text-[var(--text-tertiary)]"
             title={countLabel}
           >
             {totalItems}
           </span>
         ) : null}
       </div>
-      <div className="relative z-10 mt-2.5 hidden flex-col gap-1.5 sm:flex">
+      <div className="relative z-10 mt-2 flex flex-col gap-1">
         {visibleBlocks.map((block) => {
           const isExternal = block.source === "GOOGLE";
           const createdByUserId = block.createdByUserId || "external";
@@ -280,7 +274,6 @@ export default function DayCell({
               name: block.createdBy?.name ?? null,
               email: block.createdBy?.email ?? "??",
             });
-          const blockLabel = isExternal ? "Busy" : block.title;
           const blockTimeLabel = isExternal
             ? getBlockTimeLabel(
                 date,
@@ -290,6 +283,9 @@ export default function DayCell({
                 timeZone,
               )
             : null;
+          const blockLabel = isExternal
+            ? blockTimeLabel ?? "All day"
+            : block.title;
           const tooltipText = isExternal
             ? `${creatorLabel} is busy${
                 block.startAt && block.endAt
@@ -299,24 +295,22 @@ export default function DayCell({
             : `${block.title}${creatorLabel ? ` | ${creatorLabel}` : ""}`;
           const notePreview = block.note?.trim();
           const blockContent = (
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 items-center gap-1.5">
               <span
-                className={`h-2 self-stretch rounded-full ${isContinuation ? "w-1" : "w-1.5"}`}
+                className={`shrink-0 rounded-full ${
+                  isExternal
+                    ? "h-3 w-0.5"
+                    : `h-2 self-stretch ${isContinuation ? "w-1" : "w-1.5"}`
+                }`}
                 style={{ backgroundColor: blockAccent }}
               />
-              <div className="min-w-0">
-                {blockTimeLabel ? (
-                  <div className="truncate text-[10px] font-semibold leading-tight text-current/70">
-                    {blockTimeLabel}
-                  </div>
-                ) : null}
-                <div className="truncate text-[10px] font-medium">{blockLabel}</div>
-                {notePreview ? (
-                  <div className="truncate text-[10px] text-current/75">
-                    {notePreview}
-                  </div>
-                ) : null}
-              </div>
+              <span
+                className={`min-w-0 truncate text-[10px] ${
+                  isExternal ? "font-semibold tabular-nums" : "font-medium"
+                }`}
+              >
+                {blockLabel}
+              </span>
             </div>
           );
 
@@ -324,11 +318,14 @@ export default function DayCell({
             return (
               <div
                 key={block.id}
-                className={`rounded-lg border border-dashed border-white/80 px-2 py-1 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] ${
+                className={`rounded-lg border border-dashed px-2 py-1 ${
                   isContinuation ? "pt-1.5" : ""
                 }`}
                 style={{
                   backgroundColor: blockSoft,
+                  backgroundImage:
+                    "repeating-linear-gradient(135deg, transparent 0, transparent 4px, rgba(255,255,255,0.72) 4px, rgba(255,255,255,0.72) 7px)",
+                  borderColor: `color-mix(in srgb, ${blockAccent} 28%, transparent)`,
                   color: blockText,
                 }}
                 title={tooltipText}
@@ -392,13 +389,116 @@ export default function DayCell({
           );
         })}
         {hiddenCount > 0 ? (
-          <div
-            className="rounded-md border border-dashed border-[var(--panel-border)] bg-white/70 px-2 py-1 text-center text-[10px] font-semibold text-[var(--text-muted)]"
-            title={hiddenItemsLabel}
-            aria-label={`${hiddenCount} more ${hiddenCount === 1 ? "item" : "items"}: ${hiddenItemsLabel}`}
-          >
-            +{hiddenCount} more
-          </div>
+          <details className="group/more relative">
+            <summary
+              className="flex cursor-pointer list-none items-center justify-center gap-1 rounded-md border border-dashed border-[var(--panel-border)] bg-white/70 px-2 py-1 text-center text-[10px] font-semibold text-[var(--text-muted)] transition hover:border-rose-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200 [&::-webkit-details-marker]:hidden"
+              aria-label={`Show ${hiddenCount} more ${hiddenCount === 1 ? "item" : "items"}`}
+            >
+              +{hiddenCount} more
+              <span
+                aria-hidden="true"
+                className="transition group-open/more:rotate-45"
+              >
+                +
+              </span>
+            </summary>
+            <div className="absolute inset-x-0 bottom-full z-30 mb-1 space-y-1 rounded-xl border border-[var(--panel-border)] bg-white p-1.5 text-left shadow-[var(--shadow-lg)]">
+              {hiddenBlocks.map((block) => {
+                const isExternal = block.source === "GOOGLE";
+                const createdByUserId = block.createdByUserId || "external";
+                const creatorAccent = memberVisuals[createdByUserId]?.accent;
+                const blockAccent =
+                  creatorAccent?.accent ?? "var(--color-secondary)";
+                const blockSoft =
+                  creatorAccent?.accentSoft ?? "var(--color-secondary-soft)";
+                const blockText =
+                  creatorAccent?.accentText ?? "var(--idea-new-text)";
+                const blockTimeLabel = isExternal
+                  ? getBlockTimeLabel(
+                      date,
+                      block.startAt,
+                      block.endAt,
+                      timeFormat,
+                      timeZone,
+                    )
+                  : null;
+                const label = isExternal
+                  ? blockTimeLabel ?? "All day"
+                  : block.title;
+                const content = (
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span
+                      className="h-3 w-0.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: blockAccent }}
+                    />
+                    <span className="min-w-0 truncate text-[10px] font-semibold tabular-nums">
+                      {label}
+                    </span>
+                  </span>
+                );
+
+                return isExternal ? (
+                  <div
+                    key={block.id}
+                    className="rounded-lg border border-dashed px-2 py-1.5"
+                    style={{
+                      backgroundColor: blockSoft,
+                      backgroundImage:
+                        "repeating-linear-gradient(135deg, transparent 0, transparent 4px, rgba(255,255,255,0.72) 4px, rgba(255,255,255,0.72) 7px)",
+                      borderColor: `color-mix(in srgb, ${blockAccent} 28%, transparent)`,
+                      color: blockText,
+                    }}
+                    title={blockTimeLabel ? `${blockTimeLabel} busy` : "All-day busy"}
+                  >
+                    {content}
+                  </div>
+                ) : (
+                  <Link
+                    key={block.id}
+                    className="block rounded-lg px-2 py-1.5 transition hover:brightness-95"
+                    href={buildBlockEditHref(block.id)}
+                    style={{ backgroundColor: blockSoft, color: blockText }}
+                    title={label}
+                  >
+                    {content}
+                  </Link>
+                );
+              })}
+              {hiddenEvents.map((event) => {
+                const spanPosition = getEventSpanPosition(
+                  date,
+                  event.dateTimeStart,
+                  event.dateTimeEnd,
+                  timeZone,
+                );
+                const timeLabel = getEventTimeLabel(
+                  event,
+                  timeFormat,
+                  spanPosition,
+                  timeZone,
+                );
+
+                return (
+                  <Link
+                    key={event.id}
+                    className="flex min-w-0 items-center gap-1.5 rounded-lg bg-rose-50 px-2 py-1.5 text-rose-700 transition hover:bg-rose-100"
+                    href={`/events/${event.id}`}
+                    title={getEventTooltip(event, timeFormat, timeZone)}
+                  >
+                    <span className="h-4 w-0.5 shrink-0 rounded-full bg-rose-500" />
+                    {timeLabel ? (
+                      <span className="shrink-0 text-[9px] font-semibold text-current/70">
+                        {timeLabel}
+                      </span>
+                    ) : null}
+                    <span className="min-w-0 truncate text-[10px] font-medium">
+                      {event.title}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </details>
         ) : null}
       </div>
       <span className="pointer-events-none absolute bottom-2 right-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/90 bg-white/80 text-[10px] font-semibold text-[var(--text-muted)] opacity-0 transition group-hover/day:opacity-100">

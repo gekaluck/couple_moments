@@ -25,7 +25,7 @@ export default function PlanningSection({
   const summary = `${countLabel(planCount, "plan")} · ${countLabel(ideaCount, "idea")}`;
 
   return (
-    <section className="surface mt-4 p-4 md:mt-6 md:p-8">
+    <section className="surface mt-4 p-4 md:mt-6 md:p-6 xl:p-8">
       <button
         type="button"
         aria-controls={contentId}

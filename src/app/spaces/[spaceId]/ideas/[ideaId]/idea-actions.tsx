@@ -11,7 +11,10 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import PlaceSearch, { PlaceSelection } from "@/components/places/PlaceSearch";
 import TagInput from "@/components/ui/TagInput";
 import Button from "@/components/ui/Button";
-import { getOffsetMinutesForLocalDateTime } from "@/lib/date-time";
+import {
+  getOffsetMinutesForLocalDateTime,
+  isLocalDateTimeInPast,
+} from "@/lib/date-time";
 
 function getTodayDateString() {
   const today = new Date();
@@ -68,6 +71,12 @@ export default function IdeaActions({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const todayStr = getTodayDateString();
+  const [scheduleDate, setScheduleDate] = useState(todayStr);
+  const [scheduleTime, setScheduleTime] = useState("19:00");
+  const createsMemory = isLocalDateTimeInPast(
+    scheduleDate,
+    scheduleTime || "12:00",
+  );
   const [editPlace, setEditPlace] = useState<PlaceSelection | null>(
     idea.placeId && idea.placeLat != null && idea.placeLng != null && idea.placeUrl
       ? {
@@ -128,7 +137,7 @@ export default function IdeaActions({
         onClick={() => setIsScheduleOpen(true)}
       >
         <Calendar className="h-4 w-4" />
-        Schedule
+        Plan / remember
       </button>
       <button
         className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--panel-border)] bg-white/90 text-[var(--text-primary)] shadow-[var(--shadow-sm)] transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
@@ -152,7 +161,7 @@ export default function IdeaActions({
       <Modal
         isOpen={isScheduleOpen}
         onClose={() => setIsScheduleOpen(false)}
-        title="Schedule this idea"
+        title="Plan or remember this idea"
       >
         <div className="space-y-4">
           <div>
@@ -172,6 +181,7 @@ export default function IdeaActions({
               const formData = new FormData(event.currentTarget);
               const date = formData.get("date")?.toString() ?? "";
               const time = formData.get("time")?.toString() || "12:00";
+              const creatingMemory = isLocalDateTimeInPast(date, time);
               const offsetMinutes = getOffsetMinutesForLocalDateTime(date, time);
               if (offsetMinutes !== null) {
                 formData.set("timeZoneOffsetStart", offsetMinutes.toString());
@@ -179,7 +189,11 @@ export default function IdeaActions({
               startTransition(async () => {
                 try {
                   const result = await onSchedule(formData);
-                  toast.success("Event created from idea!");
+                  toast.success(
+                    creatingMemory
+                      ? "Memory created from idea!"
+                      : "Plan created from idea!",
+                  );
                   if (result?.googleSync?.attempted && !result.googleSync.success) {
                     toast.warning(
                       result.googleSync.message ??
@@ -195,7 +209,11 @@ export default function IdeaActions({
                     router.refresh();
                   }
                 } catch {
-                  toast.error("Failed to schedule idea");
+                  toast.error(
+                    creatingMemory
+                      ? "Failed to create memory"
+                      : "Failed to plan idea",
+                  );
                 }
               });
             }}
@@ -209,8 +227,8 @@ export default function IdeaActions({
                 className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
                 name="date"
                 type="date"
-                min={todayStr}
-                defaultValue={todayStr}
+                value={scheduleDate}
+                onChange={(event) => setScheduleDate(event.target.value)}
                 required
               />
             </label>
@@ -220,10 +238,16 @@ export default function IdeaActions({
                 className="rounded-xl border border-transparent bg-[var(--surface-50)] px-3 py-2 text-sm font-normal normal-case tracking-normal text-[var(--text-primary)] outline-none focus:border-[var(--panel-border)] focus:bg-white"
                 name="time"
                 type="time"
-                defaultValue="19:00"
+                value={scheduleTime}
+                onChange={(event) => setScheduleTime(event.target.value)}
               />
             </label>
-            {hasGoogleCalendar && (
+            <p className="rounded-xl bg-[var(--surface-50)] px-3 py-2 text-xs text-[var(--text-muted)]">
+              {createsMemory
+                ? "This past date will be saved directly to Memories."
+                : "This date will be added to Upcoming plans."}
+            </p>
+            {hasGoogleCalendar && !createsMemory && (
               <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                 <input
                   type="checkbox"
@@ -253,7 +277,11 @@ export default function IdeaActions({
                 Cancel
               </Button>
               <Button variant="primary" size="sm" type="submit" loading={isPending}>
-                {isPending ? "Creating..." : "Create event"}
+                {isPending
+                  ? "Creating..."
+                  : createsMemory
+                    ? "Create memory"
+                    : "Plan idea"}
               </Button>
             </div>
           </form>
