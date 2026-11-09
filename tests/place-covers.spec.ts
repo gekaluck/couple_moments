@@ -76,9 +76,9 @@ test("place IDs resolve fresh covers for ideas and upcoming events", async ({
 
   await test.step("scheduled event keeps resolving the place cover", async () => {
     await page.goto(`/spaces/${spaceId}/ideas/${idea.id}`);
-    await page.getByRole("button", { name: "Schedule" }).first().click();
+    await page.getByRole("button", { name: "Plan / remember" }).first().click();
     await page.fill('input[name="date"]', isoDateDaysFromNow(7));
-    await page.getByRole("button", { name: "Create event" }).click();
+    await page.getByRole("button", { name: "Plan idea" }).click();
     await page.waitForURL(/\/events\//);
 
     await page.goto(`/spaces/${spaceId}/calendar`);

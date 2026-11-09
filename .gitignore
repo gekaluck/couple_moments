@@ -30,7 +30,9 @@ build/
 # IDE
 .vscode/
 .idea/
-.claude/
+# Claude Code: keep personal settings local, commit shared skills
+.claude/*
+!.claude/skills/
 *.swp
 *.swo
 

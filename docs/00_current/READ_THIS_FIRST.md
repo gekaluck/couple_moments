@@ -22,7 +22,7 @@ Do not use `docs/90_archive` for current-state decisions unless explicitly reque
 
 ## Handoff contract
 - Goal: make focused, reviewable changes aligned to the active milestone.
-- Constraints: follow repository rules in `CLAUDE.md`.
+- Constraints: follow repository rules in `AGENTS.md`.
 - Artifacts: update docs when behavior, architecture, or milestone scope changes.
 
 ## Core env reminders

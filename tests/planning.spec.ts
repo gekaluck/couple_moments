@@ -67,10 +67,13 @@ test("core planning flow: event, idea, schedule, delete reverts idea", async ({
     );
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(page.getByRole("link", { name: "Activity" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
+    // The page header also has an "Activity" breadcrumb link; check the bottom tab bar.
+    const bottomNav = page.getByRole("navigation").filter({
+      has: page.getByRole("link", { name: "Activity" }),
+    });
+    await expect(
+      bottomNav.getByRole("link", { name: "Activity" }),
+    ).toHaveAttribute("aria-current", "page");
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.getByRole("link", { name: "Back to activity" }).click();
 
@@ -99,9 +102,9 @@ test("core planning flow: event, idea, schedule, delete reverts idea", async ({
     expect(ideaHref).toBeTruthy();
     await page.goto(ideaHref!);
     await page.waitForURL(/\/ideas\//);
-    await page.getByRole("button", { name: "Schedule" }).first().click();
+    await page.getByRole("button", { name: "Plan / remember" }).first().click();
     await page.fill('input[name="date"]', isoDateDaysFromNow(10));
-    await page.getByRole("button", { name: "Create event" }).click();
+    await page.getByRole("button", { name: "Plan idea" }).click();
     // Scheduling navigates to the created event's page
     await page.waitForURL(/\/events\//);
     await expect(
