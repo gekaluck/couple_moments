@@ -24,6 +24,7 @@ export default function FeedbackForm({
   const [steps, setSteps] = useState("");
   const [expected, setExpected] = useState("");
   const [actual, setActual] = useState("");
+  const [status, setStatus] = useState<string | null>(null);
 
   const diagnostics = useMemo(() => {
     const now = new Date().toISOString();
@@ -62,16 +63,33 @@ export default function FeedbackForm({
     [actual, area, diagnostics.href, diagnostics.now, diagnostics.ua, expected, fromPath, repro, severity, spaceId, steps, summary, userId],
   );
 
-  const openEmailDraft = () => {
-    if (!supportEmail) {
-      toast.error("Support email is not configured. Copy the report and send it manually.");
+  const copyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(reportBody);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleSend = async () => {
+    if (supportEmail) {
+      const subject = encodeURIComponent(
+        `[Duet Beta][${severity.toUpperCase()}] ${summary || "Issue report"}`,
+      );
+      const body = encodeURIComponent(reportBody);
+      window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
+      setStatus(
+        "Opening your email app with the report. If nothing opens, use Copy report and send it to the Duet team manually.",
+      );
       return;
     }
-    const subject = encodeURIComponent(
-      `[Duet Beta][${severity.toUpperCase()}] ${summary || "Issue report"}`,
+    const copied = await copyReport();
+    setStatus(
+      copied
+        ? "Email sending isn't set up here, so the report was copied to your clipboard. Please paste it into a message to the Duet team."
+        : "Email sending isn't set up here. Please select the generated report below, copy it and send it to the Duet team.",
     );
-    const body = encodeURIComponent(reportBody);
-    window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -87,7 +105,10 @@ export default function FeedbackForm({
       </section>
 
       <section className="surface p-6 md:p-8">
-        <form className="grid gap-4" onSubmit={(event) => event.preventDefault()}>
+        <form className="grid gap-4" onSubmit={(event) => {
+            event.preventDefault();
+            void handleSend();
+          }}>
           <label className="grid gap-1">
             <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">
               Summary
@@ -202,8 +223,11 @@ export default function FeedbackForm({
           <button
             type="button"
             onClick={async () => {
-              await navigator.clipboard.writeText(reportBody);
-              toast.success("Issue report copied to clipboard.");
+              if (await copyReport()) {
+                toast.success("Issue report copied to clipboard.");
+              } else {
+                toast.error("Couldn't copy. Select the report text and copy it manually.");
+              }
             }}
             className="rounded-full bg-[var(--action-primary)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--action-primary-strong)]"
           >
@@ -211,10 +235,10 @@ export default function FeedbackForm({
           </button>
           <button
             type="button"
-            onClick={openEmailDraft}
+            onClick={() => void handleSend()}
             className="rounded-full border border-[var(--panel-border)] bg-white/90 px-4 py-2 text-xs font-semibold text-[var(--text-primary)] transition hover:bg-white"
           >
-            Open email draft
+            {supportEmail ? "Open email draft" : "Send report"}
           </button>
           <Link
             href={fromPath}
@@ -223,6 +247,11 @@ export default function FeedbackForm({
             Back to app
           </Link>
         </div>
+        {status ? (
+          <p role="status" className="mt-3 text-sm text-[var(--text-muted)]">
+            {status}
+          </p>
+        ) : null}
       </section>
     </div>
   );
